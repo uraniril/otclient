@@ -1,6 +1,18 @@
+# OTServ Brasil - OTClient
+
+[![Discord Channel](https://img.shields.io/discord/528117503952551936.svg?style=flat-square&logo=discord)](https://discord.gg/3NxYnyV)
+[![GitHub issues](https://img.shields.io/github/issues/opentibiabr/otclient)](https://github.com/opentibiabr/otclient/issues)
+[![GitHub pull request](https://img.shields.io/github/issues-pr/opentibiabr/otclient)](https://github.com/opentibiabr/otclient/pulls)
+[![Contributors](https://img.shields.io/github/contributors/opentibiabr/otclient.svg?style=flat-square)](https://github.com/opentibiabr/otclient/graphs/contributors)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/opentibiabr/otclient/blob/develop/LICENSE)
+
+![GitHub repo size](https://img.shields.io/github/repo-size/opentibiabr/otclient)
+
+## Builds
+
 [![Build Status](https://ci.appveyor.com/api/projects/status/github/opentibiabr/otclient?branch=develop&passingText=develop%20-%20OK&svg=true)](https://ci.appveyor.com/project/opentibiabr/otclient)
-[![Build Status](https://secure.travis-ci.org/opentibiabr/otclient.svg?branch=develop)](http://travis-ci.org/opentibiabr/otclient)
-[![Discord Channel](https://img.shields.io/discord/528117503952551936.svg?label=discord)](https://discord.gg/3NxYnyV)
+[![Build Status](https://travis-ci.com/opentibiabr/otclient.svg?branch=develop)](http://travis-ci.com/opentibiabr/otclient)
+[![Build Status](https://github.com/opentibiabr/otclient/actions/workflows/build-vcpkg.yml/badge.svg)](https://github.com/opentibiabr/otclient/actions/workflows/build-vcpkg.yml)
 
 ### What is otclient?
 
@@ -11,29 +23,18 @@ that each functionality is a separated module, giving the possibility to users m
 anything easily. Users can also create new mods and extend game interface for their own purposes.
 Otclient is written in C++11 and heavily scripted in lua.
 
-For a server to connect to, you can build your own with the [otservbr-global](https://github.com/opentibiabr/otservbr-global)
-or connect to one listed on [otservlist](https://otservlist.org/).
-
 ### Where do I download?
 
 Compiled for Windows can be found here:
-* [Windows Builds](https://ci.appveyor.com/project/opentibiabr/otclient)
+* [AppVeyor](https://ci.appveyor.com/project/opentibiabr/otclient)
+
+Compiled for macOS, Ubuntu and Windows can be found here:
+* [Actions](https://github.com/opentibiabr/otclient/actions/workflows/build-vcpkg.yml)
 
 Compatible Dat and Spr with [otservbr-global](https://github.com/opentibiabr/otservbr-global):
-* [Client 10](https://github.com/opentibiabr/tools/blob/master/Tibia%20Client%2010.rar)
+* [Client 10](https://github.com/opentibiabr/tools/blob/master/Tibia%20Client%2010.zip)
 
-
-**NOTE:** You will need to download spr/dat files on your own and place them in `data/things/1231/` (i.e: `data/things/1231/Tibia.spr`)
-
-### Features
-
-Beyond of it's flexibility with scripts, otclient comes with tons of other features that make possible
-the creation of new client side stuff in otserv that was not possible before. These include,
-sound system, graphics effects with shaders, modules/addons system, animated textures,
-styleable user interface, transparency, multi language, in game lua terminal, an OpenGL 1.1/2.0 ES engine that make possible
-to port to mobile platforms. Otclient is also flexible enough to
-create tibia tools like map editors just using scripts, because it wasn't designed to be just a
-client, instead otclient was designed to be a combination of a framework and tibia APIs.
+**NOTE:** You will need to download spr/dat files on your own and place them in `data/things/1264/` (i.e: `data/things/1264/Tibia.spr`)
 
 ### Compiling
 
@@ -64,7 +65,7 @@ docker run -it --rm \
   --env DISPLAY \
   --volume /tmp/.X11-unix:/tmp/.X11-unix \
   --device /dev/dri \
-  --device /dev/snd edubart/otclient /bin/bash
+  --device /dev/snd opentibiabr/otclient /bin/bash
 
 # Enable access control for the X server.
 xhost -
@@ -72,8 +73,7 @@ xhost -
 
 ### Need help?
 
-Try to ask questions in [otland](http://otland.net/f494/), now we have a board for the project there,
-or talk with us at the gitter chat.
+Try to ask questions in our [discord](https://discord.gg/3NxYnyV) 
 
 ### Bugs
 
@@ -81,7 +81,7 @@ Have found a bug? Please create an issue in our [bug tracker](https://github.com
 
 ### Contributing
 
-We encourage you to contribute to otclient! You can make pull requests of any improvement in our github page, alternatively, see [Contributing Wiki Page](https://github.com/opentibiabr/otclient/wiki/Contributing).
+We encourage you to contribute to otclient! You can make pull requests of any improvement in [pull requests](https://github.com/opentibiabr/otclient/pulls)
 
 ### Contact
 
