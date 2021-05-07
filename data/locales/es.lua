@@ -378,7 +378,15 @@ locale = {
     ["You read the following, written on \n%s.\n"] = "Lees lo siguiente, escrito en \n%s\n",
     ["Your Money:"] = "Tu dinero:",
     ["Change language"] = "Cambiar idioma",
-    ["Don't stretch or shrink Game Window"] = "No estirar ni encoger la ventana de juego"
+    ["Don't stretch or shrink Game Window"] = "No estirar ni encoger la ventana de juego",
+	["Destination is out of range."] = "Destination is out of range.",
+	["Floor Shadowing"] = "Floor Shadowing",
+	["Draw Viewport Edge"] = "Draw Viewport Edge",
+	["Draw Floating Effects"] = "Draw Floating Effects",
+	["Light Version"] = "Light Version",
+	["Render Scale"] = "Render Scale",
+	["Warning"] = "Warning",
+	["Rendering scale above 100%% will drop performance and visual bugs may occur."] = "Rendering scale above 100%% will drop performance and visual bugs may occur."
   }
 }
 

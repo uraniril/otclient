@@ -77,7 +77,7 @@ void UITextEdit::drawSelf(Fw::DrawPane drawPane)
     if(m_color != Color::alpha) {
         if(glyphsMustRecache) {
             m_glyphsTextCoordsBuffer.clear();
-            for(int i=0;i<textLength;++i)
+            for(int i = 0; i < textLength; ++i)
                 m_glyphsTextCoordsBuffer.addRect(m_glyphsCoords[i], m_glyphsTexCoords[i]);
         }
         g_painter->setColor(m_color);
@@ -87,7 +87,7 @@ void UITextEdit::drawSelf(Fw::DrawPane drawPane)
     if(hasSelection()) {
         if(glyphsMustRecache) {
             m_glyphsSelectCoordsBuffer.clear();
-            for(int i=m_selectionStart;i<m_selectionEnd;++i)
+            for(int i = m_selectionStart; i < m_selectionEnd; ++i)
                 m_glyphsSelectCoordsBuffer.addRect(m_glyphsCoords[i], m_glyphsTexCoords[i]);
         }
         g_painter->setColor(m_selectionBackgroundColor);
@@ -106,9 +106,9 @@ void UITextEdit::drawSelf(Fw::DrawPane drawPane)
             Rect cursorRect;
             // when cursor is at 0
             if(m_cursorPos == 0)
-                cursorRect = Rect(m_rect.left()+m_padding.left, m_rect.top()+m_padding.top, 1, m_font->getGlyphHeight());
+                cursorRect = Rect(m_rect.left() + m_padding.left, m_rect.top() + m_padding.top, 1, m_font->getGlyphHeight());
             else
-                cursorRect = Rect(m_glyphsCoords[m_cursorPos-1].right(), m_glyphsCoords[m_cursorPos-1].top(), 1, m_font->getGlyphHeight());
+                cursorRect = Rect(m_glyphsCoords[m_cursorPos - 1].right(), m_glyphsCoords[m_cursorPos - 1].top(), 1, m_font->getGlyphHeight());
 
             if(hasSelection() && m_cursorPos >= m_selectionStart && m_cursorPos <= m_selectionEnd)
                 g_painter->setColor(m_selectionColor);
@@ -116,7 +116,7 @@ void UITextEdit::drawSelf(Fw::DrawPane drawPane)
                 g_painter->setColor(m_color);
 
             g_painter->drawFilledRect(cursorRect);
-        } else if(elapsed >= 2*delay) {
+        } else if(elapsed >= 2 * delay) {
             m_cursorTicks = g_clock.millis();
         }
     }
@@ -142,9 +142,9 @@ void UITextEdit::update(bool focusCursor)
 
     // map glyphs positions
     Size textBoxSize;
-    const std::vector<Point>& glyphsPositions = m_font->calculateGlyphsPositions(text, m_textAlign, &textBoxSize);
-    const Rect *glyphsTextureCoords = m_font->getGlyphsTextureCoords();
-    const Size *glyphsSize = m_font->getGlyphsSize();
+    const auto& glyphsPositions = m_font->calculateGlyphsPositions(text, m_textAlign, &textBoxSize);
+    const Rect* glyphsTextureCoords = m_font->getGlyphsTextureCoords();
+    const Size* glyphsSize = m_font->getGlyphsSize();
     int glyph;
 
     // update rect size
@@ -159,7 +159,7 @@ void UITextEdit::update(bool focusCursor)
     }
 
     // resize just on demand
-    if(textLength > (int)m_glyphsCoords.size()) {
+    if(textLength > static_cast<int>(m_glyphsCoords.size())) {
         m_glyphsCoords.resize(textLength);
         m_glyphsTexCoords.resize(textLength);
     }
@@ -175,43 +175,43 @@ void UITextEdit::update(bool focusCursor)
     m_cursorInRange = false;
     if(focusCursor && m_autoScroll) {
         if(m_cursorPos > 0 && textLength > 0) {
-                assert(m_cursorPos <= textLength);
-                Rect virtualRect(m_textVirtualOffset, m_rect.size() - Size(m_padding.left+m_padding.right, 0)); // previous rendered virtual rect
-                int pos = m_cursorPos - 1; // element before cursor
-                glyph = (uchar)text[pos]; // glyph of the element before cursor
-                Rect glyphRect(glyphsPositions[pos], glyphsSize[glyph]);
+            assert(m_cursorPos <= textLength);
+            Rect virtualRect(m_textVirtualOffset, m_rect.size() - Size(m_padding.left + m_padding.right, 0)); // previous rendered virtual rect
+            int pos = m_cursorPos - 1; // element before cursor
+            glyph = static_cast<uchar>(text[pos]); // glyph of the element before cursor
+            Rect glyphRect(glyphsPositions[pos], glyphsSize[glyph]);
 
-                // if the cursor is not on the previous rendered virtual rect we need to update it
-                if(!virtualRect.contains(glyphRect.topLeft()) || !virtualRect.contains(glyphRect.bottomRight())) {
-                    // calculate where is the first glyph visible
-                    Point startGlyphPos;
-                    startGlyphPos.y = std::max<int>(glyphRect.bottom() - virtualRect.height(), 0);
-                    startGlyphPos.x = std::max<int>(glyphRect.right() - virtualRect.width(), 0);
+            // if the cursor is not on the previous rendered virtual rect we need to update it
+            if(!virtualRect.contains(glyphRect.topLeft()) || !virtualRect.contains(glyphRect.bottomRight())) {
+                // calculate where is the first glyph visible
+                Point startGlyphPos;
+                startGlyphPos.y = std::max<int>(glyphRect.bottom() - virtualRect.height(), 0);
+                startGlyphPos.x = std::max<int>(glyphRect.right() - virtualRect.width(), 0);
 
-                    // find that glyph
-                    for(pos = 0; pos < textLength; ++pos) {
-                        glyph = (uchar)text[pos];
-                        glyphRect = Rect(glyphsPositions[pos], glyphsSize[glyph]);
-                        glyphRect.setTop(std::max<int>(glyphRect.top() - m_font->getYOffset() - m_font->getGlyphSpacing().height(), 0));
-                        glyphRect.setLeft(std::max<int>(glyphRect.left() - m_font->getGlyphSpacing().width(), 0));
+                // find that glyph
+                for(pos = 0; pos < textLength; ++pos) {
+                    glyph = static_cast<uchar>(text[pos]);
+                    glyphRect = Rect(glyphsPositions[pos], glyphsSize[glyph]);
+                    glyphRect.setTop(std::max<int>(glyphRect.top() - m_font->getYOffset() - m_font->getGlyphSpacing().height(), 0));
+                    glyphRect.setLeft(std::max<int>(glyphRect.left() - m_font->getGlyphSpacing().width(), 0));
 
-                        // first glyph entirely visible found
-                        if(glyphRect.topLeft() >= startGlyphPos) {
-                            m_textVirtualOffset.x = glyphsPositions[pos].x;
-                            m_textVirtualOffset.y = glyphsPositions[pos].y - m_font->getYOffset();
-                            break;
-                        }
+                    // first glyph entirely visible found
+                    if(glyphRect.topLeft() >= startGlyphPos) {
+                        m_textVirtualOffset.x = glyphsPositions[pos].x;
+                        m_textVirtualOffset.y = glyphsPositions[pos].y - m_font->getYOffset();
+                        break;
                     }
                 }
+            }
         } else {
-            m_textVirtualOffset = Point(0,0);
+            m_textVirtualOffset = Point();
         }
         m_cursorInRange = true;
     } else {
         if(m_cursorPos > 0 && textLength > 0) {
-            Rect virtualRect(m_textVirtualOffset, m_rect.size() - Size(2*m_padding.left+m_padding.right, 0) ); // previous rendered virtual rect
+            Rect virtualRect(m_textVirtualOffset, m_rect.size() - Size(2 * m_padding.left + m_padding.right, 0)); // previous rendered virtual rect
             int pos = m_cursorPos - 1; // element before cursor
-            glyph = (uchar)text[pos]; // glyph of the element before cursor
+            glyph = static_cast<uchar>(text[pos]); // glyph of the element before cursor
             Rect glyphRect(glyphsPositions[pos], glyphsSize[glyph]);
             if(virtualRect.contains(glyphRect.topLeft()) && virtualRect.contains(glyphRect.bottomRight()))
                 m_cursorInRange = true;
@@ -262,11 +262,11 @@ void UITextEdit::update(bool focusCursor)
     }
 
     for(int i = 0; i < textLength; ++i) {
-        glyph = (uchar)text[i];
+        glyph = static_cast<uchar>(text[i]);
         m_glyphsCoords[i].clear();
 
         // skip invalid glyphs
-        if(glyph < 32 && glyph != (uchar)'\n')
+        if(glyph < 32 && glyph != static_cast<uchar>('\n'))
             continue;
 
         // calculate initial glyph rect and texture coords
@@ -279,7 +279,7 @@ void UITextEdit::update(bool focusCursor)
         } else if(m_textAlign & Fw::AlignVerticalCenter) {
             glyphScreenCoords.translate(0, (textScreenCoords.height() - textBoxSize.height()) / 2);
         } else { // AlignTop
-            // nothing to do
+         // nothing to do
         }
 
         if(m_textAlign & Fw::AlignRight) {
@@ -287,7 +287,7 @@ void UITextEdit::update(bool focusCursor)
         } else if(m_textAlign & Fw::AlignHorizontalCenter) {
             glyphScreenCoords.translate((textScreenCoords.width() - textBoxSize.width()) / 2, 0);
         } else { // AlignLeft
-            // nothing to do
+         // nothing to do
         }
 
         // only render glyphs that are after startRenderPosition
@@ -343,7 +343,7 @@ void UITextEdit::setCursorPos(int pos)
     if(pos != m_cursorPos) {
         if(pos < 0)
             m_cursorPos = 0;
-        else if((uint)pos >= m_text.length())
+        else if(static_cast<uint>(pos) >= m_text.length())
             m_cursorPos = m_text.length();
         else
             m_cursorPos = pos;
@@ -362,14 +362,14 @@ void UITextEdit::setSelection(int start, int end)
     if(end == -1)
         end = m_text.length();
 
-    m_selectionStart = stdext::clamp<int>(start, 0, (int)m_text.length());
-    m_selectionEnd = stdext::clamp<int>(end, 0, (int)m_text.length());
+    m_selectionStart = stdext::clamp<int>(start, 0, static_cast<int>(m_text.length()));
+    m_selectionEnd = stdext::clamp<int>(end, 0, static_cast<int>(m_text.length()));
     recacheGlyphs();
 }
 
 void UITextEdit::setTextHidden(bool hidden)
 {
-    m_textHidden = true;
+    m_textHidden = hidden;
     update(true);
 }
 
@@ -398,7 +398,7 @@ void UITextEdit::appendText(std::string text)
 
             // only ignore text append if it contains invalid characters
             if(!m_validCharacters.empty()) {
-                for(char i: text) {
+                for(char i : text) {
                     if(m_validCharacters.find(i) == std::string::npos)
                         return;
                 }
@@ -440,7 +440,7 @@ void UITextEdit::removeCharacter(bool right)
 {
     std::string tmp = m_text;
     if(m_cursorPos >= 0 && tmp.length() > 0) {
-        if((uint)m_cursorPos >= tmp.length()) {
+        if(static_cast<uint>(m_cursorPos) >= tmp.length()) {
             tmp.erase(tmp.begin() + (--m_cursorPos));
         } else {
             if(right)
@@ -503,12 +503,12 @@ void UITextEdit::wrapText()
 void UITextEdit::moveCursorHorizontally(bool right)
 {
     if(right) {
-        if((uint)m_cursorPos+1 <= m_text.length())
+        if(static_cast<uint>(m_cursorPos) + 1 <= m_text.length())
             m_cursorPos++;
         else
             m_cursorPos = 0;
     } else {
-        if(m_cursorPos-1 >= 0)
+        if(m_cursorPos - 1 >= 0)
             m_cursorPos--;
         else
             m_cursorPos = m_text.length();
@@ -518,7 +518,7 @@ void UITextEdit::moveCursorHorizontally(bool right)
     update(true);
 }
 
-void UITextEdit::moveCursorVertically(bool up)
+void UITextEdit::moveCursorVertically(bool)
 {
     //TODO
 }
@@ -530,7 +530,7 @@ int UITextEdit::getTextPos(Point pos)
     // find any glyph that is actually on the
     int candidatePos = -1;
     Rect firstGlyphRect, lastGlyphRect;
-    for(int i=0;i<textLength;++i) {
+    for(int i = 0; i < textLength; ++i) {
         Rect clickGlyphRect = m_glyphsCoords[i];
         if(!clickGlyphRect.isValid())
             continue;
@@ -538,17 +538,16 @@ int UITextEdit::getTextPos(Point pos)
             firstGlyphRect = clickGlyphRect;
         lastGlyphRect = clickGlyphRect;
         clickGlyphRect.expandTop(m_font->getYOffset() + m_font->getGlyphSpacing().height());
-        clickGlyphRect.expandLeft(m_font->getGlyphSpacing().width()+1);
+        clickGlyphRect.expandLeft(m_font->getGlyphSpacing().width() + 1);
         if(clickGlyphRect.contains(pos)) {
             candidatePos = i;
             break;
-        }
-        else if(pos.y >= clickGlyphRect.top() && pos.y <= clickGlyphRect.bottom()) {
+        } else if(pos.y >= clickGlyphRect.top() && pos.y <= clickGlyphRect.bottom()) {
             if(pos.x <= clickGlyphRect.left()) {
                 candidatePos = i;
                 break;
             } else if(pos.x >= clickGlyphRect.right())
-                candidatePos = i+1;
+                candidatePos = i + 1;
         }
     }
 
@@ -585,7 +584,7 @@ std::string UITextEdit::getSelection()
 
 void UITextEdit::updateText()
 {
-    if(m_cursorPos > (int)m_text.length())
+    if(m_cursorPos > static_cast<int>(m_text.length()))
         m_cursorPos = m_text.length();
 
     // any text changes reset the selection
@@ -635,8 +634,7 @@ void UITextEdit::onStyleApply(const std::string& styleName, const OTMLNodePtr& s
         else if(node->tag() == "selection") {
             Point selectionRange = node->value<Point>();
             setSelection(selectionRange.x, selectionRange.y);
-        }
-        else if(node->tag() == "cursor-visible")
+        } else if(node->tag() == "cursor-visible")
             setCursorVisible(node->value<bool>());
         else if(node->tag() == "change-cursor-image")
             setChangeCursorImage(node->value<bool>());
@@ -695,7 +693,7 @@ bool UITextEdit::onKeyPress(uchar keyCode, int keyboardModifiers, int autoRepeat
                 return true;
             }
         } else if(keyCode == Fw::KeyEnd) { // move cursor to last character
-            if(m_cursorPos != (int)m_text.length()) {
+            if(m_cursorPos != static_cast<int>(m_text.length())) {
                 clearSelection();
                 setCursorPos(m_text.length());
                 return true;
@@ -764,7 +762,7 @@ bool UITextEdit::onKeyPress(uchar keyCode, int keyboardModifiers, int autoRepeat
                 return true;
             }
         } else if(keyCode == Fw::KeyEnd) { // move cursor to last character
-            if(m_cursorPos != (int)m_text.length()) {
+            if(m_cursorPos != static_cast<int>(m_text.length())) {
                 setSelection(m_cursorPos, m_text.length());
                 setCursorPos(m_text.length());
                 return true;

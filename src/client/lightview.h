@@ -23,40 +23,63 @@
 #ifndef LIGHTVIEW_H
 #define LIGHTVIEW_H
 
-#include "declarations.h"
+#include <framework/graphics/framebuffer.h>
 #include <framework/graphics/declarations.h>
 #include <framework/graphics/painter.h>
+#include "declarations.h"
 #include "thingtype.h"
 
+struct ShadeBlock {
+    int8 floor = -1;
+    Point pos;
+};
+
 struct LightSource {
-    Color color;
-    Point center;
-    int radius;
+    Point pos;
+    uint8 color;
+    uint16 radius;
+    float brightness;
 };
 
 class LightView : public LuaObject
 {
 public:
-    LightView();
+    LightView(const MapViewPtr& mapView);
 
-    void reset();
-    void setGlobalLight(const Light& light);
-    void addLightSource(const Point& center, float scaleFactor, const Light& light);
-    void resize(const Size& size);
+    void resize();
     void draw(const Rect& dest, const Rect& src);
+    void addLightSource(const Point& mainCenter, const Light& light);
 
-    void setBlendEquation(Painter::BlendEquation blendEquation) { m_blendEquation = blendEquation; }
+    void setGlobalLight(const Light& light) { m_globalLight = light; m_globalLightColor = Color::from8bit(m_globalLight.color, m_globalLight.intensity / static_cast<float>(UINT8_MAX)); }
+    void setFloor(const uint8 floor) { m_currentFloor = floor; }
+    void setShade(const Point& point);
+    void schedulePainting(const uint16_t delay = FrameBuffer::MIN_TIME_UPDATE) const { if(isDark()) m_lightbuffer->schedulePainting(delay); }
+
+    const Light& getGlobalLight() const { return m_globalLight; }
+
+    bool canUpdate() const { return isDark() && m_lightbuffer->canUpdate(); }
+    bool isDark() const { return m_globalLight.intensity < 250; }
 
 private:
-    void drawGlobalLight(const Light& light);
-    void drawLightSource(const Point& center, const Color& color, int radius);
-    TexturePtr generateLightBubble(float centerFactor);
+    static bool orderLightComparator(const LightSource& a, const LightSource& b) { return a.brightness == b.brightness && a.color < b.color || a.brightness < b.brightness; }
 
-    Painter::BlendEquation m_blendEquation;
-    TexturePtr m_lightTexture;
-    FrameBufferPtr m_lightbuffer;
+    void generateLightTexture(),
+        generateShadeTexture(),
+        drawLights();
+
+    TexturePtr m_lightTexture,
+        m_shadeTexture;
+
     Light m_globalLight;
-    std::vector<LightSource> m_lightMap;
+    Color m_globalLightColor;
+
+    FrameBufferPtr m_lightbuffer;
+    MapViewPtr m_mapView;
+
+    int8 m_currentFloor;
+
+    std::vector<ShadeBlock> m_shades;
+    std::array<std::vector<LightSource>, Otc::MAX_Z + 1> m_lights;
 };
 
 #endif

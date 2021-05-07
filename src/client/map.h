@@ -23,15 +23,16 @@
 #ifndef MAP_H
 #define MAP_H
 
-#include "creature.h"
-#include "houses.h"
-#include "towns.h"
-#include "creatures.h"
 #include "animatedtext.h"
+#include "creature.h"
+#include "creatures.h"
+#include "houses.h"
 #include "statictext.h"
 #include "tile.h"
+#include "towns.h"
 
 #include <framework/core/clock.h>
+#include <framework/graphics/framebuffer.h>
 
 enum OTBM_ItemAttr
 {
@@ -102,12 +103,14 @@ class TileBlock {
 public:
     TileBlock() { m_tiles.fill(nullptr); }
 
-    const TilePtr& create(const Position& pos) {
+    const TilePtr& create(const Position& pos)
+    {
         TilePtr& tile = m_tiles[getTileIndex(pos)];
         tile = TilePtr(new Tile(pos));
         return tile;
     }
-    const TilePtr& getOrCreate(const Position& pos) {
+    const TilePtr& getOrCreate(const Position& pos)
+    {
         TilePtr& tile = m_tiles[getTileIndex(pos)];
         if(!tile)
             tile = TilePtr(new Tile(pos));
@@ -118,21 +121,10 @@ public:
 
     uint getTileIndex(const Position& pos) { return ((pos.y % BLOCK_SIZE) * BLOCK_SIZE) + (pos.x % BLOCK_SIZE); }
 
-    const std::array<TilePtr, BLOCK_SIZE*BLOCK_SIZE>& getTiles() const { return m_tiles; }
+    const std::array<TilePtr, BLOCK_SIZE* BLOCK_SIZE>& getTiles() const { return m_tiles; }
 
 private:
-    std::array<TilePtr, BLOCK_SIZE*BLOCK_SIZE> m_tiles;
-};
-
-struct AwareRange
-{
-    int top;
-    int right;
-    int bottom;
-    int left;
-
-    int horizontal() { return left + right + 1; }
-    int vertical() { return top + bottom + 1; }
+    std::array<TilePtr, BLOCK_SIZE* BLOCK_SIZE> m_tiles;
 };
 
 //@bindsingleton g_map
@@ -144,7 +136,13 @@ public:
 
     void addMapView(const MapViewPtr& mapView);
     void removeMapView(const MapViewPtr& mapView);
-    void notificateTileUpdate(const Position& pos);
+    void notificateTileUpdate(const Position& pos, const ThingPtr& thing, const Otc::Operation operation);
+    void notificateCreatureInformationUpdate(const CreaturePtr& creature, const Otc::DrawFlags flags);
+    void notificateCameraMove(const Point& offset);
+
+    void schedulePainting(const Otc::FrameUpdate frameFlags, const uint16_t delay = FrameBuffer::MIN_TIME_UPDATE);
+    void schedulePainting(const Position& pos, const Otc::FrameUpdate frameFlags, const uint16_t delay = FrameBuffer::MIN_TIME_UPDATE);
+    void cancelScheduledPainting(const Otc::FrameUpdate frameFlags, const uint16_t delay);
 
     bool loadOtcm(const std::string& fileName);
     void saveOtcm(const std::string& fileName);
@@ -171,10 +169,10 @@ public:
     void cleanTexts();
 
     // thing related
-    void addThing(const ThingPtr& thing, const Position& pos, int stackPos = -1);
-    ThingPtr getThing(const Position& pos, int stackPos);
+    void addThing(const ThingPtr& thing, const Position& pos, int16 stackPos = -1);
+    ThingPtr getThing(const Position& pos, int16 stackPos);
     bool removeThing(const ThingPtr& thing);
-    bool removeThingByPos(const Position& pos, int stackPos);
+    bool removeThingByPos(const Position& pos, int16 stackPos);
     void colorizeThing(const ThingPtr& thing, const Color& color);
     void removeThingColor(const ThingPtr& thing);
 
@@ -186,7 +184,7 @@ public:
     const TilePtr& createTileEx(const Position& pos, const Items&... items);
     const TilePtr& getOrCreateTile(const Position& pos);
     const TilePtr& getTile(const Position& pos);
-    const TileList getTiles(int floor = -1);
+    const TileList getTiles(int8 floor = -1);
     void cleanTile(const Position& pos);
 
     // tile zone related
@@ -197,7 +195,7 @@ public:
 
     float getZoneOpacity() { return m_zoneOpacity; }
     Color getZoneColor(tileflags_t flag);
-    tileflags_t getZoneFlags() { return (tileflags_t)m_zoneFlags; }
+    tileflags_t getZoneFlags() { return static_cast<tileflags_t>(m_zoneFlags); }
     bool showZones() { return m_zoneFlags != 0; }
     bool showZone(tileflags_t zone) { return (m_zoneFlags & zone) == zone; }
 
@@ -217,16 +215,19 @@ public:
     void removeCreatureById(uint32 id);
     std::vector<CreaturePtr> getSightSpectators(const Position& centerPos, bool multiFloor);
     std::vector<CreaturePtr> getSpectators(const Position& centerPos, bool multiFloor);
-    std::vector<CreaturePtr> getSpectatorsInRange(const Position& centerPos, bool multiFloor, int xRange, int yRange);
-    std::vector<CreaturePtr> getSpectatorsInRangeEx(const Position& centerPos, bool multiFloor, int minXRange, int maxXRange, int minYRange, int maxYRange);
+    std::vector<CreaturePtr> getSpectatorsInRange(const Position& centerPos, bool multiFloor, int32 xRange, int32 yRange);
+    std::vector<CreaturePtr> getSpectatorsInRangeEx(const Position& centerPos, bool multiFloor, int32 minXRange, int32 maxXRange, int32 minYRange, int32 maxYRange);
 
-    void setLight(const Light& light) { m_light = light; }
+    void setLight(const Light& light);
+
     void setCentralPosition(const Position& centralPosition);
 
     bool isLookPossible(const Position& pos);
-    bool isCovered(const Position& pos, int firstFloor = 0);
-    bool isCompletelyCovered(const Position& pos, int firstFloor = 0);
+    bool isCovered(const Position& pos, uint8 firstFloor = 0);
+    bool isCompletelyCovered(const Position& pos, uint8 firstFloor = 0);
     bool isAwareOfPosition(const Position& pos);
+
+    void resetLastCamera();
 
     void setAwareRange(const AwareRange& range);
     void resetAwareRange();
@@ -234,39 +235,50 @@ public:
 
     Light getLight() { return m_light; }
     Position getCentralPosition() { return m_centralPosition; }
-    int getFirstAwareFloor();
-    int getLastAwareFloor();
-    const std::vector<MissilePtr>& getFloorMissiles(int z) { return m_floorMissiles[z]; }
+    uint8 getFirstAwareFloor();
+    uint8 getLastAwareFloor();
+    const std::vector<MissilePtr>& getFloorMissiles(uint8 z) { return m_floorMissiles[z]; }
 
     std::vector<AnimatedTextPtr> getAnimatedTexts() { return m_animatedTexts; }
     std::vector<StaticTextPtr> getStaticTexts() { return m_staticTexts; }
 
-    std::tuple<std::vector<Otc::Direction>, Otc::PathFindResult> findPath(const Position& start, const Position& goal, int maxComplexity, int flags = 0);
+    std::tuple<std::vector<Otc::Direction>, Otc::PathFindResult> findPath(const Position& start, const Position& goal, uint16 maxComplexity, uint32 flags = 0);
+
+    void setFloatingEffect(bool enable) { m_floatingEffect = enable; }
+    bool isDrawingFloatingEffects() { return m_floatingEffect; }
 
 private:
     void removeUnawareThings();
-    uint getBlockIndex(const Position& pos) { return ((pos.y / BLOCK_SIZE) * (65536 / BLOCK_SIZE)) + (pos.x / BLOCK_SIZE); }
 
-    std::unordered_map<uint, TileBlock> m_tileBlocks[Otc::MAX_Z+1];
-    std::unordered_map<uint32, CreaturePtr> m_knownCreatures;
-    std::array<std::vector<MissilePtr>, Otc::MAX_Z+1> m_floorMissiles;
+    uint16 getBlockIndex(const Position& pos) { return ((pos.y / BLOCK_SIZE) * (65536 / BLOCK_SIZE)) + (pos.x / BLOCK_SIZE); }
+
+    std::array<std::vector<MissilePtr>, Otc::MAX_Z + 1> m_floorMissiles;
+
     std::vector<AnimatedTextPtr> m_animatedTexts;
     std::vector<StaticTextPtr> m_staticTexts;
     std::vector<MapViewPtr> m_mapViews;
-    std::unordered_map<Position, std::string, PositionHasher> m_waypoints;
+
+    std::unordered_map<uint, TileBlock> m_tileBlocks[Otc::MAX_Z + 1];
+    std::unordered_map<uint32, CreaturePtr> m_knownCreatures;
+    std::unordered_map<Position, std::string, Position::Hasher> m_waypoints;
+
+    std::map<uint32, Color> m_zoneColors;
+
+    stdext::packed_storage<uint8> m_attribs;
 
     uint8 m_animationFlags;
     uint32 m_zoneFlags;
-    std::map<uint32, Color> m_zoneColors;
+
     float m_zoneOpacity;
 
     Light m_light;
     Position m_centralPosition;
     Rect m_tilesRect;
 
-    stdext::packed_storage<uint8> m_attribs;
     AwareRange m_awareRange;
     static TilePtr m_nulltile;
+
+    stdext::boolean<true> m_floatingEffect;
 };
 
 extern Map g_map;

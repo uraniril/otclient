@@ -117,12 +117,11 @@ MarketItemDescription = {
   Ability = 12,
   Charges = 13,
   WeaponName = 14,
-  Weight = 15,
-  Slot = 16
+  Weight = 15
 }
 
 MarketItemDescription.First = MarketItemDescription.Armor
-MarketItemDescription.Last = MarketItemDescription.Slot
+MarketItemDescription.Last = MarketItemDescription.Weight
 
 MarketItemDescriptionStrings = {
   [1] = 'Armor',
@@ -139,8 +138,7 @@ MarketItemDescriptionStrings = {
   [12] = 'Ability',
   [13] = 'Charges',
   [14] = 'Weapon Type',
-  [15] = 'Weight',
-  [16] = 'Slot'
+  [15] = 'Weight'
 }
 
 function getMarketDescriptionName(id)

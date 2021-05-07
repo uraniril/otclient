@@ -27,30 +27,30 @@
 #include <framework/core/timer.h>
 #include "thing.h"
 
-// @bindclass
+ // @bindclass
 class Missile : public Thing
 {
-    enum {
-        TICKS_PER_FRAME = 75
-    };
-
 public:
-    void draw(const Point& dest, float scaleFactor, bool animate, LightView *lightView = nullptr);
+    void draw(const Point& dest, float scaleFactor, int frameFlag, LightView* lightView = nullptr);
 
-    void setId(uint32 id);
+    void setId(uint32 id) override;
     void setPath(const Position& fromPosition, const Position& toPosition);
 
-    uint32 getId() { return m_id; }
+    uint32 getId() override { return m_id; }
 
     MissilePtr asMissile() { return static_self_cast<Missile>(); }
-    bool isMissile() { return true; }
+    bool isMissile() override { return true; }
 
-    const ThingTypePtr& getThingType();
-    ThingType *rawGetThingType();
+    const ThingTypePtr& getThingType() override;
+    ThingType* rawGetThingType() override;
+
+protected:
+    int getAnimationInterval() override;
 
 private:
     Timer m_animationTimer;
     Point m_delta;
+    uint8 m_distance;
     float m_duration;
     uint16 m_id;
     Otc::Direction m_direction;

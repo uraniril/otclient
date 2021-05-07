@@ -21,11 +21,11 @@
  */
 
 #include "animatedtext.h"
-#include "map.h"
-#include "game.h"
 #include <framework/core/clock.h>
 #include <framework/core/eventdispatcher.h>
 #include <framework/graphics/graphics.h>
+#include "game.h"
+#include "map.h"
 
 AnimatedText::AnimatedText()
 {
@@ -35,12 +35,12 @@ AnimatedText::AnimatedText()
 
 void AnimatedText::drawText(const Point& dest, const Rect& visibleRect)
 {
-    static float tf = Otc::ANIMATED_TEXT_DURATION;
-    static float tftf = Otc::ANIMATED_TEXT_DURATION * Otc::ANIMATED_TEXT_DURATION;
+    const static float tf = Otc::ANIMATED_TEXT_DURATION;
+    const static float tftf = Otc::ANIMATED_TEXT_DURATION * Otc::ANIMATED_TEXT_DURATION;
 
     Point p = dest;
-    Size textSize = m_cachedText.getTextSize();
-    float t = m_animationTimer.ticksElapsed();
+    const Size textSize = m_cachedText.getTextSize();
+    const float t = m_animationTimer.ticksElapsed();
     p.x += (24 - textSize.width() / 2);
 
     if(g_game.getFeature(Otc::GameDiagonalAnimatedText)) {
@@ -49,17 +49,16 @@ void AnimatedText::drawText(const Point& dest, const Rect& visibleRect)
 
     p.y += 8 + (-48 * t) / tf;
     p += m_offset;
-    Rect rect(p, textSize);
+    const Rect rect(p, textSize);
 
     if(visibleRect.contains(rect)) {
         //TODO: cache into a framebuffer
-        float t0 = tf / 1.2;
+        const float t0 = tf / 1.2;
         if(t > t0) {
             Color color = m_color;
-            color.setAlpha((float)(1 - (t - t0) / (tf - t0)));
+            color.setAlpha(static_cast<float>(1 - (t - t0) / (tf - t0)));
             g_painter->setColor(color);
-        }
-        else
+        } else
             g_painter->setColor(m_color);
         m_cachedText.draw(rect);
     }
@@ -96,14 +95,13 @@ bool AnimatedText::merge(const AnimatedTextPtr& other)
         return false;
 
     try {
-        int number = stdext::safe_cast<int>(m_cachedText.getText());
-        int otherNumber = stdext::safe_cast<int>(other->getCachedText().getText());
+        const int number = stdext::safe_cast<int>(m_cachedText.getText());
+        const int otherNumber = stdext::safe_cast<int>(other->getCachedText().getText());
 
-        std::string text = stdext::format("%d", number + otherNumber);
+        const std::string text = stdext::format("%d", number + otherNumber);
         m_cachedText.setText(text);
         return true;
-    }
-    catch(...) {
+    } catch(...) {
         return false;
     }
 }

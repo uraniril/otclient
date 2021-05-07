@@ -21,15 +21,15 @@
  */
 
 #include "missile.h"
-#include "thingtypemanager.h"
-#include "map.h"
-#include "tile.h"
 #include <framework/core/clock.h>
 #include <framework/core/eventdispatcher.h>
+#include "map.h"
+#include "thingtypemanager.h"
+#include "tile.h"
 
-void Missile::draw(const Point& dest, float scaleFactor, bool animate, LightView *lightView)
+void Missile::draw(const Point& dest, float scaleFactor, int frameFlag, LightView* lightView)
 {
-    if(m_id == 0 || !animate)
+    if(m_id == 0)
         return;
 
     int xPattern = 0, yPattern = 0;
@@ -62,23 +62,38 @@ void Missile::draw(const Point& dest, float scaleFactor, bool animate, LightView
         yPattern = 1;
     }
 
-    float fraction = m_animationTimer.ticksElapsed() / m_duration;
-    rawGetThingType()->draw(dest + m_delta * fraction * scaleFactor, scaleFactor, 0, xPattern, yPattern, 0, 0, lightView);
+    const float fraction = m_animationTimer.ticksElapsed() / m_duration;
+    rawGetThingType()->draw(dest + m_delta * fraction * scaleFactor, scaleFactor, 0, xPattern, yPattern, 0, 0, false, frameFlag, lightView);
 }
 
 void Missile::setPath(const Position& fromPosition, const Position& toPosition)
 {
-    m_direction = fromPosition.getDirectionFromPosition(toPosition);
-
     m_position = fromPosition;
     m_delta = Point(toPosition.x - fromPosition.x, toPosition.y - fromPosition.y);
-    m_duration = 150 * std::sqrt(m_delta.length());
+
+    const float deltaLength = m_delta.length();
+    if(deltaLength == 0) {
+        g_map.removeThing(this);
+        return;
+    }
+
+    m_direction = fromPosition.getDirectionFromPosition(toPosition);
+
+    m_duration = (Otc::MISSILE_TICKS_PER_FRAME * 2) * std::sqrt(deltaLength);
     m_delta *= Otc::TILE_PIXELS;
     m_animationTimer.restart();
+    m_distance = fromPosition.distance(toPosition);
 
     // schedule removal
-    auto self = asMissile();
+    const auto self = asMissile();
     g_dispatcher.scheduleEvent([self]() { g_map.removeThing(self); }, m_duration);
+
+    schedulePainting(getAnimationInterval());
+}
+
+int Missile::getAnimationInterval()
+{
+    return std::floor((static_cast<float>(Otc::MISSILE_TICKS_PER_FRAME) / Otc::TILE_PIXELS) * 10);
 }
 
 void Missile::setId(uint32 id)

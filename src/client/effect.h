@@ -27,31 +27,36 @@
 #include <framework/core/timer.h>
 #include "thing.h"
 
-// @bindclass
+ // @bindclass
 class Effect : public Thing
 {
-    enum {
-        EFFECT_TICKS_PER_FRAME = 75
-    };
-
 public:
-    void drawEffect(const Point& dest, float scaleFactor, bool animate, int offsetX = 0, int offsetY = 0, LightView *lightView = nullptr);
+    Effect();
 
-    void setId(uint32 id);
-    uint32 getId() { return m_id; }
+    void drawEffect(const Point& dest, float scaleFactor, int frameFlag, LightView* lightView = nullptr);
+
+    void setId(uint32 id) override;
+    uint32 getId() override { return m_id; }
 
     EffectPtr asEffect() { return static_self_cast<Effect>(); }
-    bool isEffect() { return true; }
+    bool isEffect() override { return true; }
 
-    const ThingTypePtr& getThingType();
-    ThingType *rawGetThingType();
+    const ThingTypePtr& getThingType() override;
+    ThingType* rawGetThingType() override;
+
+    void waitFor(const EffectPtr& firstEffect);
 
 protected:
-    void onAppear();
+    void onAppear() override;
+    int getAnimationInterval() override;
 
 private:
     Timer m_animationTimer;
+
     uint16 m_id;
+
+    int m_duration;
+    int m_timeToStartDrawing;
 };
 
 #endif

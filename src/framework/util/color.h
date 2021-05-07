@@ -32,19 +32,29 @@
 class Color
 {
 public:
-    Color() : m_r(1.0f), m_g(1.0f), m_b(1.0f), m_a(1.0f) { }
-    Color(uint32 rgba) { setRGBA(rgba); }
-    Color(uint8 r, uint8 g, uint8 b, uint8 a = 0xFF) : m_r(r/255.0f), m_g(g/255.0f), m_b(b/255.0f), m_a(a/255.0f) { }
-    Color(int r, int g, int b, int a = 0xFF) : m_r(r/255.0f), m_g(g/255.0f), m_b(b/255.0f), m_a(a/255.0f) { }
-    Color(float r, float g, float b, float a = 1.0f) : m_r(r), m_g(g), m_b(b), m_a(a) { }
+    Color() : m_r(1.0f), m_g(1.0f), m_b(1.0f), m_a(1.0f) {}
+    Color(const uint32 rgba) { setRGBA(rgba); }
+    Color(const uint8 r, const uint8 g, const uint8 b, const uint8 a = 0xFF) : m_r(r / 255.0f), m_g(g / 255.0f), m_b(b / 255.0f), m_a(a / 255.0f) {}
+    Color(const int r, const int g, const int b, const int a = 0xFF) : m_r(r / 255.0f), m_g(g / 255.0f), m_b(b / 255.0f), m_a(a / 255.0f) {}
+    Color(const float r, const float g, const float b, const float a = 1.0f) : m_r(r), m_g(g), m_b(b), m_a(a) {}
     Color(const std::string& coltext);
 
-    Color(const Color &color) = default;
+    Color(const uint8 byteColor, const uint8 intensity, const float formule = 0.5f)
+    {
+        const float brightness = formule + (intensity / (float)8) * formule;
+        Color colorMap = Color::from8bit(byteColor);
+        m_a = colorMap.aF();
+        m_b = colorMap.bF() * brightness;
+        m_g = colorMap.gF() * brightness;
+        m_r = colorMap.rF() * brightness;
+    }
 
-    uint8 a() const { return m_a*255.0f; }
-    uint8 b() const { return m_b*255.0f; }
-    uint8 g() const { return m_g*255.0f; }
-    uint8 r() const { return m_r*255.0f; }
+    Color(const Color& color) = default;
+
+    uint8 a() const { return m_a * 255.0f; }
+    uint8 b() const { return m_b * 255.0f; }
+    uint8 g() const { return m_g * 255.0f; }
+    uint8 r() const { return m_r * 255.0f; }
 
     float aF() const { return m_a; }
     float bF() const { return m_b; }
@@ -53,24 +63,24 @@ public:
 
     uint32 rgba() const { return uint32(a() | b() << 8 | g() << 16 | r() << 24); }
 
-    void setRed(int r) { m_r = uint8(r)/255.0f; }
-    void setGreen(int g) { m_g = uint8(g)/255.0f; }
-    void setBlue(int b) { m_b = uint8(b)/255.0f; }
-    void setAlpha(int a) { m_a = uint8(a)/255.0f; }
+    void setRed(const int r) { m_r = uint8(r) / 255.0f; }
+    void setGreen(const int g) { m_g = uint8(g) / 255.0f; }
+    void setBlue(const int b) { m_b = uint8(b) / 255.0f; }
+    void setAlpha(const int a) { m_a = uint8(a) / 255.0f; }
 
-    void setRed(float r) { m_r = r; }
-    void setGreen(float g) { m_g = g; }
-    void setBlue(float b) { m_b = b; }
-    void setAlpha(float a) { m_a = a; }
+    void setRed(const float r) { m_r = r; }
+    void setGreen(const float g) { m_g = g; }
+    void setBlue(const float b) { m_b = b; }
+    void setAlpha(const float a) { m_a = a; }
 
-    void setRGBA(uint8 r, uint8 g, uint8 b, uint8 a = 0xFF) { m_r = r/255.0f; m_g = g/255.0f; m_b = b/255.0f; m_a = a/255.0f; }
-    void setRGBA(uint32 rgba) { setRGBA((rgba >> 0) & 0xff, (rgba >> 8) & 0xff, (rgba >> 16) & 0xff, (rgba >> 24) & 0xff); }
+    void setRGBA(const uint8 r, const uint8 g, const uint8 b, const uint8 a = 0xFF) { m_r = r / 255.0f; m_g = g / 255.0f; m_b = b / 255.0f; m_a = a / 255.0f; }
+    void setRGBA(const uint32 rgba) { setRGBA((rgba >> 0) & 0xff, (rgba >> 8) & 0xff, (rgba >> 16) & 0xff, (rgba >> 24) & 0xff); }
 
     Color operator+(const Color& other) const { return Color(m_r + other.m_r, m_g + other.m_g, m_b + other.m_b, m_a + other.m_a); }
     Color operator-(const Color& other) const { return Color(m_r - other.m_r, m_g - other.m_g, m_b - other.m_b, m_a - other.m_a); }
 
-    Color operator*(float v) const { return Color(m_r*v, m_g*v, m_b*v, m_a*v); }
-    Color operator/(float v) const { return Color(m_r/v, m_g/v, m_b/v, m_a/v); }
+    Color operator*(const float v) const { return Color(m_r * v, m_g * v, m_b * v, m_a * v); }
+    Color operator/(const float v) const { return Color(m_r / v, m_g / v, m_b / v, m_a / v); }
 
     Color& operator=(uint32_t rgba) { setRGBA(rgba); return *this; }
     bool operator==(uint32_t rgba) const { return this->rgba() == rgba; }
@@ -79,7 +89,15 @@ public:
     bool operator==(const Color& other) const { return other.rgba() == rgba(); }
     bool operator!=(const Color& other) const { return other.rgba() != rgba(); }
 
-    static uint8 to8bit(const Color& color) {
+    void blend(const Color color)
+    {
+        m_r *= (1 - color.m_a) + color.m_r * color.m_a;
+        m_g *= (1 - color.m_a) + color.m_g * color.m_a;
+        m_b *= (1 - color.m_a) + color.m_b * color.m_a;
+    }
+
+    static uint8 to8bit(const Color& color)
+    {
         uint8 c = 0;
         c += (color.r() / 51) * 36;
         c += (color.g() / 51) * 6;
@@ -87,13 +105,14 @@ public:
         return c;
     }
 
-    static Color from8bit(int color) {
+    static Color from8bit(const int color, const float brightness = 1.0f)
+    {
         if(color >= 216 || color <= 0)
             return Color(0, 0, 0);
 
-        int r = int(color / 36) % 6 * 51;
-        int g = int(color / 6) % 6 * 51;
-        int b = color % 6 * 51;
+        const int r = (static_cast<int>(color / 36) % 6 * 51) * brightness;
+        const int g = (static_cast<int>(color / 6) % 6 * 51) * brightness;
+        const int b = (color % 6 * 51) * brightness;
         return Color(r, g, b);
     }
 
@@ -128,10 +147,10 @@ inline std::ostream& operator<<(std::ostream& out, const Color& color)
 {
     using namespace std;
     out << "#" << hex << setfill('0')
-        << setw(2) << (int)color.r()
-        << setw(2) << (int)color.g()
-        << setw(2) << (int)color.b()
-        << setw(2) << (int)color.a();
+        << setw(2) << static_cast<int>(color.r())
+        << setw(2) << static_cast<int>(color.g())
+        << setw(2) << static_cast<int>(color.b())
+        << setw(2) << static_cast<int>(color.a());
     out << dec << setfill(' ');
     return out;
 }
@@ -145,15 +164,15 @@ inline std::istream& operator>>(std::istream& in, Color& color)
         in >> tmp;
 
         if(tmp.length() == 6 || tmp.length() == 8) {
-            color.setRed((uint8)stdext::hex_to_dec(tmp.substr(0, 2)));
-            color.setGreen((uint8)stdext::hex_to_dec(tmp.substr(2, 2)));
-            color.setBlue((uint8)stdext::hex_to_dec(tmp.substr(4, 2)));
+            color.setRed(static_cast<uint8>(stdext::hex_to_dec(tmp.substr(0, 2))));
+            color.setGreen(static_cast<uint8>(stdext::hex_to_dec(tmp.substr(2, 2))));
+            color.setBlue(static_cast<uint8>(stdext::hex_to_dec(tmp.substr(4, 2))));
             if(tmp.length() == 8)
-                color.setAlpha((uint8)stdext::hex_to_dec(tmp.substr(6, 2)));
+                color.setAlpha(static_cast<uint8>(stdext::hex_to_dec(tmp.substr(6, 2))));
             else
                 color.setAlpha(255);
         } else
-            in.seekg(-(std::istream::streampos)tmp.length()-1, ios_base::cur);
+            in.seekg(-static_cast<std::istream::streampos>(tmp.length()) - 1, ios_base::cur);
     } else {
         in.unget();
         in >> tmp;

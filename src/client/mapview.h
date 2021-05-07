@@ -23,12 +23,19 @@
 #ifndef MAPVIEW_H
 #define MAPVIEW_H
 
-#include "declarations.h"
-#include <framework/graphics/paintershaderprogram.h>
-#include <framework/graphics/declarations.h>
-#include <framework/luaengine/luaobject.h>
 #include <framework/core/declarations.h>
+#include <framework/graphics/declarations.h>
+#include <framework/graphics/texturemanager.h>
+#include <framework/graphics/paintershaderprogram.h>
+#include <framework/luaengine/luaobject.h>
 #include "lightview.h"
+
+struct AwareRange
+{
+    uint8 top, right, bottom, left;
+    uint8 horizontal() { return left + right + 1; }
+    uint8 vertical() { return top + bottom + 1; }
+};
 
 // @bindclass
 class MapView : public LuaObject
@@ -45,78 +52,82 @@ public:
     ~MapView();
     void draw(const Rect& rect);
 
-private:
-    void updateGeometry(const Size& visibleDimension, const Size& optimizedSize);
-    void updateVisibleTilesCache(int start = 0);
-    void requestVisibleTilesCacheUpdate() { m_mustUpdateVisibleTilesCache = true; }
-
 protected:
-    void onTileUpdate(const Position& pos);
+    void onGlobalLightChange(const Light& light);
+    void onFloorDrawingStart(const uint8 floor);
+    void onFloorDrawingEnd(const uint8 floor);
+    void onFloorChange(const uint8 floor, const uint8 previousFloor);
+    void onTileUpdate(const Position& pos, const ThingPtr& thing, const Otc::Operation operation);
+    void onCreatureInformationUpdate(const CreaturePtr& creature, const Otc::DrawFlags flags);
     void onMapCenterChange(const Position& pos);
+    void onCameraMove(const Point& offset);
 
     friend class Map;
+    friend class Tile;
+    friend class LightView;
 
 public:
     // floor visibility related
-    void lockFirstVisibleFloor(int firstVisibleFloor);
-    void unlockFirstVisibleFloor();
-    int getLockedFirstVisibleFloor() { return m_lockedFirstVisibleFloor; }
+    uint8 getLockedFirstVisibleFloor() { return m_lockedFirstVisibleFloor; }
+    uint8 getCachedFirstVisibleFloor() { return m_cachedFirstVisibleFloor; }
+    uint8 getCachedLastVisibleFloor() { return m_cachedLastVisibleFloor; }
+    uint8 getTileSize() { return m_tileSize; }
 
-    void setMultifloor(bool enable) { m_multifloor = enable; requestVisibleTilesCacheUpdate(); }
+    void lockFirstVisibleFloor(uint8 firstVisibleFloor);
+    void unlockFirstVisibleFloor();
+
     bool isMultifloor() { return m_multifloor; }
+    void setMultifloor(bool enable) { m_multifloor = enable; requestVisibleTilesCacheUpdate(); }
 
     // map dimension related
-    void setVisibleDimension(const Size& visibleDimension);
-    Size getVisibleDimension() { return m_visibleDimension; }
-    int getTileSize() { return m_tileSize; }
     Point getVisibleCenterOffset() { return m_visibleCenterOffset; }
-    int getCachedFirstVisibleFloor() { return m_cachedFirstVisibleFloor; }
-    int getCachedLastVisibleFloor() { return m_cachedLastVisibleFloor; }
+    Size getVisibleDimension() { return m_visibleDimension; }
+    void setVisibleDimension(const Size& visibleDimension);
 
     // view mode related
-    void setViewMode(ViewMode viewMode);
     ViewMode getViewMode() { return m_viewMode; }
+    void setViewMode(ViewMode viewMode);
     void optimizeForSize(const Size& visibleSize);
 
     void setAutoViewMode(bool enable);
     bool isAutoViewModeEnabled() { return m_autoViewMode; }
 
     // camera related
-    void followCreature(const CreaturePtr& creature);
     CreaturePtr getFollowingCreature() { return m_followingCreature; }
+    void followCreature(const CreaturePtr& creature);
     bool isFollowingCreature() { return m_followingCreature && m_follow; }
 
-    void setCameraPosition(const Position& pos);
     Position getCameraPosition();
+    void setCameraPosition(const Position& pos);
 
-    void setMinimumAmbientLight(float intensity) { m_minimumAmbientLight = intensity; }
+    void setMinimumAmbientLight(float intensity) { m_minimumAmbientLight = intensity; updateLight(); }
     float getMinimumAmbientLight() { return m_minimumAmbientLight; }
 
     // drawing related
-    void setDrawFlags(Otc::DrawFlags drawFlags) { m_drawFlags = drawFlags; requestVisibleTilesCacheUpdate(); }
-    Otc::DrawFlags getDrawFlags() { return m_drawFlags; }
-
     void setDrawTexts(bool enable) { m_drawTexts = enable; }
     bool isDrawingTexts() { return m_drawTexts; }
 
-    void setDrawNames(bool enable) { m_drawNames = enable; }
+    void setDrawNames(bool enable) { m_drawNames = enable; schedulePainting(Otc::FUpdateCreatureInformation); }
     bool isDrawingNames() { return m_drawNames; }
 
-    void setDrawHealthBars(bool enable) { m_drawHealthBars = enable; }
+    void setDrawHealthBars(bool enable) { m_drawHealthBars = enable; schedulePainting(Otc::FUpdateCreatureInformation); }
     bool isDrawingHealthBars() { return m_drawHealthBars; }
 
     void setDrawLights(bool enable);
-    bool isDrawingLights() { return m_drawLights; }
+    bool isDrawingLights() { return m_drawLights && m_lightView->isDark(); }
 
-    void setDrawManaBar(bool enable) { m_drawManaBar = enable; }
+    void setFloorShadowingFlag(const Otc::ShadowFloor flag) { m_lastFloorShadowingColor = Color::white; m_floorShadowingFlag = flag; requestVisibleTilesCacheUpdate(); schedulePainting(Otc::FUpdateThing); }
+    bool hasFloorShadowingFlag(const Otc::ShadowFloor flag) { return m_floorShadowingFlag & flag; }
+    bool hasFloorShadowingFlag() { return m_floorShadowingFlag > 0; }
+    const Color getLastFloorShadowingColor() { return m_lastFloorShadowingColor; }
+
+    void setDrawViewportEdge(bool enable) { m_drawViewportEdge = enable; schedulePainting(Otc::FUpdateThing); }
+    bool isDrawingViewportEdge() { return m_drawViewportEdge; }
+
+    void setDrawManaBar(bool enable) { m_drawManaBar = enable; schedulePainting(Otc::FUpdateCreatureInformation); }
     bool isDrawingManaBar() { return m_drawManaBar; }
 
-    void move(int x, int y);
-
-    void setAnimated(bool animated) { m_animated = animated; requestVisibleTilesCacheUpdate(); }
-    bool isAnimating() { return m_animated; }
-
-    void setAddLightMethod(bool add) { m_lightView->setBlendEquation(add ? Painter::BlendEquation_Add : Painter::BlendEquation_Max); }
+    void move(int32 x, int32 y);
 
     void setShader(const PainterShaderProgramPtr& shader, float fadein, float fadeout);
     PainterShaderProgramPtr getShader() { return m_shader; }
@@ -125,56 +136,150 @@ public:
 
     MapViewPtr asMapView() { return static_self_cast<MapView>(); }
 
+    void schedulePainting(const Otc::FrameUpdate frameFlags, const uint16_t delay = FrameBuffer::MIN_TIME_UPDATE);
+    void schedulePainting(const Position& pos, const Otc::FrameUpdate frameFlags, const uint16_t delay = FrameBuffer::MIN_TIME_UPDATE);
+    void cancelScheduledPainting(const Otc::FrameUpdate frameFlags, uint16_t delay);
+
+    void resetLastCamera() { m_lastCameraPosition = Position(); }
+
+    std::vector<CreaturePtr>& getVisibleCreatures() { return m_visibleCreatures; }
+    std::vector<CreaturePtr> getSpectators(const Position& centerPos, bool multiFloor);
+    std::vector<CreaturePtr> getSightSpectators(const Position& centerPos, bool multiFloor);
+
+    bool isInRange(const Position& pos, const bool ignoreZ = false);
+
+    void setCrosshairTexture(const std::string& texturePath);
+
+    void onPositionChange(const Position& newPos, const Position& oldPos);
+    void onMouseMove(const Position& mousePos, const bool isVirtualMove = false);
+
+    void setLastMousePosition(const Position& mousePos) { m_lastMousePosition = mousePos; }
+    const Position& getLastMousePosition() { return m_lastMousePosition; }
+
+    void setDrawHighlightTarget(const bool enable) { m_drawHighlightTarget = enable; }
+
+    void setAntiAliasing(const bool enable);
+    void setRenderScale(const uint8 scale);
+
 private:
+    struct ViewPort {
+        uint8 top, right, bottom, left;
+    };
+
+    struct FrameCache {
+        FrameBufferPtr tile, staticText, dynamicText,
+            crosshair, creatureInformation;
+
+        uint32_t flags = 0;
+    };
+
+    struct Crosshair {
+        bool positionChanged = false;
+        Position position;
+        TexturePtr texture;
+    };
+
+    struct RectCache {
+        Rect rect, srcRect;
+        Point drawOffset;
+        float horizontalStretchFactor, verticalStretchFactor;
+    };
+
+    void updateGeometry(const Size& visibleDimension, const Size& optimizedSize);
+    void updateVisibleTilesCache();
+    void requestVisibleTilesCacheUpdate() { m_mustUpdateVisibleTilesCache = true; }
+
+    uint8 calcFirstVisibleFloor();
+    uint8 calcLastVisibleFloor();
+
+    void updateLight();
+    void updateViewportDirectionCache();
+    void drawCreatureInformation();
+    void drawText();
+
+#if DRAW_ALL_GROUND_FIRST == 1
+    void drawSeparately(const uint8 floor, const ViewPort& viewPort, LightView* lightView);
+#endif
+
     Rect calcFramebufferSource(const Size& destSize);
-    int calcFirstVisibleFloor();
-    int calcLastVisibleFloor();
-    Point transformPositionTo2D(const Position& position, const Position& relativePosition) {
+
+    Point transformPositionTo2D(const Position& position, const Position& relativePosition)
+    {
         return Point((m_virtualCenterOffset.x + (position.x - relativePosition.x) - (relativePosition.z - position.z)) * m_tileSize,
                      (m_virtualCenterOffset.y + (position.y - relativePosition.y) - (relativePosition.z - position.z)) * m_tileSize);
     }
 
-    int m_lockedFirstVisibleFloor;
-    int m_cachedFirstVisibleFloor;
-    int m_cachedLastVisibleFloor;
-    int m_tileSize;
-    int m_updateTilesPos;
-    Size m_drawDimension;
-    Size m_visibleDimension;
-    Size m_optimizedSize;
-    Point m_virtualCenterOffset;
-    Point m_visibleCenterOffset;
-    Point m_moveOffset;
-    Position m_customCameraPosition;
-    stdext::boolean<true> m_mustUpdateVisibleTilesCache;
-    stdext::boolean<true> m_mustDrawVisibleTilesCache;
-    stdext::boolean<true> m_mustCleanFramebuffer;
-    stdext::boolean<true> m_multifloor;
-    stdext::boolean<true> m_animated;
-    stdext::boolean<true> m_autoViewMode;
-    stdext::boolean<true> m_drawTexts;
-    stdext::boolean<true> m_drawNames;
-    stdext::boolean<true> m_drawHealthBars;
-    stdext::boolean<false> m_drawLights;
-    stdext::boolean<true> m_drawManaBar;
-    stdext::boolean<true> m_smooth;
+    bool canRenderTile(const TilePtr& tile, const ViewPort& viewPort, LightView* lightView);
 
-    stdext::boolean<true> m_follow;
-    std::vector<TilePtr> m_cachedVisibleTiles;
-    std::vector<CreaturePtr> m_cachedFloorVisibleCreatures;
-    CreaturePtr m_followingCreature;
-    FrameBufferPtr m_framebuffer;
-    PainterShaderProgramPtr m_shader;
-    ViewMode m_viewMode;
-    Otc::DrawFlags m_drawFlags;
-    std::vector<Point> m_spiral;
+    uint8 m_lockedFirstVisibleFloor,
+        m_cachedFirstVisibleFloor,
+        m_cachedLastVisibleFloor,
+        m_lightVersion,
+        m_renderScale,
+        m_tileSize,
+        m_floorMin,
+        m_floorMax,
+        m_floorShadowingFlag;
+
+    float m_minimumAmbientLight,
+        m_fadeInTime,
+        m_fadeOutTime,
+        m_scaleFactor;
+
+    Rect m_rectDimension;
+
+    Size m_drawDimension,
+        m_visibleDimension,
+        m_optimizedSize;
+
+    Point m_virtualCenterOffset,
+        m_visibleCenterOffset,
+        m_moveOffset;
+
+    Position m_customCameraPosition,
+        m_lastCameraPosition,
+        m_lastMousePosition;
+
+    std::array<ViewPort, Otc::InvalidDirection + 1> m_viewPortDirection;
+    ViewPort m_viewport;
+
+    stdext::boolean<true>
+        m_mustUpdateVisibleTilesCache,
+        m_shaderSwitchDone,
+        m_drawHealthBars,
+        m_drawManaBar,
+        m_multifloor,
+        m_drawTexts,
+        m_drawNames,
+        m_smooth,
+        m_follow,
+        m_antiAliasing;
+
+    stdext::boolean<false> m_drawLights,
+        m_autoViewMode,
+        m_drawViewportEdge,
+        m_drawHighlightTarget;
+
+    std::vector<CreaturePtr> m_visibleCreatures;
+
+    std::array<std::vector<TilePtr>, Otc::MAX_Z + 1> m_cachedVisibleTiles;
+
+    PainterShaderProgramPtr m_shader, m_nextShader;
     LightViewPtr m_lightView;
-    float m_minimumAmbientLight;
+    CreaturePtr m_followingCreature;
+
+    FrameCache m_frameCache;
+    RectCache m_rectCache;
+    Crosshair m_crosshair;
+    ViewMode m_viewMode;
+
+    Color m_lastFloorShadowingColor;
+
     Timer m_fadeTimer;
-    PainterShaderProgramPtr m_nextShader;
-    float m_fadeInTime;
-    float m_fadeOutTime;
-    stdext::boolean<true> m_shaderSwitchDone;
+
+    AwareRange m_awareRange;
+
+    TilePtr m_lastHighlightTile;
 };
 
 #endif

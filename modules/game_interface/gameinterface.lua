@@ -16,7 +16,6 @@ limitedZoom = false
 currentViewMode = 0
 smartWalkDirs = {}
 smartWalkDir = nil
-walkFunction = nil
 hookedMenuOptions = {}
 lastDirTime = g_clock.millis()
 
@@ -29,15 +28,15 @@ function init()
     onLoginAdvice = onLoginAdvice,
   }, true)
 
-  -- Call load AFTER game window has been created and 
-  -- resized to a stable state, otherwise the saved 
+  -- Call load AFTER game window has been created and
+  -- resized to a stable state, otherwise the saved
   -- settings can get overridden by false onGeometryChange
   -- events
   connect(g_app, {
     onRun = load,
     onExit = save
   })
-  
+
   gameRootPanel = g_ui.displayUI('gameinterface')
   gameRootPanel:hide()
   gameRootPanel:lower()
@@ -337,20 +336,13 @@ function changeWalkDir(dir, pop)
 end
 
 function smartWalk(dir)
-  if g_keyboard.getModifiers() == KeyboardNoModifier then
-    local func = walkFunction
-    if not func then
-      if modules.client_options.getOption('dashWalk') then
-        func = g_game.dashWalk
-      else
-        func = g_game.walk
-      end
-    end
-    local dire = smartWalkDir or dir
-    func(dire)
-    return true
+  if g_keyboard.getModifiers() ~= KeyboardNoModifier then
+	return false
   end
-  return false
+
+  local dire = smartWalkDir or dir
+  g_game.walk(dire)
+  return true
 end
 
 function updateStretchShrink()
@@ -626,7 +618,7 @@ function createThingMenu(menuPosition, lookThing, useThing, creatureThing)
       menu:addSeparator()
       for name,opt in pairs(category) do
         if opt and opt.condition(menuPosition, lookThing, useThing, creatureThing) then
-          menu:addOption(name, function() opt.callback(menuPosition, 
+          menu:addOption(name, function() opt.callback(menuPosition,
             lookThing, useThing, creatureThing) end, opt.shortcut)
         end
       end
@@ -861,11 +853,13 @@ function setupViewMode(mode)
     gameMapPanel:setLimitVisibleRange(false)
     gameMapPanel:setZoom(11)
     gameMapPanel:setVisibleDimension({ width = 15, height = 11 })
+    modules.client_options.setOption('drawViewportEdge', false)
   elseif mode == 1 then
     gameMapPanel:setKeepAspectRatio(false)
     gameMapPanel:setLimitVisibleRange(true)
     gameMapPanel:setZoom(11)
     gameMapPanel:setVisibleDimension({ width = 15, height = 11 })
+    modules.client_options.setOption('drawViewportEdge', false)
   elseif mode == 2 then
     local limit = limitedZoom and not g_game.isGM()
     gameMapPanel:setLimitVisibleRange(limit)
@@ -888,6 +882,8 @@ function setupViewMode(mode)
     if not limit then
       g_game.changeMapAwareRange(24, 20)
     end
+
+    modules.client_options.setOption('drawViewportEdge', true)
   end
 
   currentViewMode = mode

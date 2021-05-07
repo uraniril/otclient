@@ -33,8 +33,17 @@
 #define LUA_LIB
 
 extern "C" {
+#if __has_include("luajit/lua.h")
+#include <luajit/lua.h>
+#else
 #include <lua.h>
+#endif
+
+#if __has_include("luajit/lauxlib.h")
+#include <luajit/lauxlib.h>
+#else
 #include <lauxlib.h>
+#endif
 }
 
 /* ----- adapted from lua-5.2.0 luaconf.h: ----- */
@@ -175,10 +184,23 @@ static lua_Unsigned luaL_checkunsigned (lua_State *L, int arg) {
 #define lbitlib_c
 #define LUA_LIB
 
-#include "lua.h"
+#if __has_include("luajit/lua.h")
+#include <luajit/lua.h>
+#else
+#include <lua.h>
+#endif
 
-#include "lauxlib.h"
-#include "lualib.h"
+#if __has_include("luajit/lauxlib.h")
+#include <luajit/lauxlib.h>
+#else
+#include <lauxlib.h>
+#endif
+
+#if __has_include("luajit/lualib.h")
+#include <luajit/lualib.h>
+#else
+#include <lualib.h>
+#endif
 
 
 /* number of bits to consider in a number */
@@ -203,7 +225,7 @@ typedef lua_Unsigned b_uint;
 
 static b_uint andaux (lua_State *L) {
   int i, n = lua_gettop(L);
-  b_uint r = ~(b_uint)0;
+  b_uint r = ~static_cast<b_uint>(0);
   for (i = 1; i <= n; i++)
     r &= luaL_checkunsigned(L, i);
   return trim(r);
@@ -281,12 +303,12 @@ static int b_rshift (lua_State *L) {
 static int b_arshift (lua_State *L) {
   b_uint r = luaL_checkunsigned(L, 1);
   int i = luaL_checkint(L, 2);
-  if (i < 0 || !(r & ((b_uint)1 << (LUA_NBITS - 1))))
+  if (i < 0 || !(r & (static_cast<b_uint>(1) << (LUA_NBITS - 1))))
     return b_shift(L, r, -i);
   else {  /* arithmetic shift for 'negative' number */
     if (i >= LUA_NBITS) r = ALLONES;
     else
-      r = trim((r >> i) | ~(~(b_uint)0 >> i));  /* add signal bit */
+      r = trim((r >> i) | ~(~static_cast<b_uint>(0) >> i));  /* add signal bit */
     lua_pushunsigned(L, r);
     return 1;
   }

@@ -45,23 +45,21 @@ std::string resolve_path(const std::string& filePath, std::string sourcePath)
     return sourcePath + filePath;
 }
 
-std::string date_time_string()
+std::string date_time_string(const char* format/* = "%b %d %Y %H:%M:%S"*/)
 {
-    char date[32];
+    char date[100];
     std::time_t tnow;
     std::time(&tnow);
-    std::tm *ts = std::localtime(&tnow);
-    std::strftime(date, 32, "%b %d %Y %H:%M:%S", ts);
+    std::tm* ts = std::localtime(&tnow);
+    std::strftime(date, 100, format, ts);
     return std::string(date);
 }
 
 std::string dec_to_hex(uint64_t num)
 {
-    std::string str;
     std::ostringstream o;
     o << std::hex << num;
-    str = o.str();
-    return str;
+    return o.str();
 }
 
 uint64_t hex_to_dec(const std::string& str)
@@ -74,7 +72,7 @@ uint64_t hex_to_dec(const std::string& str)
 
 bool is_valid_utf8(const std::string& src)
 {
-    const unsigned char *bytes = (const unsigned char *)src.c_str();
+    const unsigned char* bytes = (const unsigned char*)src.c_str();
     while(*bytes) {
         if( (// ASCII
              // use bytes[0] <= 0x7F to allow ASCII control characters
@@ -146,7 +144,7 @@ bool is_valid_utf8(const std::string& src)
 std::string utf8_to_latin1(const std::string& src)
 {
     std::string out;
-    for(uint i=0;i<src.length();) {
+    for(uint i = 0; i < src.length();) {
         uchar c = src[i++];
         if((c >= 32 && c < 128) || c == 0x0d || c == 0x0a || c == 0x09)
             out += c;
@@ -230,14 +228,14 @@ void trim(std::string& str)
 
 char upchar(char c)
 {
-    if((c >= 97 && c <= 122) || (uchar)c >= 224)
+    if((c >= 97 && c <= 122) || static_cast<uchar>(c) >= 224)
         c -= 32;
     return c;
 }
 
 char lochar(char c)
 {
-    if((c >= 65 && c <= 90) || ((uchar)c >= 192 && (uchar)c <= 223))
+    if((c >= 65 && c <= 90) || (static_cast<uchar>(c) >= 192 && static_cast<uchar>(c) <= 223))
         c += 32;
     return c;
 }
@@ -273,7 +271,7 @@ void replace_all(std::string& str, const std::string& search, const std::string&
 std::vector<std::string> split(const std::string& str, const std::string& separators)
 {
     std::vector<std::string> splitted;
-    boost::split(splitted, str, boost::is_any_of(std::string(separators)));
+    boost::split(splitted, str, boost::is_any_of(separators));
     return splitted;
 }
 

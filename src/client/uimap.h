@@ -23,8 +23,8 @@
 #ifndef UIMAP_H
 #define UIMAP_H
 
-#include "declarations.h"
 #include <framework/ui/uiwidget.h>
+#include "declarations.h"
 #include "tile.h"
 
 #include "mapview.h"
@@ -35,14 +35,10 @@ public:
     UIMap();
     ~UIMap();
 
-    void drawSelf(Fw::DrawPane drawPane);
+    void drawSelf(Fw::DrawPane drawPane) override;
 
     void movePixels(int x, int y);
-    bool setZoom(int zoom);
-    bool zoomIn();
-    bool zoomOut();
     void followCreature(const CreaturePtr& creature) { m_mapView->followCreature(creature); }
-
     void setCameraPosition(const Position& pos) { m_mapView->setCameraPosition(pos); }
     void setMaxZoomIn(int maxZoomIn) { m_maxZoomIn = maxZoomIn; }
     void setMaxZoomOut(int maxZoomOut) { m_maxZoomOut = maxZoomOut; }
@@ -50,61 +46,79 @@ public:
     void lockVisibleFloor(int floor) { m_mapView->lockFirstVisibleFloor(floor); }
     void unlockVisibleFloor() { m_mapView->unlockFirstVisibleFloor(); }
     void setVisibleDimension(const Size& visibleDimension);
-    void setViewMode(MapView::ViewMode viewMode)  { m_mapView->setViewMode(viewMode); }
+    void setViewMode(MapView::ViewMode viewMode) { m_mapView->setViewMode(viewMode); }
     void setAutoViewMode(bool enable) { m_mapView->setAutoViewMode(enable); }
-    void setDrawFlags(Otc::DrawFlags drawFlags) { m_mapView->setDrawFlags(drawFlags); }
     void setDrawTexts(bool enable) { m_mapView->setDrawTexts(enable); }
     void setDrawNames(bool enable) { m_mapView->setDrawNames(enable); }
     void setDrawHealthBars(bool enable) { m_mapView->setDrawHealthBars(enable); }
     void setDrawLights(bool enable) { m_mapView->setDrawLights(enable); }
+    void setFloorShadowingFlag(const Otc::ShadowFloor flag) { m_mapView->setFloorShadowingFlag(flag); }
+    void setDrawViewportEdge(bool enable) { m_mapView->setDrawViewportEdge(enable); }
     void setDrawManaBar(bool enable) { m_mapView->setDrawManaBar(enable); }
-    void setAnimated(bool enable) { m_mapView->setAnimated(enable); }
     void setKeepAspectRatio(bool enable);
     void setMapShader(const PainterShaderProgramPtr& shader, float fadeout, float fadein) { m_mapView->setShader(shader, fadein, fadeout); }
     void setMinimumAmbientLight(float intensity) { m_mapView->setMinimumAmbientLight(intensity); }
     void setLimitVisibleRange(bool limitVisibleRange) { m_limitVisibleRange = limitVisibleRange; updateVisibleDimension(); }
-    void setAddLightMethod(bool add) { m_mapView->setAddLightMethod(add); }
 
+    bool zoomIn();
+    bool zoomOut();
+    bool setZoom(int zoom);
     bool isMultifloor() { return m_mapView->isMultifloor(); }
     bool isAutoViewModeEnabled() { return m_mapView->isAutoViewModeEnabled(); }
     bool isDrawingTexts() { return m_mapView->isDrawingTexts(); }
     bool isDrawingNames() { return m_mapView->isDrawingNames(); }
     bool isDrawingHealthBars() { return m_mapView->isDrawingHealthBars(); }
     bool isDrawingLights() { return m_mapView->isDrawingLights(); }
+    bool isDrawingViewportEdge() { return m_mapView->isDrawingViewportEdge(); }
     bool isDrawingManaBar() { return m_mapView->isDrawingManaBar(); }
-    bool isAnimating() { return m_mapView->isAnimating(); }
     bool isKeepAspectRatioEnabled() { return m_keepAspectRatio; }
     bool isLimitVisibleRangeEnabled() { return m_limitVisibleRange; }
 
-    Size getVisibleDimension() { return m_mapView->getVisibleDimension(); }
+    bool hasFloorShadowingFlag(const Otc::ShadowFloor flag) { return m_mapView->hasFloorShadowingFlag(flag); }
+
+    std::vector<CreaturePtr> getVisibleCreatures() { return m_mapView->getVisibleCreatures(); }
+    std::vector<CreaturePtr> getSpectators(const Position& centerPos, bool multiFloor) { return m_mapView->getSpectators(centerPos, multiFloor); }
+    std::vector<CreaturePtr> getSightSpectators(const Position& centerPos, bool multiFloor) { return m_mapView->getSightSpectators(centerPos, multiFloor); }
+    bool isInRange(const Position& pos) { return m_mapView->isInRange(pos); }
+
+    PainterShaderProgramPtr getMapShader() { return m_mapView->getShader(); }
     MapView::ViewMode getViewMode() { return m_mapView->getViewMode(); }
     CreaturePtr getFollowingCreature() { return m_mapView->getFollowingCreature(); }
-    Otc::DrawFlags getDrawFlags() { return m_mapView->getDrawFlags(); }
     Position getCameraPosition() { return m_mapView->getCameraPosition(); }
     Position getPosition(const Point& mousePos);
     TilePtr getTile(const Point& mousePos);
+    Size getVisibleDimension() { return m_mapView->getVisibleDimension(); }
+
     int getMaxZoomIn() { return m_maxZoomIn; }
     int getMaxZoomOut() { return m_maxZoomOut; }
     int getZoom() { return m_zoom; }
-    PainterShaderProgramPtr getMapShader() { return m_mapView->getShader(); }
+
     float getMinimumAmbientLight() { return m_mapView->getMinimumAmbientLight(); }
 
+    void setCrosshairTexture(const std::string& texturePath) { m_mapView->setCrosshairTexture(texturePath); }
+    void setDrawHighlightTarget(const bool enable) { m_mapView->setDrawHighlightTarget(enable); }
+    void setAntiAliasing(const bool enable) { m_mapView->setAntiAliasing(enable); }
+    void setRenderScale(const uint8 scale) { m_mapView->setRenderScale(scale); }
+
 protected:
-    virtual void onStyleApply(const std::string& styleName, const OTMLNodePtr& styleNode);
-    virtual void onGeometryChange(const Rect& oldRect, const Rect& newRect);
+    void onStyleApply(const std::string& styleName, const OTMLNodePtr& styleNode) override;
+    void onGeometryChange(const Rect& oldRect, const Rect& newRect) override;
+    bool onMouseMove(const Point& mousePos, const Point& mouseMoved) override;
 
 private:
     void updateVisibleDimension();
     void updateMapSize();
 
-    int m_zoom;
     MapViewPtr m_mapView;
     Rect m_mapRect;
     float m_aspectRatio;
-    bool m_keepAspectRatio;
-    bool m_limitVisibleRange;
-    int m_maxZoomIn;
-    int m_maxZoomOut;
+
+    bool m_keepAspectRatio,
+        m_limitVisibleRange;
+
+    int m_maxZoomIn,
+        m_maxZoomOut,
+        m_zoom;
 };
 
 #endif

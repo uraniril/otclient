@@ -23,14 +23,14 @@
 #ifndef TOWNS_H
 #define TOWNS_H
 
-#include "declarations.h"
 #include <framework/luaengine/luaobject.h>
+#include "declarations.h"
 
 class Town : public LuaObject
 {
 public:
-    Town() { }
-    Town(uint32 tid, const std::string& name, const Position& pos=Position());
+    Town() {}
+    Town(uint32 tid, const std::string& name, const Position& pos = Position());
 
     void setId(uint32 tid) { m_id = tid; }
     void setName(const std::string& name) { m_name = name; }
@@ -54,7 +54,7 @@ public:
     void addTown(const TownPtr& town);
     void removeTown(uint32 townId);
     const TownPtr& getTown(uint32 townId);
-    const TownPtr& getTownByName(std::string name);
+    const TownPtr& getTownByName(const std::string& name);
 
     void sort();
     TownList getTowns() { return m_towns; }

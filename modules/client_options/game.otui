@@ -13,11 +13,6 @@ Panel
     !tooltip: tr('Will detect when to use diagonal step based on the\nkeys you are pressing')
 
   OptionCheckBox
-    id: dashWalk
-    !text: tr('Enable dash walking')
-    !tooltip: tr('Will boost your walk on high speed characters')
-
-  OptionCheckBox
     id: showPing
     !text: tr('Show connection ping')
     !tooltip: tr('Display connection speed to the server (milliseconds)')
@@ -41,6 +36,28 @@ Panel
   OptionCheckBox
     id: displayText
     !text: tr('Display text messages')
+
+  OptionCheckBox
+    id: enableHighlightMouseTarget
+    !text: tr('Highlight mouse target')
+
+  Label
+    id: chooseCrosshairLabel
+    width: 60
+    !text: tr('Crosshair:')
+    phantom: false
+    anchors.left: prev.left
+    anchors.top: prev.bottom
+    margin-top: 13
+
+  ComboBox
+    id: crosshair
+    width: 120
+    anchors.left: prev.right
+    anchors.top: enableHighlightMouseTarget.bottom
+    margin-top: 10
+    margin-left: 5
+    mouse-scroll: false
 
   Label
     id: turnDelayLabel

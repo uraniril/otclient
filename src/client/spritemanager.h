@@ -26,12 +26,12 @@
 #include <framework/core/declarations.h>
 #include <framework/graphics/declarations.h>
 
-//@bindsingleton g_sprites
+ //@bindsingleton g_sprites
 class SpriteManager
 {
     enum {
         SPRITE_SIZE = 32,
-        SPRITE_DATA_SIZE = SPRITE_SIZE*SPRITE_SIZE * 4
+        SPRITE_DATA_SIZE = SPRITE_SIZE * SPRITE_SIZE * 4
     };
 
 public:
@@ -42,7 +42,7 @@ public:
     bool loadSpr(std::string file);
     void unload();
 
-    void saveSpr(std::string fileName);
+    void saveSpr(const std::string& fileName);
 
     uint32 getSignature() { return m_signature; }
     int getSpritesCount() { return m_spritesCount; }

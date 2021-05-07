@@ -23,11 +23,11 @@
 #ifndef CLIENT_DECLARATIONS_H
 #define CLIENT_DECLARATIONS_H
 
-#include "global.h"
 #include <framework/net/declarations.h>
 #include <framework/ui/declarations.h>
+#include "global.h"
 
-// core
+ // core
 class Map;
 class Game;
 class MapView;
@@ -85,9 +85,9 @@ typedef std::list<TownPtr> TownList;
 typedef std::list<ItemPtr> ItemList;
 typedef std::list<TilePtr> TileList;
 typedef std::vector<ItemPtr> ItemVector;
-typedef std::unordered_map<Position, TilePtr, PositionHasher> TileMap;
-typedef std::unordered_map<Position, CreatureTypePtr, PositionHasher> CreatureMap;
-typedef std::unordered_map<Position, SpawnPtr, PositionHasher> SpawnMap;
+typedef std::unordered_map<Position, TilePtr, Position::Hasher> TileMap;
+typedef std::unordered_map<Position, CreatureTypePtr, Position::Hasher> CreatureMap;
+typedef std::unordered_map<Position, SpawnPtr, Position::Hasher> SpawnMap;
 
 // net
 class ProtocolLogin;

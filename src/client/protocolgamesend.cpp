@@ -20,12 +20,12 @@
  * THE SOFTWARE.
  */
 
-#include "protocolgame.h"
-#include "game.h"
-#include "client.h"
 #include <framework/core/application.h>
 #include <framework/platform/platform.h>
 #include <framework/util/crypt.h>
+#include "client.h"
+#include "game.h"
+#include "protocolgame.h"
 
 void ProtocolGame::send(const OutputMessagePtr& outputMessage)
 {
@@ -65,7 +65,7 @@ void ProtocolGame::sendLoginPacket(uint challengeTimestamp, uint8 challengeRando
     if(g_game.getFeature(Otc::GamePreviewState))
         msg->addU8(0);
 
-    int offset = msg->getMessageSize();
+    const int offset = msg->getMessageSize();
     // first RSA byte must be 0
     msg->addU8(0);
 
@@ -100,12 +100,12 @@ void ProtocolGame::sendLoginPacket(uint challengeTimestamp, uint8 challengeRando
         msg->addU8(challengeRandom);
     }
 
-    std::string extended = callLuaField<std::string>("getLoginExtendedData");
+    const std::string extended = callLuaField<std::string>("getLoginExtendedData");
     if(!extended.empty())
         msg->addString(extended);
 
     // complete the bytes for rsa encryption with zeros
-    int paddingBytes = g_crypt.rsaGetSize() - (msg->getMessageSize() - offset);
+    const int paddingBytes = g_crypt.rsaGetSize() - (msg->getMessageSize() - offset);
     assert(paddingBytes >= 0);
     msg->addPaddingBytes(paddingBytes);
 
@@ -162,33 +162,33 @@ void ProtocolGame::sendAutoWalk(const std::vector<Otc::Direction>& path)
     for(Otc::Direction dir : path) {
         uint8 byte;
         switch(dir) {
-            case Otc::East:
-                byte = 1;
-                break;
-            case Otc::NorthEast:
-                byte = 2;
-                break;
-            case Otc::North:
-                byte = 3;
-                break;
-            case Otc::NorthWest:
-                byte = 4;
-                break;
-            case Otc::West:
-                byte = 5;
-                break;
-            case Otc::SouthWest:
-                byte = 6;
-                break;
-            case Otc::South:
-                byte = 7;
-                break;
-            case Otc::SouthEast:
-                byte = 8;
-                break;
-            default:
-                byte = 0;
-                break;
+        case Otc::East:
+            byte = 1;
+            break;
+        case Otc::NorthEast:
+            byte = 2;
+            break;
+        case Otc::North:
+            byte = 3;
+            break;
+        case Otc::NorthWest:
+            byte = 4;
+            break;
+        case Otc::West:
+            byte = 5;
+            break;
+        case Otc::SouthWest:
+            byte = 6;
+            break;
+        case Otc::South:
+            byte = 7;
+            break;
+        case Otc::SouthEast:
+            byte = 8;
+            break;
+        default:
+            byte = 0;
+            break;
         }
         msg->addU8(byte);
     }
@@ -486,7 +486,7 @@ void ProtocolGame::sendTalk(Otc::MessageMode mode, int channelId, const std::str
     if(message.empty())
         return;
 
-    if(message.length() > 255) {
+    if(message.length() > UINT8_MAX) {
         g_logger.traceError("message too large");
         return;
     }
@@ -582,7 +582,7 @@ void ProtocolGame::sendChangeFightModes(Otc::FightModes fightMode, Otc::ChaseMod
     msg->addU8(Proto::ClientChangeFightModes);
     msg->addU8(fightMode);
     msg->addU8(chaseMode);
-    msg->addU8(safeFight ? 0x01: 0x00);
+    msg->addU8(safeFight ? 0x01 : 0x00);
     if(g_game.getFeature(Otc::GamePVPMode))
         msg->addU8(pvpMode);
     send(msg);

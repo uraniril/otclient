@@ -21,16 +21,50 @@
  */
 
 #include "thing.h"
+#include "thing.h"
+#include <framework/graphics/graphics.h>
+#include "game.h"
+#include "map.h"
 #include "spritemanager.h"
 #include "thingtypemanager.h"
-#include <framework/graphics/graphics.h>
-#include "map.h"
 #include "tile.h"
-#include "game.h"
 
-Thing::Thing() :
-    m_datId(0)
+Thing::Thing() : m_datId(0) {}
+
+void Thing::schedulePainting(uint16_t delay)
 {
+    uint32_t frameFlag;
+
+    if(isStaticText()) frameFlag = Otc::FUpdateStaticText;
+    else {
+        frameFlag = Otc::FUpdateThing;
+
+        if(isItem() || isEffect()) {
+            g_map.schedulePainting(static_cast<Otc::FrameUpdate>(frameFlag), getAnimationInterval());
+        } else if(isCreature()) {
+            if(isLocalPlayer()) {
+                frameFlag |= Otc::FUpdateTextInformation;
+                delay = FrameBuffer::FORCE_UPDATE;
+            } else frameFlag |= Otc::FUpdateCreatureInformation;
+        }
+
+        if(isLocalPlayer() || hasLight() || isGround() && !isTranslucent()) frameFlag |= Otc::FUpdateLight;
+    }
+
+    g_map.schedulePainting(m_position, static_cast<Otc::FrameUpdate>(frameFlag), delay);
+}
+
+void Thing::cancelScheduledPainting()
+{
+    const int delay = getAnimationInterval();
+    if(delay == 0) return;
+
+    uint32_t frameFlag = Otc::FUpdateThing;
+
+    if(isLocalPlayer() || hasLight()) frameFlag |= Otc::FUpdateLight;
+    if(isCreature()) frameFlag |= Otc::FUpdateCreatureInformation;
+
+    g_map.cancelScheduledPainting(static_cast<Otc::FrameUpdate>(frameFlag), delay);
 }
 
 void Thing::setPosition(const Position& position)
@@ -38,7 +72,7 @@ void Thing::setPosition(const Position& position)
     if(m_position == position)
         return;
 
-    Position oldPos = m_position;
+    const Position oldPos = m_position;
     m_position = position;
     onPositionChange(position, oldPos);
 }
@@ -47,16 +81,21 @@ int Thing::getStackPriority()
 {
     if(isGround())
         return 0;
-    else if(isGroundBorder())
+
+    if(isGroundBorder())
         return 1;
-    else if(isOnBottom())
+
+    if(isOnBottom())
         return 2;
-    else if(isOnTop())
+
+    if(isOnTop())
         return 3;
-    else if(isCreature())
+
+    if(isCreature())
         return 4;
-    else // common items
-        return 5;
+
+    // common items
+    return 5;
 }
 
 const TilePtr& Thing::getTile()
@@ -67,22 +106,23 @@ const TilePtr& Thing::getTile()
 ContainerPtr Thing::getParentContainer()
 {
     if(m_position.x == 0xffff && m_position.y & 0x40) {
-        int containerId = m_position.y ^ 0x40;
+        const int containerId = m_position.y ^ 0x40;
         return g_game.getContainer(containerId);
     }
+
     return nullptr;
 }
 
 int Thing::getStackPos()
 {
-    if(m_position.x == 65535 && isItem()) // is inside a container
+    if(m_position.x == UINT16_MAX && isItem()) // is inside a container
         return m_position.z;
-    else if(const TilePtr& tile = getTile())
+
+    if(const TilePtr& tile = getTile())
         return tile->getThingStackPos(static_self_cast<Thing>());
-    else {
-        g_logger.traceError("got a thing with invalid stackpos");
-        return -1;
-    }
+
+    g_logger.traceError("got a thing with invalid stackpos");
+    return -1;
 }
 
 const ThingTypePtr& Thing::getThingType()

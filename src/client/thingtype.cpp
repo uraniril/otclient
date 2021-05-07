@@ -21,15 +21,17 @@
  */
 
 #include "thingtype.h"
-#include "spritemanager.h"
 #include "game.h"
 #include "lightview.h"
+#include "map.h"
+#include "spritemanager.h"
 
-#include <framework/graphics/graphics.h>
-#include <framework/graphics/texture.h>
-#include <framework/graphics/image.h>
-#include <framework/graphics/texturemanager.h>
+#include <framework/core/eventdispatcher.h>
 #include <framework/core/filestream.h>
+#include <framework/graphics/graphics.h>
+#include <framework/graphics/image.h>
+#include <framework/graphics/texture.h>
+#include <framework/graphics/texturemanager.h>
 #include <framework/otml/otml.h>
 
 ThingType::ThingType()
@@ -45,12 +47,13 @@ ThingType::ThingType()
     m_layers = 0;
     m_elevation = 0;
     m_opacity = 1.0f;
+    m_countPainterListeningRef = 0;
 }
 
 void ThingType::serialize(const FileStreamPtr& fin)
 {
     for(int i = 0; i < ThingLastAttr; ++i) {
-        if(!hasAttr((ThingAttr)i))
+        if(!hasAttr(static_cast<ThingAttr>(i)))
             continue;
 
         int attr = i;
@@ -68,40 +71,43 @@ void ThingType::serialize(const FileStreamPtr& fin)
 
         fin->addU8(attr);
         switch(attr) {
-            case ThingAttrDisplacement: {
-                fin->addU16(m_displacement.x);
-                fin->addU16(m_displacement.y);
-                break;
-            }
-            case ThingAttrLight: {
-                Light light = m_attribs.get<Light>(attr);
-                fin->addU16(light.intensity);
-                fin->addU16(light.color);
-                break;
-            }
-            case ThingAttrMarket: {
-                MarketData market = m_attribs.get<MarketData>(attr);
-                fin->addU16(market.category);
-                fin->addU16(market.tradeAs);
-                fin->addU16(market.showAs);
-                fin->addString(market.name);
-                fin->addU16(market.restrictVocation);
-                fin->addU16(market.requiredLevel);
-                break;
-            }
-            case ThingAttrUsable:
-            case ThingAttrElevation:
-            case ThingAttrGround:
-            case ThingAttrWritable:
-            case ThingAttrWritableOnce:
-            case ThingAttrMinimapColor:
-            case ThingAttrCloth:
-            case ThingAttrLensHelp:
-                fin->addU16(m_attribs.get<uint16>(attr));
-                break;
-            default:
-                break;
-        };
+        case ThingAttrDisplacement:
+        {
+            fin->addU16(m_displacement.x);
+            fin->addU16(m_displacement.y);
+            break;
+        }
+        case ThingAttrLight:
+        {
+            const Light light = m_attribs.get<Light>(attr);
+            fin->addU16(light.intensity);
+            fin->addU16(light.color);
+            break;
+        }
+        case ThingAttrMarket:
+        {
+            MarketData market = m_attribs.get<MarketData>(attr);
+            fin->addU16(market.category);
+            fin->addU16(market.tradeAs);
+            fin->addU16(market.showAs);
+            fin->addString(market.name);
+            fin->addU16(market.restrictVocation);
+            fin->addU16(market.requiredLevel);
+            break;
+        }
+        case ThingAttrUsable:
+        case ThingAttrElevation:
+        case ThingAttrGround:
+        case ThingAttrWritable:
+        case ThingAttrWritableOnce:
+        case ThingAttrMinimapColor:
+        case ThingAttrCloth:
+        case ThingAttrLensHelp:
+            fin->addU16(m_attribs.get<uint16>(attr));
+            break;
+        default:
+            break;
+        }
     }
     fin->addU8(ThingLastAttr);
 
@@ -118,12 +124,12 @@ void ThingType::serialize(const FileStreamPtr& fin)
     fin->addU8(m_animationPhases);
 
     if(g_game.getFeature(Otc::GameEnhancedAnimations)) {
-        if(m_animationPhases > 1 && m_animator != nullptr)  {
+        if(m_animationPhases > 1 && m_animator != nullptr) {
             m_animator->serialize(fin);
         }
     }
 
-    for(int i: m_spritesIndex) {
+    for(int i : m_spritesIndex) {
         if(g_game.getFeature(Otc::GameSpritesU32))
             fin->addU32(i);
         else
@@ -139,8 +145,8 @@ void ThingType::unserialize(uint16 clientId, ThingCategory category, const FileS
 
     int count = 0, attr = -1;
     bool done = false;
-    for(int i = 0 ; i < ThingLastAttr;++i) {
-        count++;
+    for(int i = 0; i < ThingLastAttr; ++i) {
+        ++count;
         attr = fin->getU8();
         if(attr == ThingLastAttr) {
             done = true;
@@ -154,7 +160,13 @@ void ThingType::unserialize(uint16 clientId, ThingCategory category, const FileS
              */
             if(attr == 16)
                 attr = ThingAttrNoMoveAnimation;
-            else if(attr > 16)
+            else if(attr == 254) { // Usable
+                m_attribs.set(ThingAttrUsable, true);
+                continue;
+            } else if(attr == 35) { // Default Action
+                m_attribs.set(ThingAttrDefaultAction, fin->getU16());
+                continue;
+            } else if(attr > 16)
                 attr -= 1;
         } else if(g_game.getClientVersion() >= 860) {
             /* Default attribute values follow
@@ -169,7 +181,8 @@ void ThingType::unserialize(uint16 clientId, ThingCategory category, const FileS
             if(attr == 8) {
                 m_attribs.set(ThingAttrChargeable, true);
                 continue;
-            } else if(attr > 8)
+            }
+            if(attr > 8)
                 attr -= 1;
         } else if(g_game.getClientVersion() >= 755) {
             /* In 7.55-7.72 attributes 23 is "Floor Change". */
@@ -215,79 +228,86 @@ void ThingType::unserialize(uint16 clientId, ThingCategory category, const FileS
         }
 
         switch(attr) {
-            case ThingAttrDisplacement: {
-                if(g_game.getClientVersion() >= 755) {
-                    m_displacement.x = fin->getU16();
-                    m_displacement.y = fin->getU16();
-                } else {
-                    m_displacement.x = 8;
-                    m_displacement.y = 8;
-                }
-                m_attribs.set(attr, true);
-                break;
+        case ThingAttrDisplacement:
+        {
+            if(g_game.getClientVersion() >= 755) {
+                m_displacement.x = fin->getU16();
+                m_displacement.y = fin->getU16();
+            } else {
+                m_displacement.x = 8;
+                m_displacement.y = 8;
             }
-            case ThingAttrLight: {
-                Light light;
-                light.intensity = fin->getU16();
-                light.color = fin->getU16();
-                m_attribs.set(attr, light);
-                break;
-            }
-            case ThingAttrMarket: {
-                MarketData market;
-                market.category = fin->getU16();
-                market.tradeAs = fin->getU16();
-                market.showAs = fin->getU16();
-                market.name = fin->getString();
-                market.restrictVocation = fin->getU16();
-                market.requiredLevel = fin->getU16();
-                m_attribs.set(attr, market);
-                break;
-            }
-            case ThingAttrElevation: {
-                m_elevation = fin->getU16();
-                m_attribs.set(attr, m_elevation);
-                break;
-            }
-            case ThingAttrUsable:
-            case ThingAttrGround:
-            case ThingAttrWritable:
-            case ThingAttrWritableOnce:
-            case ThingAttrMinimapColor:
-            case ThingAttrCloth:
-            case ThingAttrLensHelp:
-                m_attribs.set(attr, fin->getU16());
-                break;
-            default:
-                m_attribs.set(attr, true);
-                break;
-        };
+            m_attribs.set(attr, true);
+            break;
+        }
+        case ThingAttrLight:
+        {
+            Light light;
+            light.intensity = fin->getU16();
+            light.color = fin->getU16();
+            m_attribs.set(attr, light);
+            break;
+        }
+        case ThingAttrMarket:
+        {
+            MarketData market;
+            market.category = fin->getU16();
+            market.tradeAs = fin->getU16();
+            market.showAs = fin->getU16();
+            market.name = fin->getString();
+            market.restrictVocation = fin->getU16();
+            market.requiredLevel = fin->getU16();
+            m_attribs.set(attr, market);
+            break;
+        }
+        case ThingAttrElevation:
+        {
+            m_elevation = fin->getU16();
+            m_attribs.set(attr, m_elevation);
+            break;
+        }
+        case ThingAttrUsable:
+        case ThingAttrGround:
+        case ThingAttrWritable:
+        case ThingAttrWritableOnce:
+        case ThingAttrMinimapColor:
+        case ThingAttrCloth:
+        case ThingAttrLensHelp:
+            m_attribs.set(attr, fin->getU16());
+            break;
+        default:
+            m_attribs.set(attr, true);
+            break;
+        }
     }
 
     if(!done)
         stdext::throw_exception(stdext::format("corrupt data (id: %d, category: %d, count: %d, lastAttr: %d)",
-            m_id, m_category, count, attr));
+                                               m_id, m_category, count, attr));
 
-    bool hasFrameGroups = (category == ThingCategoryCreature && g_game.getFeature(Otc::GameIdleAnimations));
-    uint8 groupCount = hasFrameGroups ? fin->getU8() : 1;
+    const bool hasFrameGroups = category == ThingCategoryCreature && g_game.getFeature(Otc::GameIdleAnimations);
+    const uint8 groupCount = hasFrameGroups ? fin->getU8() : 1;
 
     m_animationPhases = 0;
     int totalSpritesCount = 0;
+
+    std::vector<Size> sizes;
+    std::vector<int> total_sprites;
 
     for(int i = 0; i < groupCount; ++i) {
         uint8 frameGroupType = FrameGroupDefault;
         if(hasFrameGroups)
             frameGroupType = fin->getU8();
 
-        uint8 width = fin->getU8();
-        uint8 height = fin->getU8();
+        const uint8 width = fin->getU8();
+        const uint8 height = fin->getU8();
         m_size = Size(width, height);
+        sizes.push_back(m_size);
         if(width > 1 || height > 1) {
             m_realSize = fin->getU8();
-            m_exactSize = std::min<int>(m_realSize, std::max<int>(width * 32, height * 32));
-        }
-        else
-            m_exactSize = 32;
+            m_exactSize = std::min<int>(m_realSize, std::max<int>(width * Otc::TILE_PIXELS, height * Otc::TILE_PIXELS));
+        } else
+            m_exactSize = Otc::TILE_PIXELS;
 
         m_layers = fin->getU8();
         m_numPatternX = fin->getU8();
@@ -296,48 +316,75 @@ void ThingType::unserialize(uint16 clientId, ThingCategory category, const FileS
             m_numPatternZ = fin->getU8();
         else
             m_numPatternZ = 1;
-        
-        int groupAnimationsPhases = fin->getU8();
+
+        const int groupAnimationsPhases = fin->getU8();
         m_animationPhases += groupAnimationsPhases;
 
         if(groupAnimationsPhases > 1 && g_game.getFeature(Otc::GameEnhancedAnimations)) {
             AnimatorPtr animator = AnimatorPtr(new Animator);
             animator->unserialize(groupAnimationsPhases, fin);
 
-            switch(frameGroupType) {
-                case FrameGroupIdle:
-                    m_idleAnimator = animator;
-                    break;
-                case FrameGroupMoving:
-                    m_animator = animator;
-                    break;
-            }
+            if(groupCount == 1 || frameGroupType == FrameGroupMoving)
+                m_animator = animator;
+            else m_idleAnimator = animator;
         }
 
-        int totalSprites = m_size.area() * m_layers * m_numPatternX * m_numPatternY * m_numPatternZ * groupAnimationsPhases;
+        const int totalSprites = m_size.area() * m_layers * m_numPatternX * m_numPatternY * m_numPatternZ * groupAnimationsPhases;
+        total_sprites.push_back(totalSprites);
 
-        if((totalSpritesCount+totalSprites) > 4096)
+        if(totalSpritesCount + totalSprites > 4096)
             stdext::throw_exception("a thing type has more than 4096 sprites");
 
-        m_spritesIndex.resize((totalSpritesCount+totalSprites));
-        for(int j = totalSpritesCount; j < (totalSpritesCount+totalSprites); j++)
+        m_spritesIndex.resize(totalSpritesCount + totalSprites);
+        for(int j = totalSpritesCount; j < (totalSpritesCount + totalSprites); ++j)
             m_spritesIndex[j] = g_game.getFeature(Otc::GameSpritesU32) ? fin->getU32() : fin->getU16();
 
         totalSpritesCount += totalSprites;
     }
 
-    if(m_idleAnimator && !m_animator) {
-        m_animator = m_idleAnimator;
-        m_idleAnimator = nullptr;
+    if(sizes.size() > 1) {
+        // correction for some sprites
+        for(auto& s : sizes) {
+            m_size.setWidth(std::max<int>(m_size.width(), s.width()));
+            m_size.setHeight(std::max<int>(m_size.height(), s.height()));
+        }
+        size_t expectedSize = m_size.area() * m_layers * m_numPatternX * m_numPatternY * m_numPatternZ * m_animationPhases;
+        if(expectedSize != m_spritesIndex.size()) {
+            std::vector<int> sprites(std::move(m_spritesIndex));
+            m_spritesIndex.clear();
+            m_spritesIndex.reserve(expectedSize);
+            for(size_t i = 0, idx = 0; i < sizes.size(); ++i) {
+                int totalSprites = total_sprites[i];
+                if(m_size == sizes[i]) {
+                    for(int j = 0; j < totalSprites; ++j) {
+                        m_spritesIndex.push_back(sprites[idx++]);
+                    }
+                    continue;
+                }
+                size_t patterns = (totalSprites / sizes[i].area());
+                for(size_t p = 0; p < patterns; ++p) {
+                    for(int x = 0; x < m_size.width(); ++x) {
+                        for(int y = 0; y < m_size.height(); ++y) {
+                            if(x < sizes[i].width() && y < sizes[i].height()) {
+                                m_spritesIndex.push_back(sprites[idx++]);
+                                continue;
+                            }
+                            m_spritesIndex.push_back(0);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     m_textures.resize(m_animationPhases);
+    m_blankTextures.resize(m_animationPhases);
     m_texturesFramesRects.resize(m_animationPhases);
     m_texturesFramesOriginRects.resize(m_animationPhases);
     m_texturesFramesOffsets.resize(m_animationPhases);
 }
 
-void ThingType::exportImage(std::string fileName)
+void ThingType::exportImage(const std::string& fileName)
 {
     if(m_null)
         stdext::throw_exception("cannot export null thingtype");
@@ -345,7 +392,7 @@ void ThingType::exportImage(std::string fileName)
     if(m_spritesIndex.empty())
         stdext::throw_exception("cannot export thingtype without sprites");
 
-    ImagePtr image(new Image(Size(32 * m_size.width() * m_layers * m_numPatternX, 32 * m_size.height() * m_animationPhases * m_numPatternY * m_numPatternZ)));
+    ImagePtr image(new Image(Size(32 * m_size.width() * m_layers * m_numPatternX, Otc::TILE_PIXELS * m_size.height() * m_animationPhases * m_numPatternY * m_numPatternZ)));
     for(int z = 0; z < m_numPatternZ; ++z) {
         for(int y = 0; y < m_numPatternY; ++y) {
             for(int x = 0; x < m_numPatternX; ++x) {
@@ -353,8 +400,8 @@ void ThingType::exportImage(std::string fileName)
                     for(int a = 0; a < m_animationPhases; ++a) {
                         for(int w = 0; w < m_size.width(); ++w) {
                             for(int h = 0; h < m_size.height(); ++h) {
-                                image->blit(Point(32 * (m_size.width() - w - 1 + m_size.width() * x + m_size.width() * m_numPatternX * l),
-                                                  32 * (m_size.height() - h - 1 + m_size.height() * y + m_size.height() * m_numPatternY * a + m_size.height() * m_numPatternY * m_animationPhases * z)),
+                                image->blit(Point(Otc::TILE_PIXELS * (m_size.width() - w - 1 + m_size.width() * x + m_size.width() * m_numPatternX * l),
+                                                  Otc::TILE_PIXELS * (m_size.height() - h - 1 + m_size.height() * y + m_size.height() * m_numPatternY * a + m_size.height() * m_numPatternY * m_animationPhases * z)),
                                             g_sprites.getSpriteImage(m_spritesIndex[getSpriteIndex(w, h, l, x, y, z, a)]));
                             }
                         }
@@ -385,7 +432,7 @@ void ThingType::unserializeOtml(const OTMLNodePtr& node)
     }
 }
 
-void ThingType::draw(const Point& dest, float scaleFactor, int layer, int xPattern, int yPattern, int zPattern, int animationPhase, LightView *lightView)
+void ThingType::draw(const Point& dest, float scaleFactor, int layer, int xPattern, int yPattern, int zPattern, int animationPhase, bool useBlankTexture, int frameFlags, LightView* lightView)
 {
     if(m_null)
         return;
@@ -393,11 +440,11 @@ void ThingType::draw(const Point& dest, float scaleFactor, int layer, int xPatte
     if(animationPhase >= m_animationPhases)
         return;
 
-    const TexturePtr& texture = getTexture(animationPhase); // texture might not exists, neither its rects.
+    const TexturePtr& texture = getTexture(animationPhase, useBlankTexture); // texture might not exists, neither its rects.
     if(!texture)
         return;
 
-    uint frameIndex = getTextureIndex(layer, xPattern, yPattern, zPattern);
+    const uint frameIndex = getTextureIndex(layer, xPattern, yPattern, zPattern);
     if(frameIndex >= m_texturesFramesRects[animationPhase].size())
         return;
 
@@ -411,107 +458,114 @@ void ThingType::draw(const Point& dest, float scaleFactor, int layer, int xPatte
         textureRect = m_texturesFramesRects[animationPhase][frameIndex];
     }
 
-    Rect screenRect(dest + (textureOffset - m_displacement - (m_size.toPoint() - Point(1, 1)) * 32) * scaleFactor,
-                    textureRect.size() * scaleFactor);
+    const Rect screenRect(dest + (textureOffset - m_displacement - (m_size.toPoint() - Point(1)) * Otc::TILE_PIXELS) * scaleFactor,
+                          textureRect.size() * scaleFactor);
 
-    bool useOpacity = m_opacity < 1.0f;
+    if(frameFlags & Otc::FUpdateThing) {
+        const bool useOpacity = m_opacity < 1.0f;
 
-    if(useOpacity)
-        g_painter->setColor(Color(1.0f,1.0f,1.0f,m_opacity));
+        if(useOpacity)
+            g_painter->setColor(Color(1.0f, 1.0f, 1.0f, m_opacity));
 
-    g_painter->drawTexturedRect(screenRect, texture, textureRect);
+        g_painter->drawTexturedRect(screenRect, texture, textureRect);
 
-    if(useOpacity)
-        g_painter->setColor(Color::white);
+        if(useOpacity)
+            g_painter->resetColor();
+    }
 
-    if(lightView && hasLight()) {
-        Light light = getLight();
-        if(light.intensity > 0)
-            lightView->addLightSource(screenRect.center(), scaleFactor, light);
+    if(lightView && hasLight() && frameFlags & Otc::FUpdateLight) {
+        const Light light = getLight();
+        if(light.intensity > 0) {
+            lightView->addLightSource(screenRect.center(), light);
+        }
     }
 }
 
-const TexturePtr& ThingType::getTexture(int animationPhase)
+const TexturePtr& ThingType::getTexture(int animationPhase, bool allBlank)
 {
-    TexturePtr& animationPhaseTexture = m_textures[animationPhase];
-    if(!animationPhaseTexture) {
-        bool useCustomImage = false;
-        if(animationPhase == 0 && !m_customImage.empty())
-            useCustomImage = true;
+    TexturePtr& animationPhaseTexture = (allBlank ? m_blankTextures : m_textures)[animationPhase];
+    if(animationPhaseTexture) return animationPhaseTexture;
 
-        // we don't need layers in common items, they will be pre-drawn
-        int textureLayers = 1;
-        int numLayers = m_layers;
-        if(m_category == ThingCategoryCreature && numLayers >= 2) {
-             // 5 layers: outfit base, red mask, green mask, blue mask, yellow mask
-            textureLayers = 5;
-            numLayers = 5;
-        }
+    bool useCustomImage = false;
+    if(animationPhase == 0 && !m_customImage.empty())
+        useCustomImage = true;
 
-        int indexSize = textureLayers * m_numPatternX * m_numPatternY * m_numPatternZ;
-        Size textureSize = getBestTextureDimension(m_size.width(), m_size.height(), indexSize);
-        ImagePtr fullImage;
+    // we don't need layers in common items, they will be pre-drawn
+    int textureLayers = 1;
+    int numLayers = m_layers;
+    if(m_category == ThingCategoryCreature && numLayers >= 2) {
+        // 5 layers: outfit base, red mask, green mask, blue mask, yellow mask
+        textureLayers = 5;
+        numLayers = 5;
+    }
 
-        if(useCustomImage)
-            fullImage = Image::load(m_customImage);
-        else
-            fullImage = ImagePtr(new Image(textureSize * Otc::TILE_PIXELS));
+    const int indexSize = textureLayers * m_numPatternX * m_numPatternY * m_numPatternZ;
+    const Size textureSize = getBestTextureDimension(m_size.width(), m_size.height(), indexSize);
+    const ImagePtr fullImage = useCustomImage ? Image::load(m_customImage) : ImagePtr(new Image(textureSize * Otc::TILE_PIXELS));
 
-        m_texturesFramesRects[animationPhase].resize(indexSize);
-        m_texturesFramesOriginRects[animationPhase].resize(indexSize);
-        m_texturesFramesOffsets[animationPhase].resize(indexSize);
+    m_texturesFramesRects[animationPhase].resize(indexSize);
+    m_texturesFramesOriginRects[animationPhase].resize(indexSize);
+    m_texturesFramesOffsets[animationPhase].resize(indexSize);
+    for(int z = 0; z < m_numPatternZ; ++z) {
+        for(int y = 0; y < m_numPatternY; ++y) {
+            for(int x = 0; x < m_numPatternX; ++x) {
+                for(int l = 0; l < numLayers; ++l) {
+                    const bool spriteMask = m_category == ThingCategoryCreature && l > 0;
+                    const int frameIndex = getTextureIndex(l % textureLayers, x, y, z);
 
-        for(int z = 0; z < m_numPatternZ; ++z) {
-            for(int y = 0; y < m_numPatternY; ++y) {
-                for(int x = 0; x < m_numPatternX; ++x) {
-                    for(int l = 0; l < numLayers; ++l) {
-                        bool spriteMask = (m_category == ThingCategoryCreature && l > 0);
-                        int frameIndex = getTextureIndex(l % textureLayers, x, y, z);
-                        Point framePos = Point(frameIndex % (textureSize.width() / m_size.width()) * m_size.width(),
-                                               frameIndex / (textureSize.width() / m_size.width()) * m_size.height()) * Otc::TILE_PIXELS;
+                    Point framePos = Point(frameIndex % (textureSize.width() / m_size.width()) * m_size.width(),
+                                           frameIndex / (textureSize.width() / m_size.width()) * m_size.height()) * Otc::TILE_PIXELS;
 
-                        if(!useCustomImage) {
-                            for(int h = 0; h < m_size.height(); ++h) {
-                                for(int w = 0; w < m_size.width(); ++w) {
-                                    uint spriteIndex = getSpriteIndex(w, h, spriteMask ? 1 : l, x, y, z, animationPhase);
-                                    ImagePtr spriteImage = g_sprites.getSpriteImage(m_spritesIndex[spriteIndex]);
-                                    if(spriteImage) {
-                                        if(spriteMask) {
-                                            static Color maskColors[] = { Color::red, Color::green, Color::blue, Color::yellow };
-                                            spriteImage->overwriteMask(maskColors[l - 1]);
+                    if(!useCustomImage) {
+                        for(int h = 0; h < m_size.height(); ++h) {
+                            for(int w = 0; w < m_size.width(); ++w) {
+                                const uint spriteIndex = getSpriteIndex(w, h, spriteMask ? 1 : l, x, y, z, animationPhase);
+                                ImagePtr spriteImage = g_sprites.getSpriteImage(m_spritesIndex[spriteIndex]);
+                                if(!spriteImage) fullImage->setTransparentPixel(true);
+                                else {
+                                    if(spriteIndex == 0) {
+                                        if(spriteImage->hasTransparentPixel() || hasDisplacement()) {
+                                            fullImage->setTransparentPixel(true);
                                         }
-                                        Point spritePos = Point(m_size.width()  - w - 1,
-                                                                m_size.height() - h - 1) * Otc::TILE_PIXELS;
-
-                                        fullImage->blit(framePos + spritePos, spriteImage);
                                     }
+
+                                    if(allBlank) {
+                                        spriteImage->overwrite(Color::white);
+                                    } else if(spriteMask) {
+                                        static Color maskColors[] = { Color::red, Color::green, Color::blue, Color::yellow };
+                                        spriteImage->overwriteMask(maskColors[l - 1]);
+                                    }
+                                    Point spritePos = Point(m_size.width() - w - 1,
+                                                            m_size.height() - h - 1) * Otc::TILE_PIXELS;
+
+                                    fullImage->blit(framePos + spritePos, spriteImage);
                                 }
                             }
                         }
-
-                        Rect drawRect(framePos + Point(m_size.width(), m_size.height()) * Otc::TILE_PIXELS - Point(1,1), framePos);
-                        for(int fx = framePos.x; fx < framePos.x + m_size.width() * Otc::TILE_PIXELS; ++fx) {
-                            for(int fy = framePos.y; fy < framePos.y + m_size.height() * Otc::TILE_PIXELS; ++fy) {
-                                uint8 *p = fullImage->getPixel(fx,fy);
-                                if(p[3] != 0x00) {
-                                    drawRect.setTop   (std::min<int>(fy, (int)drawRect.top()));
-                                    drawRect.setLeft  (std::min<int>(fx, (int)drawRect.left()));
-                                    drawRect.setBottom(std::max<int>(fy, (int)drawRect.bottom()));
-                                    drawRect.setRight (std::max<int>(fx, (int)drawRect.right()));
-                                }
-                            }
-                        }
-
-                        m_texturesFramesRects[animationPhase][frameIndex] = drawRect;
-                        m_texturesFramesOriginRects[animationPhase][frameIndex] = Rect(framePos, Size(m_size.width(), m_size.height()) * Otc::TILE_PIXELS);
-                        m_texturesFramesOffsets[animationPhase][frameIndex] = drawRect.topLeft() - framePos;
                     }
+
+                    Rect drawRect(framePos + Point(m_size.width(), m_size.height()) * Otc::TILE_PIXELS - Point(1), framePos);
+                    for(int fx = framePos.x; fx < framePos.x + m_size.width() * Otc::TILE_PIXELS; ++fx) {
+                        for(int fy = framePos.y; fy < framePos.y + m_size.height() * Otc::TILE_PIXELS; ++fy) {
+                            uint8* p = fullImage->getPixel(fx, fy);
+                            if(p[3] != 0x00) {
+                                drawRect.setTop(std::min<int>(fy, static_cast<int>(drawRect.top())));
+                                drawRect.setLeft(std::min<int>(fx, static_cast<int>(drawRect.left())));
+                                drawRect.setBottom(std::max<int>(fy, static_cast<int>(drawRect.bottom())));
+                                drawRect.setRight(std::max<int>(fx, static_cast<int>(drawRect.right())));
+                            }
+                        }
+                    }
+
+                    m_texturesFramesRects[animationPhase][frameIndex] = drawRect;
+                    m_texturesFramesOriginRects[animationPhase][frameIndex] = Rect(framePos, Size(m_size.width(), m_size.height()) * Otc::TILE_PIXELS);
+                    m_texturesFramesOffsets[animationPhase][frameIndex] = drawRect.topLeft() - framePos;
                 }
             }
         }
-        animationPhaseTexture = TexturePtr(new Texture(fullImage, true));
-        animationPhaseTexture->setSmooth(true);
     }
+
+    animationPhaseTexture = TexturePtr(new Texture(fullImage, true));
     return animationPhaseTexture;
 }
 
@@ -521,22 +575,22 @@ Size ThingType::getBestTextureDimension(int w, int h, int count)
 
     int k = 1;
     while(k < w)
-        k<<=1;
+        k <<= 1;
     w = k;
 
     k = 1;
     while(k < h)
-        k<<=1;
+        k <<= 1;
     h = k;
 
-    int numSprites = w*h*count;
-    assert(numSprites <= MAX*MAX);
+    const int numSprites = w * h * count;
+    assert(numSprites <= MAX * MAX);
     assert(w <= MAX);
     assert(h <= MAX);
 
     Size bestDimension = Size(MAX, MAX);
-    for(int i=w;i<=MAX;i<<=1) {
-        for(int j=h;j<=MAX;j<<=1) {
+    for(int i = w; i <= MAX; i <<= 1) {
+        for(int j = h; j <= MAX; j <<= 1) {
             Size candidateDimension = Size(i, j);
             if(candidateDimension.area() < numSprites)
                 continue;
@@ -549,23 +603,25 @@ Size ThingType::getBestTextureDimension(int w, int h, int count)
     return bestDimension;
 }
 
-uint ThingType::getSpriteIndex(int w, int h, int l, int x, int y, int z, int a) {
-    uint index =
+uint ThingType::getSpriteIndex(int w, int h, int l, int x, int y, int z, int a)
+{
+    const uint index =
         ((((((a % m_animationPhases)
-        * m_numPatternZ + z)
-        * m_numPatternY + y)
-        * m_numPatternX + x)
-        * m_layers + l)
-        * m_size.height() + h)
+             * m_numPatternZ + z)
+            * m_numPatternY + y)
+           * m_numPatternX + x)
+          * m_layers + l)
+         * m_size.height() + h)
         * m_size.width() + w;
     assert(index < m_spritesIndex.size());
     return index;
 }
 
-uint ThingType::getTextureIndex(int l, int x, int y, int z) {
+uint ThingType::getTextureIndex(int l, int x, int y, int z)
+{
     return ((l * m_numPatternZ + z)
-               * m_numPatternY + y)
-               * m_numPatternX + x;
+            * m_numPatternY + y)
+        * m_numPatternX + x;
 }
 
 int ThingType::getExactSize(int layer, int xPattern, int yPattern, int zPattern, int animationPhase)
@@ -574,8 +630,8 @@ int ThingType::getExactSize(int layer, int xPattern, int yPattern, int zPattern,
         return 0;
 
     getTexture(animationPhase); // we must calculate it anyway.
-    int frameIndex = getTextureIndex(layer, xPattern, yPattern, zPattern);
-    Size size = m_texturesFramesOriginRects[animationPhase][frameIndex].size() - m_texturesFramesOffsets[animationPhase][frameIndex].toSize();
+    const int frameIndex = getTextureIndex(layer, xPattern, yPattern, zPattern);
+    const Size size = m_texturesFramesOriginRects[animationPhase][frameIndex].size() - m_texturesFramesOffsets[animationPhase][frameIndex].toSize();
     return std::max<int>(size.width(), size.height());
 }
 
@@ -585,4 +641,28 @@ void ThingType::setPathable(bool var)
         m_attribs.remove(ThingAttrNotPathable);
     else
         m_attribs.set(ThingAttrNotPathable, true);
+}
+
+int ThingType::getAnimationPhases()
+{
+    if(m_animator) return m_animator->getAnimationPhases();
+
+    if(m_category == ThingCategoryCreature) return m_animationPhases - 1;
+
+    return m_animationPhases;
+}
+
+int ThingType::getExactHeight()
+{
+    if(m_null)
+        return 0;
+
+    if(m_exactHeight != -1)
+        return m_exactHeight;
+
+    getTexture(0);
+    const int frameIndex = getTextureIndex(0, 0, 0, 0);
+    const Size size = m_texturesFramesOriginRects[0][frameIndex].size() - m_texturesFramesOffsets[0][frameIndex].toSize();
+
+    return m_exactHeight = size.height();
 }

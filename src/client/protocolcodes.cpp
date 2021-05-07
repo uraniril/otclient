@@ -24,14 +24,15 @@
 
 namespace Proto {
 
-std::map<uint8, uint8> messageModesMap;
+    std::map<uint8, uint8> messageModesMap;
 
-void buildMessageModesMap(int version) {
-    messageModesMap.clear();
+    void buildMessageModesMap(int version)
+    {
+        messageModesMap.clear();
 
-    if(version >= 1094) {
-        messageModesMap[Otc::MessageMana] = 43;
-    }
+        if(version >= 1094) {
+            messageModesMap[Otc::MessageMana] = 43;
+        }
 
     if(version >= 1055) { // might be 1054
         messageModesMap[Otc::MessageNone] = 0;
@@ -77,6 +78,49 @@ void buildMessageModesMap(int version) {
         messageModesMap[Otc::MessageTutorialHint] = 40;
         messageModesMap[Otc::MessageThankyou] = 41;
         messageModesMap[Otc::MessageMarket] = 42;
+    } else if(version >= 1041) {
+        messageModesMap[Otc::MessageNone] = 0;
+        messageModesMap[Otc::MessageSay] = 1;
+        messageModesMap[Otc::MessageWhisper] = 2;
+        messageModesMap[Otc::MessageYell] = 3;
+        messageModesMap[Otc::MessagePrivateFrom] = 4;
+        messageModesMap[Otc::MessagePrivateTo] = 5;
+        messageModesMap[Otc::MessageChannelManagement] = 6;
+        messageModesMap[Otc::MessageChannel] = 7;
+        messageModesMap[Otc::MessageChannelHighlight] = 8;
+        messageModesMap[Otc::MessageSpell] = 9;
+        messageModesMap[Otc::MessageNpcFromStartBlock] = 10;
+        messageModesMap[Otc::MessageNpcFrom] = 11;
+        messageModesMap[Otc::MessageNpcTo] = 12;
+        messageModesMap[Otc::MessageGamemasterBroadcast] = 13;
+        messageModesMap[Otc::MessageGamemasterChannel] = 14;
+        messageModesMap[Otc::MessageGamemasterPrivateFrom] = 15;
+        messageModesMap[Otc::MessageGamemasterPrivateTo] = 16;
+        messageModesMap[Otc::MessageLogin] = 17;
+        messageModesMap[Otc::MessageWarning] = 18; // Admin
+        messageModesMap[Otc::MessageGame] = 19;
+        messageModesMap[Otc::MessageFailure] = 20;
+        messageModesMap[Otc::MessageLook] = 21;
+        messageModesMap[Otc::MessageDamageDealed] = 22;
+        messageModesMap[Otc::MessageDamageReceived] = 23;
+        messageModesMap[Otc::MessageHeal] = 24;
+        messageModesMap[Otc::MessageExp] = 25;
+        messageModesMap[Otc::MessageDamageOthers] = 26;
+        messageModesMap[Otc::MessageHealOthers] = 27;
+        messageModesMap[Otc::MessageExpOthers] = 28;
+        messageModesMap[Otc::MessageStatus] = 29;
+        messageModesMap[Otc::MessageLoot] = 30;
+        messageModesMap[Otc::MessageTradeNpc] = 31;
+        messageModesMap[Otc::MessageGuild] = 32;
+        messageModesMap[Otc::MessagePartyManagement] = 33;
+        messageModesMap[Otc::MessageParty] = 34;
+        messageModesMap[Otc::MessageBarkLow] = 35;
+        messageModesMap[Otc::MessageBarkLoud] = 36;
+        messageModesMap[Otc::MessageReport] = 37;
+        messageModesMap[Otc::MessageHotkeyUse] = 38;
+        messageModesMap[Otc::MessageTutorialHint] = 49;
+        messageModesMap[Otc::MessageThankyou] = 40;
+        messageModesMap[Otc::MessageMarket] = 41;
     } else if(version >= 1036) {
             for(int i = Otc::MessageNone; i <= Otc::MessageBeyondLast; ++i) {
                 if(i >= Otc::MessageNpcTo)
@@ -84,111 +128,111 @@ void buildMessageModesMap(int version) {
                 else
                     messageModesMap[i] = i;
             }
-    } else if(version >= 900) {
-        for(int i = Otc::MessageNone; i <= Otc::MessageBeyondLast; ++i)
-            messageModesMap[i] = i;
-    } else if(version >= 861) {
-        messageModesMap[Otc::MessageNone]                    = 0;
-        messageModesMap[Otc::MessageSay]                     = 1;
-        messageModesMap[Otc::MessageWhisper]                 = 2;
-        messageModesMap[Otc::MessageYell]                    = 3;
-        messageModesMap[Otc::MessageNpcTo]                   = 4;
-        messageModesMap[Otc::MessageNpcFrom]                 = 5;
-        messageModesMap[Otc::MessagePrivateFrom]             = 6;
-        messageModesMap[Otc::MessagePrivateTo]               = 6;
-        messageModesMap[Otc::MessageChannel]                 = 7;
-        messageModesMap[Otc::MessageChannelManagement]       = 8;
-        messageModesMap[Otc::MessageGamemasterBroadcast]     = 9;
-        messageModesMap[Otc::MessageGamemasterChannel]       = 10;
-        messageModesMap[Otc::MessageGamemasterPrivateFrom]   = 11;
-        messageModesMap[Otc::MessageGamemasterPrivateTo]     = 11;
-        messageModesMap[Otc::MessageChannelHighlight]        = 12;
-        messageModesMap[Otc::MessageMonsterSay]              = 13;
-        messageModesMap[Otc::MessageMonsterYell]             = 14;
-        messageModesMap[Otc::MessageWarning]                 = 15;
-        messageModesMap[Otc::MessageGame]                    = 16;
-        messageModesMap[Otc::MessageLogin]                   = 17;
-        messageModesMap[Otc::MessageStatus]                  = 18;
-        messageModesMap[Otc::MessageLook]                    = 19;
-        messageModesMap[Otc::MessageFailure]                 = 20;
-        messageModesMap[Otc::MessageBlue]                    = 21;
-        messageModesMap[Otc::MessageRed]                     = 22;
-    } else if(version >= 840) {
-        messageModesMap[Otc::MessageNone]                    = 0;
-        messageModesMap[Otc::MessageSay]                     = 1;
-        messageModesMap[Otc::MessageWhisper]                 = 2;
-        messageModesMap[Otc::MessageYell]                    = 3;
-        messageModesMap[Otc::MessageNpcTo]                   = 4;
-        messageModesMap[Otc::MessageNpcFromStartBlock]       = 5;
-        messageModesMap[Otc::MessagePrivateFrom]             = 6;
-        messageModesMap[Otc::MessagePrivateTo]               = 6;
-        messageModesMap[Otc::MessageChannel]                 = 7;
-        messageModesMap[Otc::MessageChannelManagement]       = 8;
-        messageModesMap[Otc::MessageRVRChannel]              = 9;
-        messageModesMap[Otc::MessageRVRAnswer]               = 10;
-        messageModesMap[Otc::MessageRVRContinue]             = 11;
-        messageModesMap[Otc::MessageGamemasterBroadcast]     = 12;
-        messageModesMap[Otc::MessageGamemasterChannel]       = 13;
-        messageModesMap[Otc::MessageGamemasterPrivateFrom]   = 14;
-        messageModesMap[Otc::MessageGamemasterPrivateTo]     = 14;
-        messageModesMap[Otc::MessageChannelHighlight]        = 15;
-        // 16, 17 ??
-        messageModesMap[Otc::MessageRed]                     = 18;
-        messageModesMap[Otc::MessageMonsterSay]              = 19;
-        messageModesMap[Otc::MessageMonsterYell]             = 20;
-        messageModesMap[Otc::MessageWarning]                 = 21;
-        messageModesMap[Otc::MessageGame]                    = 22;
-        messageModesMap[Otc::MessageLogin]                   = 23;
-        messageModesMap[Otc::MessageStatus]                  = 24;
-        messageModesMap[Otc::MessageLook]                    = 25;
-        messageModesMap[Otc::MessageFailure]                 = 26;
-        messageModesMap[Otc::MessageBlue]                    = 27;
-    } else if(version >= 760) {
-        messageModesMap[Otc::MessageNone]                    = 0;
-        messageModesMap[Otc::MessageSay]                     = 1;
-        messageModesMap[Otc::MessageWhisper]                 = 2;
-        messageModesMap[Otc::MessageYell]                    = 3;
-        messageModesMap[Otc::MessagePrivateFrom]             = 4;
-        messageModesMap[Otc::MessagePrivateTo]               = 4;
-        messageModesMap[Otc::MessageChannel]                 = 5;
-        messageModesMap[Otc::MessageRVRChannel]              = 6;
-        messageModesMap[Otc::MessageRVRAnswer]               = 7;
-        messageModesMap[Otc::MessageRVRContinue]             = 8;
-        messageModesMap[Otc::MessageGamemasterBroadcast]     = 9;
-        messageModesMap[Otc::MessageGamemasterChannel]       = 10;
-        messageModesMap[Otc::MessageGamemasterPrivateFrom]   = 11;
-        messageModesMap[Otc::MessageGamemasterPrivateTo]     = 11;
-        messageModesMap[Otc::MessageChannelHighlight]        = 12;
-        // 13, 14, 15 ??
-        messageModesMap[Otc::MessageMonsterSay]              = 16;
-        messageModesMap[Otc::MessageMonsterYell]             = 17;
-        messageModesMap[Otc::MessageWarning]                 = 18;
-        messageModesMap[Otc::MessageGame]                    = 19;
-        messageModesMap[Otc::MessageLogin]                   = 20;
-        messageModesMap[Otc::MessageStatus]                  = 21;
-        messageModesMap[Otc::MessageLook]                    = 22;
-        messageModesMap[Otc::MessageFailure]                 = 23;
-        messageModesMap[Otc::MessageBlue]                    = 24;
-        messageModesMap[Otc::MessageRed]                     = 25;
+        } else if(version >= 900) {
+            for(int i = Otc::MessageNone; i <= Otc::MessageBeyondLast; ++i)
+                messageModesMap[i] = i;
+        } else if(version >= 861) {
+            messageModesMap[Otc::MessageNone] = 0;
+            messageModesMap[Otc::MessageSay] = 1;
+            messageModesMap[Otc::MessageWhisper] = 2;
+            messageModesMap[Otc::MessageYell] = 3;
+            messageModesMap[Otc::MessageNpcTo] = 4;
+            messageModesMap[Otc::MessageNpcFrom] = 5;
+            messageModesMap[Otc::MessagePrivateFrom] = 6;
+            messageModesMap[Otc::MessagePrivateTo] = 6;
+            messageModesMap[Otc::MessageChannel] = 7;
+            messageModesMap[Otc::MessageChannelManagement] = 8;
+            messageModesMap[Otc::MessageGamemasterBroadcast] = 9;
+            messageModesMap[Otc::MessageGamemasterChannel] = 10;
+            messageModesMap[Otc::MessageGamemasterPrivateFrom] = 11;
+            messageModesMap[Otc::MessageGamemasterPrivateTo] = 11;
+            messageModesMap[Otc::MessageChannelHighlight] = 12;
+            messageModesMap[Otc::MessageMonsterSay] = 13;
+            messageModesMap[Otc::MessageMonsterYell] = 14;
+            messageModesMap[Otc::MessageWarning] = 15;
+            messageModesMap[Otc::MessageGame] = 16;
+            messageModesMap[Otc::MessageLogin] = 17;
+            messageModesMap[Otc::MessageStatus] = 18;
+            messageModesMap[Otc::MessageLook] = 19;
+            messageModesMap[Otc::MessageFailure] = 20;
+            messageModesMap[Otc::MessageBlue] = 21;
+            messageModesMap[Otc::MessageRed] = 22;
+        } else if(version >= 840) {
+            messageModesMap[Otc::MessageNone] = 0;
+            messageModesMap[Otc::MessageSay] = 1;
+            messageModesMap[Otc::MessageWhisper] = 2;
+            messageModesMap[Otc::MessageYell] = 3;
+            messageModesMap[Otc::MessageNpcTo] = 4;
+            messageModesMap[Otc::MessageNpcFromStartBlock] = 5;
+            messageModesMap[Otc::MessagePrivateFrom] = 6;
+            messageModesMap[Otc::MessagePrivateTo] = 6;
+            messageModesMap[Otc::MessageChannel] = 7;
+            messageModesMap[Otc::MessageChannelManagement] = 8;
+            messageModesMap[Otc::MessageRVRChannel] = 9;
+            messageModesMap[Otc::MessageRVRAnswer] = 10;
+            messageModesMap[Otc::MessageRVRContinue] = 11;
+            messageModesMap[Otc::MessageGamemasterBroadcast] = 12;
+            messageModesMap[Otc::MessageGamemasterChannel] = 13;
+            messageModesMap[Otc::MessageGamemasterPrivateFrom] = 14;
+            messageModesMap[Otc::MessageGamemasterPrivateTo] = 14;
+            messageModesMap[Otc::MessageChannelHighlight] = 15;
+            // 16, 17 ??
+            messageModesMap[Otc::MessageRed] = 18;
+            messageModesMap[Otc::MessageMonsterSay] = 19;
+            messageModesMap[Otc::MessageMonsterYell] = 20;
+            messageModesMap[Otc::MessageWarning] = 21;
+            messageModesMap[Otc::MessageGame] = 22;
+            messageModesMap[Otc::MessageLogin] = 23;
+            messageModesMap[Otc::MessageStatus] = 24;
+            messageModesMap[Otc::MessageLook] = 25;
+            messageModesMap[Otc::MessageFailure] = 26;
+            messageModesMap[Otc::MessageBlue] = 27;
+        } else if(version >= 760) {
+            messageModesMap[Otc::MessageNone] = 0;
+            messageModesMap[Otc::MessageSay] = 1;
+            messageModesMap[Otc::MessageWhisper] = 2;
+            messageModesMap[Otc::MessageYell] = 3;
+            messageModesMap[Otc::MessagePrivateFrom] = 4;
+            messageModesMap[Otc::MessagePrivateTo] = 4;
+            messageModesMap[Otc::MessageChannel] = 5;
+            messageModesMap[Otc::MessageRVRChannel] = 6;
+            messageModesMap[Otc::MessageRVRAnswer] = 7;
+            messageModesMap[Otc::MessageRVRContinue] = 8;
+            messageModesMap[Otc::MessageGamemasterBroadcast] = 9;
+            messageModesMap[Otc::MessageGamemasterChannel] = 10;
+            messageModesMap[Otc::MessageGamemasterPrivateFrom] = 11;
+            messageModesMap[Otc::MessageGamemasterPrivateTo] = 11;
+            messageModesMap[Otc::MessageChannelHighlight] = 12;
+            // 13, 14, 15 ??
+            messageModesMap[Otc::MessageMonsterSay] = 16;
+            messageModesMap[Otc::MessageMonsterYell] = 17;
+            messageModesMap[Otc::MessageWarning] = 18;
+            messageModesMap[Otc::MessageGame] = 19;
+            messageModesMap[Otc::MessageLogin] = 20;
+            messageModesMap[Otc::MessageStatus] = 21;
+            messageModesMap[Otc::MessageLook] = 22;
+            messageModesMap[Otc::MessageFailure] = 23;
+            messageModesMap[Otc::MessageBlue] = 24;
+            messageModesMap[Otc::MessageRed] = 25;
+        }
     }
-}
 
-Otc::MessageMode translateMessageModeFromServer(uint8 mode)
-{
-    auto it = std::find_if(messageModesMap.begin(), messageModesMap.end(), [=] (const std::pair<uint8, uint8>& p) { return p.second == mode; });
-    if(it != messageModesMap.end())
-        return (Otc::MessageMode)it->first;
-    return Otc::MessageInvalid;
-}
-
-uint8 translateMessageModeToServer(Otc::MessageMode mode)
-{
-    if(mode < 0 || mode >= Otc::LastMessage)
+    Otc::MessageMode translateMessageModeFromServer(uint8 mode)
+    {
+        auto it = std::find_if(messageModesMap.begin(), messageModesMap.end(), [=](const std::pair<uint8, uint8>& p) { return p.second == mode; });
+        if(it != messageModesMap.end())
+            return static_cast<Otc::MessageMode>(it->first);
         return Otc::MessageInvalid;
-    auto it = messageModesMap.find(mode);
-    if(it != messageModesMap.end())
-        return it->second;
-    return Otc::MessageInvalid;
-}
+    }
+
+    uint8 translateMessageModeToServer(Otc::MessageMode mode)
+    {
+        if(mode >= Otc::LastMessage)
+            return Otc::MessageInvalid;
+        const auto it = messageModesMap.find(mode);
+        if(it != messageModesMap.end())
+            return it->second;
+        return Otc::MessageInvalid;
+    }
 
 }

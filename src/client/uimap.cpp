@@ -21,12 +21,12 @@
  */
 
 #include "uimap.h"
+#include <framework/graphics/graphics.h>
+#include <framework/otml/otml.h>
 #include "game.h"
+#include "localplayer.h"
 #include "map.h"
 #include "mapview.h"
-#include <framework/otml/otml.h>
-#include <framework/graphics/graphics.h>
-#include "localplayer.h"
 
 UIMap::UIMap()
 {
@@ -38,7 +38,7 @@ UIMap::UIMap()
     m_aspectRatio = m_mapView->getVisibleDimension().ratio();
     m_maxZoomIn = 3;
     m_maxZoomOut = 513;
-    m_mapRect.resize(1,1);
+    m_mapRect.resize(1, 1);
     g_map.addMapView(m_mapView);
 }
 
@@ -65,7 +65,7 @@ void UIMap::drawSelf(Fw::DrawPane drawPane)
     }
 
     if(drawPane & Fw::BackgroundPane) {
-        g_painter->setColor(Color::white);
+        g_painter->resetColor();
         m_mapView->draw(m_mapRect);
     }
 }
@@ -86,13 +86,18 @@ bool UIMap::zoomIn()
 {
     int delta = 2;
     if(m_zoom - delta < m_maxZoomIn)
-        delta--;
+        --delta;
 
     if(m_zoom - delta < m_maxZoomIn)
         return false;
 
+    const auto oldZoom = m_zoom;
+
     m_zoom -= delta;
     updateVisibleDimension();
+
+    callLuaField("onZoomChange", m_zoom, oldZoom);
+
     return true;
 }
 
@@ -100,13 +105,18 @@ bool UIMap::zoomOut()
 {
     int delta = 2;
     if(m_zoom + delta > m_maxZoomOut)
-        delta--;
+        --delta;
 
     if(m_zoom + delta > m_maxZoomOut)
         return false;
 
+    const auto oldZoom = m_zoom;
+
     m_zoom += 2;
     updateVisibleDimension();
+
+    callLuaField("onZoomChange", m_zoom, oldZoom);
+
     return true;
 }
 
@@ -132,7 +142,7 @@ Position UIMap::getPosition(const Point& mousePos)
     if(!m_mapRect.contains(mousePos))
         return Position();
 
-    Point relativeMousePos = mousePos - m_mapRect.topLeft();
+    const Point relativeMousePos = mousePos - m_mapRect.topLeft();
     return m_mapView->getPosition(relativeMousePos, m_mapRect.size());
 }
 
@@ -145,7 +155,7 @@ TilePtr UIMap::getTile(const Point& mousePos)
     // we must check every floor, from top to bottom to check for a clickable tile
     TilePtr tile;
     tilePos.coveredUp(tilePos.z - m_mapView->getCachedFirstVisibleFloor());
-    for(int i = m_mapView->getCachedFirstVisibleFloor(); i <= m_mapView->getCachedLastVisibleFloor(); i++) {
+    for(int i = m_mapView->getCachedFirstVisibleFloor(); i <= m_mapView->getCachedLastVisibleFloor(); ++i) {
         tile = g_map.getTile(tilePos);
         if(tile && tile->isClickable())
             break;
@@ -170,8 +180,6 @@ void UIMap::onStyleApply(const std::string& styleName, const OTMLNodePtr& styleN
             setDrawTexts(node->value<bool>());
         else if(node->tag() == "draw-lights")
             setDrawLights(node->value<bool>());
-        else if(node->tag() == "animated")
-            setAnimated(node->value<bool>());
     }
 }
 
@@ -179,6 +187,16 @@ void UIMap::onGeometryChange(const Rect& oldRect, const Rect& newRect)
 {
     UIWidget::onGeometryChange(oldRect, newRect);
     updateMapSize();
+}
+
+bool UIMap::onMouseMove(const Point& mousePos, const Point& mouseMoved)
+{
+    const Position& pos = getPosition(mousePos);
+    if(pos.isValid() && m_mapView->getLastMousePosition() != pos) {
+        m_mapView->onMouseMove(pos);
+        m_mapView->setLastMousePosition(pos);
+    }
+    return UIWidget::onMouseMove(mousePos, mouseMoved);
 }
 
 void UIMap::updateVisibleDimension()
@@ -199,15 +217,17 @@ void UIMap::updateVisibleDimension()
 
     if(m_keepAspectRatio)
         updateMapSize();
+
+    g_map.schedulePainting(Otc::FUpdateAll, FrameBuffer::FORCE_UPDATE);
 }
 
 void UIMap::updateMapSize()
 {
-    Rect clippingRect = getPaddingRect();
+    const Rect clippingRect = getPaddingRect();
     Size mapSize;
     if(m_keepAspectRatio) {
-        Rect mapRect = clippingRect.expanded(-1);
-        mapSize = Size(m_aspectRatio*m_zoom, m_zoom);
+        const Rect mapRect = clippingRect.expanded(-1);
+        mapSize = Size(m_aspectRatio * m_zoom, m_zoom);
         mapSize.scale(mapRect.size(), Fw::KeepAspectRatio);
     } else {
         mapSize = clippingRect.expanded(-1).size();
@@ -219,6 +239,9 @@ void UIMap::updateMapSize()
 
     if(!m_keepAspectRatio)
         updateVisibleDimension();
+    else {
+        g_map.schedulePainting(Otc::FUpdateAll, FrameBuffer::FORCE_UPDATE);
+    }
 }
 
 /* vim: set ts=4 sw=4 et: */

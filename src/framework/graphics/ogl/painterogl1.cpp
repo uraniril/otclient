@@ -25,7 +25,7 @@
 #include "painterogl1.h"
 #include <framework/graphics/graphics.h>
 
-PainterOGL1 *g_painterOGL1 = nullptr;
+PainterOGL1* g_painterOGL1 = nullptr;
 
 PainterOGL1::PainterOGL1()
 {
@@ -66,7 +66,7 @@ void PainterOGL1::drawCoords(CoordsBuffer& coordsBuffer, DrawMode drawMode)
     if(vertexCount == 0)
         return;
 
-    bool textured = coordsBuffer.getTextureCoordCount() != 0 && m_texture;
+    const bool textured = coordsBuffer.getTextureCoordCount() != 0 && m_texture;
 
     // skip drawing of empty textures
     if(textured && m_texture->isEmpty())
@@ -114,9 +114,9 @@ void PainterOGL1::drawCoords(CoordsBuffer& coordsBuffer, DrawMode drawMode)
     }
 #ifndef OPENGL_ES
     else {
-        int verticesSize = vertexCount*2;
-        float *vertices = coordsBuffer.getVertexArray();
-        float *texCoords = coordsBuffer.getTextureCoordArray();
+        int verticesSize = vertexCount * 2;
+        float* vertices = coordsBuffer.getVertexArray();
+        float* texCoords = coordsBuffer.getTextureCoordArray();
 
         // use glBegin/glEnd, this is not available in OpenGL ES
         // and is considered much slower then glDrawArrays,
@@ -125,10 +125,10 @@ void PainterOGL1::drawCoords(CoordsBuffer& coordsBuffer, DrawMode drawMode)
             glBegin(GL_TRIANGLES);
         else if(drawMode == TriangleStrip)
             glBegin(GL_TRIANGLE_STRIP);
-        for(int i=0;i<verticesSize;i+=2) {
+        for(int i = 0; i < verticesSize; i += 2) {
             if(textured)
-                glTexCoord2f(texCoords[i], texCoords[i+1]);
-            glVertex2f(vertices[i], vertices[i+1]);
+                glTexCoord2f(texCoords[i], texCoords[i + 1]);
+            glVertex2f(vertices[i], vertices[i + 1]);
         }
         glEnd();
     }
@@ -224,8 +224,9 @@ void PainterOGL1::drawBoundingRect(const Rect& dest, int innerLineWidth)
 
 void PainterOGL1::setMatrixMode(PainterOGL1::MatrixMode matrixMode)
 {
-    if(m_matrixMode == matrixMode)
+    if(m_matrixMode == static_cast<GLenum>(matrixMode))
         return;
+
     m_matrixMode = matrixMode;
     updateGlMatrixMode();
 }

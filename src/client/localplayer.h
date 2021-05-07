@@ -25,7 +25,7 @@
 
 #include "player.h"
 
-// @bindclass
+ // @bindclass
 class LocalPlayer : public Player
 {
     enum {
@@ -98,23 +98,23 @@ public:
     bool isPendingGame() { return m_pending; }
 
     LocalPlayerPtr asLocalPlayer() { return static_self_cast<LocalPlayer>(); }
-    bool isLocalPlayer() { return true; }
+    bool isLocalPlayer() override { return true; }
 
-    virtual void onAppear();
-    virtual void onPositionChange(const Position& newPos, const Position& oldPos);
+    void onAppear() override;
+    void onPositionChange(const Position& newPos, const Position& oldPos) override;
 
 protected:
-    void walk(const Position& oldPos, const Position& newPos);
+    void walk(const Position& oldPos, const Position& newPos) override;
     void preWalk(Otc::Direction direction);
     void cancelWalk(Otc::Direction direction = Otc::InvalidDirection);
-    void stopWalk();
+    void stopWalk() override;
+    void updateWalk(const bool /*isPreWalking*/ = false) override { Creature::updateWalk(m_preWalking); }
 
     friend class Game;
 
 protected:
-    void updateWalkOffset(int totalPixelsWalked);
-    void updateWalk();
-    void terminateWalk();
+    void updateWalkOffset(int totalPixelsWalked) override;
+    void terminateWalk() override;
 
 private:
     // walk related
@@ -125,8 +125,6 @@ private:
     ScheduledEventPtr m_autoWalkContinueEvent;
     ticks_t m_walkLockExpiration;
     stdext::boolean<false> m_preWalking;
-    stdext::boolean<true> m_lastPrewalkDone;
-    stdext::boolean<false> m_secondPreWalk;
     stdext::boolean<false> m_serverWalking;
     stdext::boolean<false> m_knownCompletePath;
 
@@ -135,7 +133,6 @@ private:
     stdext::boolean<false> m_pending;
 
     ItemPtr m_inventoryItems[Otc::LastInventorySlot];
-    Timer m_idleTimer;
 
     std::array<int, Otc::LastSkill> m_skillsLevel;
     std::array<int, Otc::LastSkill> m_skillsBaseLevel;

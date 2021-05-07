@@ -23,12 +23,12 @@
 #ifndef CLIENT_LUAVALUECASTS_H
 #define CLIENT_LUAVALUECASTS_H
 
-#include "global.h"
 #include <framework/luaengine/declarations.h>
 #include "game.h"
+#include "global.h"
 #include "outfit.h"
 
-// outfit
+ // outfit
 int push_luavalue(const Outfit& outfit);
 bool luavalue_cast(int index, Outfit& outfit);
 

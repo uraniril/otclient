@@ -20,125 +20,136 @@
  * THE SOFTWARE.
  */
 
-#include "lightview.h"
-#include "mapview.h"
 #include <framework/graphics/framebuffer.h>
 #include <framework/graphics/framebuffermanager.h>
-#include <framework/graphics/painter.h>
 #include <framework/graphics/image.h>
+#include <framework/graphics/painter.h>
+#include "lightview.h"
+#include "mapview.h"
+#include "map.h"
 
-enum {
-    MAX_LIGHT_INTENSITY = 8,
-    MAX_AMBIENT_LIGHT_INTENSITY = 255
-};
-
-LightView::LightView()
+LightView::LightView(const MapViewPtr& mapView)
 {
+    m_mapView = mapView;
     m_lightbuffer = g_framebuffers.createFrameBuffer();
-    m_lightTexture = generateLightBubble(0.1f);
-    m_blendEquation = Painter::BlendEquation_Add;
-    reset();
+
+    generateLightTexture();
+    generateShadeTexture();
+
+    resize();
 }
 
-TexturePtr LightView::generateLightBubble(float centerFactor)
+void LightView::generateLightTexture()
 {
-    int bubbleRadius = 256;
-    int centerRadius = bubbleRadius * centerFactor;
-    int bubbleDiameter = bubbleRadius * 2;
-    ImagePtr lightImage = ImagePtr(new Image(Size(bubbleDiameter, bubbleDiameter)));
+    float brightnessIntensity = 1.3f,
+        centerFactor = .0f;
 
-    for(int x = 0; x < bubbleDiameter; x++) {
-        for(int y = 0; y < bubbleDiameter; y++) {
-            float radius = std::sqrt((bubbleRadius - x)*(bubbleRadius - x) + (bubbleRadius - y)*(bubbleRadius - y));
-            float intensity = stdext::clamp<float>((bubbleRadius - radius) / (float)(bubbleRadius - centerRadius), 0.0f, 1.0f);
+    const uint16 bubbleRadius = 256,
+        centerRadius = bubbleRadius * centerFactor,
+        bubbleDiameter = bubbleRadius * 2;
+
+    ImagePtr lightImage = ImagePtr(new Image(Size(bubbleDiameter, bubbleDiameter)));
+    for(int_fast16_t x = -1; ++x < bubbleDiameter;) {
+        for(int_fast16_t y = -1; ++y < bubbleDiameter;) {
+            const float radius = std::sqrt((bubbleRadius - x) * (bubbleRadius - x) + (bubbleRadius - y) * (bubbleRadius - y));
+            float intensity = stdext::clamp<float>((bubbleRadius - radius) / static_cast<float>(bubbleRadius - centerRadius), .0f, 1.0f);
 
             // light intensity varies inversely with the square of the distance
-            intensity = intensity * intensity;
-            uint8_t colorByte = intensity * 0xff;
+            const uint8_t colorByte = std::min<int16>((intensity * intensity * brightnessIntensity) * 0xff, 0xff);
 
-            uint8_t pixel[4] = {colorByte,colorByte,colorByte,0xff};
+            uint8_t pixel[4] = { 0xff, 0xff, 0xff, colorByte };
             lightImage->setPixel(x, y, pixel);
         }
     }
 
-    TexturePtr tex = TexturePtr(new Texture(lightImage, true));
-    tex->setSmooth(true);
-    return tex;
+    m_lightTexture = TexturePtr(new Texture(lightImage));
+    m_lightTexture->setSmooth(true);
 }
 
-void LightView::reset()
+void LightView::generateShadeTexture()
 {
-    m_lightMap.clear();
-}
-
-void LightView::setGlobalLight(const Light& light)
-{
-    m_globalLight = light;
-}
-
-void LightView::addLightSource(const Point& center, float scaleFactor, const Light& light)
-{
-    int intensity = std::min<int>(light.intensity, MAX_LIGHT_INTENSITY);
-    int radius = intensity * Otc::TILE_PIXELS * scaleFactor;
-
-    Color color = Color::from8bit(light.color);
-    float brightness = 0.5f + (intensity/(float)MAX_LIGHT_INTENSITY)*0.5f;
-
-    color.setRed(color.rF() * brightness);
-    color.setGreen(color.gF() * brightness);
-    color.setBlue(color.bF() * brightness);
-
-    if(m_blendEquation == Painter::BlendEquation_Add && !m_lightMap.empty()) {
-        LightSource prevSource = m_lightMap.back();
-        if(prevSource.center == center && prevSource.color == color && prevSource.radius == radius)
-            return;
+    const uint16 diameter = 10;
+    const ImagePtr image = ImagePtr(new Image(Size(diameter, diameter)));
+    for(int_fast16_t x = -1; ++x < diameter;) {
+        for(int_fast16_t y = -1; ++y < diameter;) {
+            const uint8 alpha = x == 0 || y == 0 || x == diameter - 1 || y == diameter - 1 ? 0 : 0xff;
+            uint8_t pixel[4] = { 0xff, 0xff, 0xff, alpha };
+            image->setPixel(x, y, pixel);
+        }
     }
 
-    LightSource source;
-    source.center = center;
-    source.color = color;
-    source.radius = radius;
-    m_lightMap.push_back(source);
+    m_shadeTexture = TexturePtr(new Texture(image));
+    m_shadeTexture->setSmooth(true);
 }
 
-void LightView::drawGlobalLight(const Light& light)
+void LightView::addLightSource(const Point& pos, const Light& light)
 {
-    Color color = Color::from8bit(light.color);
-    float brightness = light.intensity / (float)MAX_AMBIENT_LIGHT_INTENSITY;
-    color.setRed(color.rF() * brightness);
-    color.setGreen(color.gF() * brightness);
-    color.setBlue(color.bF() * brightness);
-    g_painter->setColor(color);
-    g_painter->drawFilledRect(Rect(0,0,m_lightbuffer->getSize()));
+    const uint16 radius = light.intensity * Otc::TILE_PIXELS * m_mapView->m_scaleFactor;
+
+    auto& lights = m_lights[m_currentFloor];
+    if(!lights.empty()) {
+        auto& prevLight = lights.back();
+        if(prevLight.pos == pos && prevLight.color == light.color) {
+            prevLight.radius = std::max<uint16>(prevLight.radius, radius);
+            return;
+        }
+    }
+
+    lights.push_back(LightSource{ pos , light.color, radius, light.brightness });
 }
 
-void LightView::drawLightSource(const Point& center, const Color& color, int radius)
+void LightView::setShade(const Point& point)
 {
-    // debug draw
-    //radius /= 16;
-
-    Rect dest = Rect(center - Point(radius, radius), Size(radius*2,radius*2));
-    g_painter->setColor(color);
-    g_painter->drawTexturedRect(dest, m_lightTexture);
+    size_t index = (m_mapView->m_drawDimension.width() * (point.y / m_mapView->m_tileSize)) + (point.x / m_mapView->m_tileSize);
+    if(index >= m_shades.size()) return;
+    m_shades[index] = ShadeBlock{ m_currentFloor, point };
 }
 
-void LightView::resize(const Size& size)
+void LightView::drawLights()
 {
-    m_lightbuffer->resize(size);
+    const auto& shadeBase = std::make_pair<Point, Size>(Point(m_mapView->m_tileSize / 4.8), Size(m_mapView->m_tileSize * 1.4));
+
+    g_painter->setColor(m_globalLightColor);
+    g_painter->drawFilledRect(m_mapView->m_rectDimension);
+    for(int_fast8_t z = m_mapView->m_floorMax; z >= m_mapView->m_floorMin; --z) {
+        if(z < m_mapView->m_floorMax) {
+            g_painter->setColor(m_globalLightColor);
+            for(auto& shade : m_shades) {
+                if(shade.floor != z) continue;
+                shade.floor = -1;
+
+                g_painter->drawTexturedRect(Rect(shade.pos - shadeBase.first, shadeBase.second), m_shadeTexture);
+            }
+        }
+
+        auto& lights = m_lights[z];
+        std::sort(lights.begin(), lights.end(), orderLightComparator);
+        for(LightSource& light : lights) {
+            g_painter->setColor(Color::from8bit(light.color, light.brightness));
+            g_painter->drawTexturedRect(Rect(light.pos - Point(light.radius), Size(light.radius * 2)), m_lightTexture);
+        }
+        lights.clear();
+    }
+}
+
+void LightView::resize()
+{
+    m_lightbuffer->resize(m_mapView->m_frameCache.tile->getSize());
+    m_shades.resize(m_mapView->m_drawDimension.area());
 }
 
 void LightView::draw(const Rect& dest, const Rect& src)
 {
-    g_painter->saveAndResetState();
-    m_lightbuffer->bind();
-    g_painter->setCompositionMode(Painter::CompositionMode_Replace);
-    drawGlobalLight(m_globalLight);
-    g_painter->setBlendEquation(m_blendEquation);
-    g_painter->setCompositionMode(Painter::CompositionMode_Add);
-    for(const LightSource& source : m_lightMap)
-        drawLightSource(source.center, source.color, source.radius);
-    m_lightbuffer->release();
+    // draw light, only if there is darkness
+    if(!isDark()) return;
+
+    if(m_lightbuffer->canUpdate()) {
+        m_lightbuffer->bind();
+        drawLights();
+        m_lightbuffer->release();
+    }
+
     g_painter->setCompositionMode(Painter::CompositionMode_Light);
     m_lightbuffer->draw(dest, src);
-    g_painter->restoreSavedState();
+    g_painter->resetCompositionMode();
 }

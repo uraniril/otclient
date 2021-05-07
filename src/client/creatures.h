@@ -23,30 +23,30 @@
 #ifndef CREATURES_H
 #define CREATURES_H
 
-#include "declarations.h"
 #include <framework/luaengine/luaobject.h>
+#include "declarations.h"
 #include "outfit.h"
 
 enum CreatureAttr : uint8
 {
-    CreatureAttrPosition  = 0,
-    CreatureAttrName      = 1,
-    CreatureAttrOutfit    = 2,
+    CreatureAttrPosition = 0,
+    CreatureAttrName = 1,
+    CreatureAttrOutfit = 2,
     CreatureAttrSpawnTime = 3,
-    CreatureAttrDir       = 4,
-    CreatureAttrRace      = 5
+    CreatureAttrDir = 4,
+    CreatureAttrRace = 5
 };
 
 enum CreatureRace : uint8
 {
-    CreatureRaceNpc     = 0,
+    CreatureRaceNpc = 0,
     CreatureRaceMonster = 1
 };
 
 enum SpawnAttr : uint8
 {
-    SpawnAttrRadius  = 0,
-    SpawnAttrCenter  = 1,
+    SpawnAttrRadius = 0,
+    SpawnAttrCenter = 1,
 };
 
 class Spawn : public LuaObject
@@ -55,7 +55,7 @@ public:
     Spawn() = default;
     Spawn(int32 radius) { setRadius(radius); }
 
-    void setRadius(int32 r) { m_attribs.set(SpawnAttrRadius, r) ;}
+    void setRadius(int32 r) { m_attribs.set(SpawnAttrRadius, r); }
     int32 getRadius() { return m_attribs.get<int32>(SpawnAttrRadius); }
 
     void setCenterPos(const Position& pos) { m_attribs.set(SpawnAttrCenter, pos); }
@@ -72,7 +72,7 @@ protected:
 
 private:
     stdext::dynamic_storage<uint8> m_attribs;
-    std::unordered_map<Position, CreatureTypePtr, PositionHasher> m_creatures;
+    std::unordered_map<Position, CreatureTypePtr, Position::Hasher> m_creatures;
     friend class CreatureManager;
 };
 
@@ -137,7 +137,7 @@ protected:
 
 private:
     std::vector<CreatureTypePtr> m_creatures;
-    std::unordered_map<Position, SpawnPtr, PositionHasher> m_spawns;
+    std::unordered_map<Position, SpawnPtr, Position::Hasher> m_spawns;
     stdext::boolean<false> m_loaded, m_spawnLoaded;
     CreatureTypePtr m_nullCreature;
 };

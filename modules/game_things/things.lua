@@ -18,13 +18,15 @@ function isLoaded()
 end
 
 function load()
+  local version = g_game.getClientVersion()
+
   local datPath, sprPath
   if filename then
-    datPath = resolvepath('/things/1231/')
-    sprPath = resolvepath('/things/1231/')
+    datPath = resolvepath('/things/' .. filename)
+    sprPath = resolvepath('/things/' .. filename)
   else
-    datPath = resolvepath('/things/1231/Tibia.dat')
-    sprPath = resolvepath('/things/1231/Tibia.spr')
+    datPath = resolvepath('/things/' .. version .. '/Tibia')
+    sprPath = resolvepath('/things/' .. version .. '/Tibia')
   end
 
   local errorMessage = ''

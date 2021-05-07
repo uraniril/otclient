@@ -23,10 +23,21 @@
 #ifndef THING_H
 #define THING_H
 
+#include <framework/graphics/framebuffer.h>
+#include <framework/luaengine/luaobject.h>
 #include "declarations.h"
 #include "thingtype.h"
 #include "thingtypemanager.h"
-#include <framework/luaengine/luaobject.h>
+
+struct Highlight {
+    int fadeLevel;
+    Color rgbColor = Color::alpha;
+    ThingPtr thing;
+    ScheduledEventPtr listeningEvent;
+    stdext::boolean<false> enabled;
+    stdext::boolean<false> update;
+    stdext::boolean<false> invertedColorSelection;
+};
 
 // @bindclass
 #pragma pack(push,1) // disable memory alignment
@@ -34,11 +45,13 @@ class Thing : public LuaObject
 {
 public:
     Thing();
-    virtual ~Thing() { }
+    virtual ~Thing() {}
+    virtual void draw(const Point& /*dest*/, float /*scaleFactor*/, bool /*animate*/, const Highlight& /*highLight*/, int /*frameFlag*/ = Otc::FUpdateThing, LightView* /*lightView*/ = nullptr) {}
+    virtual void setId(uint32 /*id*/) {}
 
-    virtual void draw(const Point& /*dest*/, float /*scaleFactor*/, bool /*animate*/, LightView* /*lightView*/ = nullptr) { }
+    void schedulePainting(uint16_t delay = FrameBuffer::MIN_TIME_UPDATE);
+    void cancelScheduledPainting();
 
-    virtual void setId(uint32 /*id*/) { }
     void setPosition(const Position& position);
 
     virtual uint32 getId() { return 0; }
@@ -48,6 +61,7 @@ public:
     ContainerPtr getParentContainer();
     int getStackPos();
 
+    virtual int getAnimationInterval() { return 0; }
     virtual bool isItem() { return false; }
     virtual bool isEffect() { return false; }
     virtual bool isMissile() { return false; }
@@ -61,10 +75,11 @@ public:
 
     // type shortcuts
     virtual const ThingTypePtr& getThingType();
-    virtual ThingType *rawGetThingType();
+    virtual ThingType* rawGetThingType();
     Size getSize() { return rawGetThingType()->getSize(); }
     int getWidth() { return rawGetThingType()->getWidth(); }
     int getHeight() { return rawGetThingType()->getHeight(); }
+    int getRealSize() { return rawGetThingType()->getRealSize(); }
     virtual Point getDisplacement() { return rawGetThingType()->getDisplacement(); }
     virtual int getDisplacementX() { return rawGetThingType()->getDisplacementX(); }
     virtual int getDisplacementY() { return rawGetThingType()->getDisplacementY(); }
@@ -74,11 +89,13 @@ public:
     int getNumPatternY() { return rawGetThingType()->getNumPatternY(); }
     int getNumPatternZ() { return rawGetThingType()->getNumPatternZ(); }
     int getAnimationPhases() { return rawGetThingType()->getAnimationPhases(); }
+    bool hasAnimationPhases() { return rawGetThingType()->getAnimationPhases() > 1; }
     AnimatorPtr getAnimator() { return rawGetThingType()->getAnimator(); }
     AnimatorPtr getIdleAnimator() { return rawGetThingType()->getIdleAnimator(); }
     int getGroundSpeed() { return rawGetThingType()->getGroundSpeed(); }
     int getMaxTextLength() { return rawGetThingType()->getMaxTextLength(); }
-    Light getLight() { return rawGetThingType()->getLight(); }
+    virtual Light getLight() { return rawGetThingType()->getLight(); }
+    virtual bool hasLight() { return rawGetThingType()->hasLight(); }
     int getMinimapColor() { return rawGetThingType()->getMinimapColor(); }
     int getLensHelp() { return rawGetThingType()->getLensHelp(); }
     int getClothSlot() { return rawGetThingType()->getClothSlot(); }
@@ -87,7 +104,9 @@ public:
     bool isGroundBorder() { return rawGetThingType()->isGroundBorder(); }
     bool isOnBottom() { return rawGetThingType()->isOnBottom(); }
     bool isOnTop() { return rawGetThingType()->isOnTop(); }
-    bool isContainer() { return rawGetThingType()->isContainer(); }
+    bool isCommon() { return !isGround() && !isGroundBorder() && !isOnTop() && !isCreature() && !isOnBottom(); }
+    bool isGroundOrBorder() { return isGround() || isGroundBorder(); }
+    virtual bool isContainer() { return rawGetThingType()->isContainer(); }
     bool isStackable() { return rawGetThingType()->isStackable(); }
     bool isForceUse() { return rawGetThingType()->isForceUse(); }
     bool isMultiUse() { return rawGetThingType()->isMultiUse(); }
@@ -98,6 +117,7 @@ public:
     bool isSplash() { return rawGetThingType()->isSplash(); }
     bool isNotWalkable() { return rawGetThingType()->isNotWalkable(); }
     bool isNotMoveable() { return rawGetThingType()->isNotMoveable(); }
+    bool isMoveable() { return !rawGetThingType()->isNotMoveable(); }
     bool blockProjectile() { return rawGetThingType()->blockProjectile(); }
     bool isNotPathable() { return rawGetThingType()->isNotPathable(); }
     bool isPickupable() { return rawGetThingType()->isPickupable(); }
@@ -105,7 +125,6 @@ public:
     bool isHookSouth() { return rawGetThingType()->isHookSouth(); }
     bool isHookEast() { return rawGetThingType()->isHookEast(); }
     bool isRotateable() { return rawGetThingType()->isRotateable(); }
-    bool hasLight() { return rawGetThingType()->hasLight(); }
     bool isDontHide() { return rawGetThingType()->isDontHide(); }
     bool isTranslucent() { return rawGetThingType()->isTranslucent(); }
     bool hasDisplacement() { return rawGetThingType()->hasDisplacement(); }
@@ -122,15 +141,27 @@ public:
     bool isWrapable() { return rawGetThingType()->isWrapable(); }
     bool isUnwrapable() { return rawGetThingType()->isUnwrapable(); }
     bool isTopEffect() { return rawGetThingType()->isTopEffect(); }
+    bool hasAction() { return rawGetThingType()->hasAction(); }
+    bool isOpaque() { return rawGetThingType()->isOpaque(); }
+    bool isTopGround() { return isGround() && !isFullGround() && blockProjectile() && getWidth() != 1 && getHeight() != 1; }
+    bool isTall(const bool useRealSize = false) { return rawGetThingType()->isTall(useRealSize); }
+
+    void canDraw(bool canDraw) { m_canDraw = canDraw; }
+    bool canDraw()  const { return m_canDraw; }
+
     MarketData getMarketData() { return rawGetThingType()->getMarketData(); }
 
-    virtual void onPositionChange(const Position& /*newPos*/, const Position& /*oldPos*/) { }
-    virtual void onAppear() { }
-    virtual void onDisappear() { }
+    virtual void onPositionChange(const Position& /*newPos*/, const Position& /*oldPos*/) {}
+    virtual void onAppear() {}
+    virtual void onDisappear() {}
 
 protected:
     Position m_position;
     uint16 m_datId;
+
+private:
+    stdext::boolean<true> m_canDraw;
+
 };
 #pragma pack(pop)
 

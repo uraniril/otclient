@@ -23,12 +23,12 @@
 #ifndef TILE_H
 #define TILE_H
 
-#include "declarations.h"
-#include "mapview.h"
-#include "effect.h"
-#include "creature.h"
-#include "item.h"
 #include <framework/luaengine/luaobject.h>
+#include "creature.h"
+#include "declarations.h"
+#include "effect.h"
+#include "item.h"
+#include "mapview.h"
 
 enum tileflags_t : uint32
 {
@@ -62,16 +62,22 @@ public:
 
     Tile(const Position& position);
 
-    void draw(const Point& dest, float scaleFactor, int drawFlags, LightView *lightView = nullptr);
+    void drawStart(const MapViewPtr& mapView);
+    void drawEnd(const MapViewPtr& mapView);
+    void onAddVisibleTileList(const MapViewPtr& mapView);
+    void draw(const Point& dest, float scaleFactor, int frameFlags, LightView* lightView = nullptr);
+    void drawGround(const Point& dest, float scaleFactor, int frameFlags, LightView* lightView = nullptr);
+    void drawBottom(const Point& dest, float scaleFactor, int frameFlags, LightView* lightView = nullptr);
+    void drawTop(const Point& dest, float scaleFactor, int frameFlags, LightView* lightView = nullptr);
+    void drawThing(const ThingPtr& thing, const Point& dest, float scaleFactor, bool animate, int frameFlag, LightView* lightView);
 
-public:
     void clean();
 
     void addWalkingCreature(const CreaturePtr& creature);
     void removeWalkingCreature(const CreaturePtr& creature);
 
     void addThing(const ThingPtr& thing, int stackPos);
-    bool removeThing(ThingPtr thing);
+    bool removeThing(const ThingPtr& thing);
     ThingPtr getThing(int stackPos);
     EffectPtr getEffect(uint16 id);
     bool hasThing(const ThingPtr& thing);
@@ -80,16 +86,17 @@ public:
 
     ThingPtr getTopLookThing();
     ThingPtr getTopUseThing();
-    CreaturePtr getTopCreature();
+    CreaturePtr getTopCreature(const bool checkAround = false);
     ThingPtr getTopMoveThing();
     ThingPtr getTopMultiUseThing();
 
-    const Position& getPosition() { return m_position; }
     int getDrawElevation() { return m_drawElevation; }
-    std::vector<ItemPtr> getItems();
+    const Position& getPosition() { return m_position; }
+    const std::vector<CreaturePtr>& getWalkingCreatures() { return m_walkingCreatures; }
+    const std::vector<ThingPtr>& getThings() { return m_things; }
     std::vector<CreaturePtr> getCreatures();
-    std::vector<CreaturePtr> getWalkingCreatures() { return m_walkingCreatures; }
-    std::vector<ThingPtr> getThings() { return m_things; }
+
+    std::vector<ItemPtr> getItems();
     ItemPtr getGround();
     int getGroundSpeed();
     uint8 getMinimapColorByte();
@@ -103,15 +110,21 @@ public:
     bool isClickable();
     bool isEmpty();
     bool isDrawable();
+    bool isBorder() { return m_isBorder; };
+    bool hasCreature();
+    bool hasTallThings();
+    bool hasWideThings();
     bool hasTranslucentLight() { return m_flags & TILESTATE_TRANSLUECENT_LIGHT; }
     bool mustHookSouth();
     bool mustHookEast();
-    bool hasCreature();
     bool limitsFloorsView(bool isFreeView = false);
     bool canErase();
+
     int getElevation() const;
     bool hasElevation(int elevation = 1);
     void overwriteMinimapColor(uint8 color) { m_minimapColor = color; }
+
+    bool isCompletelyCovered(int8 firstFloor = -1);
 
     void remFlag(uint32 flag) { m_flags &= ~flag; }
     void setFlag(uint32 flag) { m_flags |= flag; }
@@ -123,24 +136,85 @@ public:
     uint32 getHouseId() { return m_houseId; }
     bool isHouseTile() { return m_houseId != 0 && (m_flags & TILESTATE_HOUSE) == TILESTATE_HOUSE; }
 
-    void select() { m_selected = true; }
-    void unselect() { m_selected = false; }
-    bool isSelected() { return m_selected; }
+    void select();
+    void unselect();
+    bool isSelected() { return m_highlight.enabled; }
 
     TilePtr asTile() { return static_self_cast<Tile>(); }
 
+    bool hasDisplacement() { return m_countFlag.hasDisplacement > 0; }
+    bool hasLight();
+    void analyzeThing(const ThingPtr& thing, bool add);
+
+    bool hasGroundToDraw() const { return m_countFlag.hasGroundOrBorder; }
+    bool hasBottomToDraw() const { return m_countFlag.hasBottomItem || m_countFlag.hasCommonItem || m_countFlag.hasCreature || !m_walkingCreatures.empty(); }
+    bool hasTopToDraw() const { return m_countFlag.hasTopItem || !m_effects.empty(); }
+
+    bool isTopGround() const { return m_countFlag.hasTopGround > 0; }
+
+    void cancelScheduledPainting();
+
+    bool hasBorderShadowColor() { return m_borderShadowColor != Color::white; }
+
+    bool isCovered() { return m_covered; };
+    bool blockLight() { return m_countFlag.hasNoWalkableEdge && !hasGround(); };
+    bool hasGround() { return getGround() != nullptr; };
+    const std::array<Position, 8> getPositionsAround() { return m_positionsAround; }
+
 private:
+    struct CountFlag {
+        int fullGround = 0;
+        int notWalkable = 0;
+        int notPathable = 0;
+        int notSingleDimension = 0;
+        int blockProjectile = 0;
+        int totalElevation = 0;
+        int hasDisplacement = 0;
+        int isNotPathable = 0;
+        int elevation = 0;
+        int opaque = 0;
+        int hasLight = 0;
+        int hasTallThings = 0;
+        int hasWideThings = 0;
+        int hasHookEast = 0;
+        int hasHookSouth = 0;
+        int hasTopGround = 0;
+        int hasNoWalkableEdge = 0;
+        int hasCreature = 0;
+        int hasCommonItem = 0;
+        int hasTopItem = 0;
+        int hasBottomItem = 0;
+        int hasGroundOrBorder = 0;
+    };
+
+    void drawCreature(const Point& dest, float scaleFactor, int frameFlags, LightView* lightView = nullptr);
+    void checkForDetachableThing();
     void checkTranslucentLight();
 
-    stdext::packed_vector<CreaturePtr> m_walkingCreatures;
-    stdext::packed_vector<EffectPtr> m_effects; // leave this outside m_things because it has no stackpos.
-    stdext::packed_vector<ThingPtr> m_things;
+    Color m_shadowColor;
     Position m_position;
     uint8 m_drawElevation;
     uint8 m_minimapColor;
     uint32 m_flags, m_houseId;
 
-    stdext::boolean<false> m_selected;
+    std::array<Position, 8> m_positionsAround;
+
+    std::vector<CreaturePtr> m_walkingCreatures;
+    std::vector<ThingPtr> m_things;
+    std::vector<EffectPtr> m_effects;
+
+    std::vector<ItemPtr> m_animatedItems;
+
+    CountFlag m_countFlag;
+    Highlight m_highlight;
+
+    Color m_borderShadowColor;
+
+    stdext::boolean<false> m_covered,
+        m_completelyCovered,
+        m_isBorder;
+
+
 };
 
 #endif

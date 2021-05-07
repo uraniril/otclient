@@ -119,8 +119,8 @@ void PlatformWindow::processKeyUp(Fw::Key keyCode)
         return;
     } else if(keyCode == Fw::KeyNumLock) {
         for(uchar k = Fw::KeyNumpad0; k <= Fw::KeyNumpad9; ++k) {
-            if(m_keysState[(Fw::Key)k])
-                processKeyUp((Fw::Key)k);
+            if(m_keysState[static_cast<Fw::Key>(k)])
+                processKeyUp(static_cast<Fw::Key>(k));
         }
     }
 
@@ -150,7 +150,7 @@ void PlatformWindow::releaseAllKeys()
 
     m_inputEvent.keyboardModifiers = 0;
 
-    for(auto &mouseButtonState: m_mouseButtonStates)
+    for(auto& mouseButtonState : m_mouseButtonStates)
         mouseButtonState = false;
 }
 

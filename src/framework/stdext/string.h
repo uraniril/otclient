@@ -38,7 +38,7 @@ template<typename T> T from_string(const std::string& str, T def = T()) { return
 /// Resolve a file path by combining sourcePath with filePath
 std::string resolve_path(const std::string& filePath, std::string sourcePath);
 /// Get current date and time in a std::string
-std::string date_time_string();
+std::string date_time_string(const char* format = "%b %d %Y %H:%M:%S");
 
 std::string dec_to_hex(uint64_t num);
 uint64_t hex_to_dec(const std::string& str);
@@ -63,11 +63,12 @@ std::string utf16_to_latin1(const std::wstring& src);
 std::wstring latin1_to_utf16(const std::string& src);
 #endif
 
+// always returns at least one element in vector
 std::vector<std::string> split(const std::string& str, const std::string& separators = " ");
 template<typename T> std::vector<T> split(const std::string& str, const std::string& separators = " ") {
     std::vector<std::string> splitted = split(str, separators);
     std::vector<T> results(splitted.size());
-    for(uint i=0;i<splitted.size();++i)
+    for(uint i = 0; i < splitted.size(); ++i)
         results[i] = safe_cast<T>(splitted[i]);
     return results;
 }

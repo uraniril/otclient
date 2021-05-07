@@ -42,7 +42,7 @@ class House : public LuaObject
 {
 public:
     House();
-    House(uint32 hId, const std::string& name = "", const Position& pos=Position());
+    House(uint32 hId, const std::string& name = "", const Position& pos = Position());
     ~House() { m_tiles.clear(); }
 
     void setTile(const TilePtr& tile);
@@ -91,7 +91,7 @@ public:
     void addHouse(const HousePtr& house);
     void removeHouse(uint32 houseId);
     HousePtr getHouse(uint32 houseId);
-    HousePtr getHouseByName(std::string name);
+    HousePtr getHouseByName(const std::string& name);
 
     void load(const std::string& fileName);
     void save(const std::string& fileName);

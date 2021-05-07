@@ -24,19 +24,24 @@
 #include "graphics.h"
 #include "texture.h"
 
+#include <framework/core/eventdispatcher.h>
 #include <framework/platform/platformwindow.h>
 #include <framework/core/application.h>
+
+#include <client/features.h>
 
 uint FrameBuffer::boundFbo = 0;
 
 FrameBuffer::FrameBuffer()
 {
     internalCreate();
+    m_minTimeUpdate = MIN_TIME_UPDATE;
 }
 
 void FrameBuffer::internalCreate()
 {
     m_prevBoundFbo = 0;
+    m_requestAmount = 0;
     m_fbo = 0;
     if(g_graphics.canUseFBO()) {
         glGenFramebuffers(1, &m_fbo);
@@ -92,22 +97,33 @@ void FrameBuffer::release()
 {
     internalRelease();
     g_painter->restoreSavedState();
+
+
+    m_forceUpdate = false;
+    m_lastRenderedTime.restart();
+
+#if SCHEDULE_PAINTING    
+    m_requestAmount = 0;
+#endif
 }
 
 void FrameBuffer::draw()
 {
-    Rect rect(0,0, getSize());
+    if(!m_drawable) return;
+    Rect rect(0, 0, getSize());
     g_painter->drawTexturedRect(rect, m_texture, rect);
 }
 
 void FrameBuffer::draw(const Rect& dest, const Rect& src)
 {
+    if(!m_drawable) return;
     g_painter->drawTexturedRect(dest, m_texture, src);
 }
 
 void FrameBuffer::draw(const Rect& dest)
 {
-    g_painter->drawTexturedRect(dest, m_texture, Rect(0,0, getSize()));
+    if(!m_drawable) return;
+    g_painter->drawTexturedRect(dest, m_texture, Rect(0, 0, getSize()));
 }
 
 void FrameBuffer::internalBind()
@@ -138,7 +154,7 @@ void FrameBuffer::internalRelease()
         // restore screen original content
         if(m_backuping) {
             glDisable(GL_BLEND);
-            g_painter->setColor(Color::white);
+            g_painter->resetColor();
             g_painter->drawTexturedRect(screenRect, m_screenBackup, screenRect);
             glEnable(GL_BLEND);
         }
@@ -152,5 +168,75 @@ Size FrameBuffer::getSize()
         return Size(std::min<int>(m_texture->getWidth(), g_window.getWidth()),
                     std::min<int>(m_texture->getHeight(), g_window.getHeight()));
     }
+
     return m_texture->getSize();
+}
+
+bool FrameBuffer::canUpdate()
+{
+    if(SCHEDULE_PAINTING && m_schedulePaintingEnabled)
+        return (m_forceUpdate || ((m_requestAmount > 0) && (m_lastRenderedTime.ticksElapsed() >= flushTime())));
+    else
+        return (m_forceUpdate || m_lastRenderedTime.ticksElapsed() >= flushTime());
+}
+
+void FrameBuffer::update()
+{
+    if(SCHEDULE_PAINTING && m_schedulePaintingEnabled)
+        ++m_requestAmount;
+}
+
+uint16_t FrameBuffer::flushTime()
+{
+#if FLUSH_CONTROL_FOR_RENDERING == 1
+    return std::min<uint16_t>(m_minTimeUpdate + std::floor<uint16_t>(m_requestAmount / m_minTimeUpdate), m_minTimeUpdate * 3);
+#else
+    return m_minTimeUpdate;
+#endif
+}
+
+void FrameBuffer::schedulePainting(const uint16_t time)
+{
+    if(time == 0) return;
+
+    if(time == FORCE_UPDATE) {
+        m_forceUpdate = true;
+        return;
+    }
+
+    if(SCHEDULE_PAINTING == 0 || !m_schedulePaintingEnabled) return;
+
+    if(time <= m_minTimeUpdate) {
+        update();
+        return;
+    }
+
+    auto& schedule = m_schedules[time];
+    if(schedule.first == 0) {
+        schedule.second = g_dispatcher.cycleEvent([=]() {
+#if FORCE_ANIMATED_RENDERING == 1
+            m_forceUpdate = true;
+#else
+            update();
+#endif
+        }, time);
+    }
+
+    ++schedule.first;
+}
+
+void FrameBuffer::removeRenderingTime(const uint16_t time)
+{
+#if SCHEDULE_PAINTING
+    auto& schedule = m_schedules[time];
+    if(schedule.first == 0) return;
+
+    --schedule.first;
+    if(schedule.first == 0 && schedule.second) {
+        schedule.second->cancel();
+        schedule.second = nullptr;
+    }
+#else
+    time;
+#endif
 }

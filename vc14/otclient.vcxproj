@@ -76,6 +76,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);../src;</IncludePath>
+    <TargetName>$(ProjectName)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);../src;</IncludePath>
@@ -335,6 +336,7 @@
     <ClInclude Include="..\src\client\uiminimap.h" />
     <ClInclude Include="..\src\client\uiprogressrect.h" />
     <ClInclude Include="..\src\client\uisprite.h" />
+	<ClInclude Include="..\src\client\features.h" />
     <ClInclude Include="..\src\framework\const.h" />
     <ClInclude Include="..\src\framework\core\adaptativeframecounter.h" />
     <ClInclude Include="..\src\framework\core\application.h" />
@@ -436,7 +438,6 @@
     <ClInclude Include="..\src\framework\stdext\net.h" />
     <ClInclude Include="..\src\framework\stdext\packed_any.h" />
     <ClInclude Include="..\src\framework\stdext\packed_storage.h" />
-    <ClInclude Include="..\src\framework\stdext\packed_vector.h" />
     <ClInclude Include="..\src\framework\stdext\shared_object.h" />
     <ClInclude Include="..\src\framework\stdext\shared_ptr.h" />
     <ClInclude Include="..\src\framework\stdext\stdext.h" />

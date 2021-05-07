@@ -1,11 +1,10 @@
 local defaultOptions = {
-  vsync = false,
+  vsync = true,
   showFps = false,
   showPing = false,
   fullscreen = false,
   classicControl = false,
   smartWalk = false,
-  dashWalk = false,
   autoChaseOverride = true,
   showStatusMessagesInConsole = true,
   showEventMessagesInConsole = true,
@@ -15,21 +14,27 @@ local defaultOptions = {
   showPrivateMessagesInConsole = true,
   showPrivateMessagesOnScreen = true,
   showLeftPanel = false,
-  foregroundFrameRate = 61,
   backgroundFrameRate = 201,
   painterEngine = 0,
   enableAudio = true,
   enableMusicSound = true,
   musicSoundVolume = 100,
   enableLights = true,
-  ambientLight = 25,
+  floorShadowing = ShadowFloor.Bottom,
+  drawViewportEdge = false,
+  floatingEffect = false,
+  ambientLight = 0,
   displayNames = true,
   displayHealth = true,
   displayMana = true,
   displayText = true,
   dontStretchShrink = false,
   turnDelay = 50,
-  hotkeyDelay = 50,
+  hotkeyDelay = 70,
+  crosshair = 'default',
+  enableHighlightMouseTarget = true,
+  antiAliasing = true,
+  renderScale = 100
 }
 
 local optionsWindow
@@ -41,6 +46,9 @@ local consolePanel
 local graphicsPanel
 local soundPanel
 local audioButton
+
+local crosshairCombobox
+local renderScaleCombobox
 
 local function setupGraphicsEngines()
   local enginesRadioGroup = UIRadioGroup.create()
@@ -78,18 +86,16 @@ local function setupGraphicsEngines()
       setOption('painterEngine', 2)
     end
   end
-
-  if not g_graphics.canCacheBackbuffer() then
-    graphicsPanel:getChildById('foregroundFrameRate'):disable()
-    graphicsPanel:getChildById('foregroundFrameRateLabel'):disable()
-  end
 end
 
 function init()
+  local _init = false
   for k,v in pairs(defaultOptions) do
     g_settings.setDefault(k, v)
     options[k] = v
   end
+
+  g_app.setForegroundPaneMaxFps(20)
 
   optionsWindow = g_ui.displayUI('options')
   optionsWindow:hide()
@@ -109,13 +115,48 @@ function init()
   graphicsPanel = g_ui.loadUI('graphics')
   optionsTabBar:addTab(tr('Graphics'), graphicsPanel, '/images/optionstab/graphics')
 
-  audioPanel = g_ui.loadUI('audio')
-  optionsTabBar:addTab(tr('Audio'), audioPanel, '/images/optionstab/audio')
+  soundPanel = g_ui.loadUI('audio')
+  optionsTabBar:addTab(tr('Audio'), soundPanel, '/images/optionstab/audio')
 
   optionsButton = modules.client_topmenu.addLeftButton('optionsButton', tr('Options'), '/images/topbuttons/options', toggle)
   audioButton = modules.client_topmenu.addLeftButton('audioButton', tr('Audio'), '/images/topbuttons/audio', function() toggleOption('enableAudio') end)
 
-  addEvent(function() setup() end)
+  crosshairCombobox = generalPanel:recursiveGetChildById('crosshair')
+
+  crosshairCombobox:addOption('Disabled', 'disabled')
+  crosshairCombobox:addOption('Default', 'default')
+  crosshairCombobox:addOption('Full', 'full')
+
+  crosshairCombobox.onOptionChange = function(comboBox, option)
+    setOption('crosshair', comboBox:getCurrentOption().data)
+  end
+
+  renderScaleCombobox = graphicsPanel:recursiveGetChildById('renderScale')
+
+  renderScaleCombobox:addOption('50%', 50)
+  renderScaleCombobox:addOption('75%', 75)
+  renderScaleCombobox:addOption('100%', 100)
+  renderScaleCombobox:addOption('150%', 150)
+  renderScaleCombobox:addOption('200%', 200)
+
+  renderScaleCombobox.onOptionChange = function(comboBox, option)
+    setOption('renderScale', comboBox:getCurrentOption().data)
+    if _init and comboBox:getCurrentOption().data > 100 then
+      displayInfoBox(tr('Warning'), tr('Rendering scale above 100%% will drop performance and visual bugs may occur.'))
+    end
+  end
+
+  floorShadowingComboBox= graphicsPanel:recursiveGetChildById('floorShadowing')
+  floorShadowingComboBox.onOptionChange = function(comboBox, option)
+    setOption('floorShadowing', floorShadowingComboBox:getCurrentOption().data)
+  end
+
+  floorShadowingComboBox:addOption('Disabled', ShadowFloor.Disabled)
+  floorShadowingComboBox:addOption('Bottom', ShadowFloor.Bottom)
+  floorShadowingComboBox:addOption('Upside', ShadowFloor.Upside)
+  floorShadowingComboBox:addOption('Both', ShadowFloor.Both)
+
+  addEvent(function() setup() _init = true end)
 end
 
 function terminate()
@@ -135,6 +176,8 @@ function setup()
       setOption(k, g_settings.getBoolean(k), true)
     elseif type(v) == 'number' then
       setOption(k, g_settings.getNumber(k), true)
+    elseif type(v) == 'string' then
+      setOption(k, g_settings.getString(k), true)
     end
   end
 end
@@ -190,17 +233,23 @@ function setOption(key, value, force)
   elseif key == 'fullscreen' then
     g_window.setFullscreen(value)
   elseif key == 'enableAudio' then
-    g_sounds.setAudioEnabled(value)
+    if g_sounds then
+      g_sounds.setAudioEnabled(value)
+    end
     if value then
       audioButton:setIcon('/images/topbuttons/audio')
     else
       audioButton:setIcon('/images/topbuttons/audio_mute')
     end
   elseif key == 'enableMusicSound' then
-    g_sounds.getChannel(SoundChannels.Music):setEnabled(value)
+    if g_sounds then
+      g_sounds.getChannel(SoundChannels.Music):setEnabled(value)
+    end
   elseif key == 'musicSoundVolume' then
-    g_sounds.getChannel(SoundChannels.Music):setGain(value/100)
-    audioPanel:getChildById('musicSoundVolumeLabel'):setText(tr('Music volume: %d', value))
+    if g_sounds then
+      g_sounds.getChannel(SoundChannels.Music):setGain(value/100)
+    end
+    soundPanel:getChildById('musicSoundVolumeLabel'):setText(tr('Music volume: %d', value))
   elseif key == 'showLeftPanel' then
     modules.game_interface.getLeftPanel():setOn(value)
   elseif key == 'backgroundFrameRate' then
@@ -208,11 +257,6 @@ function setOption(key, value, force)
     if value <= 0 or value >= 201 then text = 'max' v = 0 end
     graphicsPanel:getChildById('backgroundFrameRateLabel'):setText(tr('Game framerate limit: %s', text))
     g_app.setBackgroundPaneMaxFps(v)
-  elseif key == 'foregroundFrameRate' then
-    local text, v = value, value
-    if value <= 0 or value >= 61 then  text = 'max' v = 0 end
-    graphicsPanel:getChildById('foregroundFrameRateLabel'):setText(tr('Interface framerate limit: %s', text))
-    g_app.setForegroundPaneMaxFps(v)
   elseif key == 'enableLights' then
     gameMapPanel:setDrawLights(value and options['ambientLight'] < 100)
     graphicsPanel:getChildById('ambientLight'):setEnabled(value)
@@ -221,6 +265,10 @@ function setOption(key, value, force)
     graphicsPanel:getChildById('ambientLightLabel'):setText(tr('Ambient light: %s%%', value))
     gameMapPanel:setMinimumAmbientLight(value/100)
     gameMapPanel:setDrawLights(options['enableLights'] and value < 100)
+  elseif key == 'drawViewportEdge' then
+    gameMapPanel:setDrawViewportEdge(value)
+  elseif key == 'floatingEffect' then
+    g_map.setFloatingEffect(value)
   elseif key == 'painterEngine' then
     g_graphics.selectPainterEngine(value)
   elseif key == 'displayNames' then
@@ -239,6 +287,24 @@ function setOption(key, value, force)
     generalPanel:getChildById('turnDelayLabel'):setText(tr('Turn delay: %sms', value))
   elseif key == 'hotkeyDelay' then
     generalPanel:getChildById('hotkeyDelayLabel'):setText(tr('Hotkey delay: %sms', value))
+  elseif key == 'crosshair' then
+    local crossPath = '/images/game/crosshair/'
+    local newValue = value
+    if  newValue == 'disabled' then
+      newValue = nil
+    end
+    gameMapPanel:setCrosshairTexture(newValue and crossPath .. newValue or nil)
+    crosshairCombobox:setCurrentOptionByData(newValue, false)
+  elseif key == 'enableHighlightMouseTarget' then
+    gameMapPanel:setDrawHighlightTarget(value)
+  elseif key == 'floorShadowing' then
+    gameMapPanel:setFloorShadowingFlag(value)
+    floorShadowingComboBox:setCurrentOptionByData(value, false)
+  elseif key == 'antiAliasing' then
+    gameMapPanel:setAntiAliasing(value)
+  elseif key == 'renderScale' then
+    gameMapPanel:setRenderScale(value)
+    renderScaleCombobox:setCurrentOptionByData(value, false)
   end
 
   -- change value for keybind updates
@@ -264,6 +330,14 @@ end
 
 function addTab(name, panel, icon)
   optionsTabBar:addTab(name, panel, icon)
+end
+
+function removeTab(v)
+  if type(v) == "string" then
+    v = optionsTabBar:getTab(v)
+  end
+
+  optionsTabBar:removeTab(v)
 end
 
 function addButton(name, func, icon)

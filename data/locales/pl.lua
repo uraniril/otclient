@@ -412,7 +412,15 @@ locale = {
     ["Sorcerer"] = "Czarodziej",
     ["Druid"] = false,
     ["Paladin"] = "Paladyn",
-    ["Knight"] = "Rycerz"
+    ["Knight"] = "Rycerz",
+    ["Destination is out of range."] = "Destination is out of range.",
+	["Floor Shadowing"] = "Floor Shadowing",
+	["Draw Viewport Edge"] = "Draw Viewport Edge",
+	["Draw Floating Effects"] = "Draw Floating Effects",
+	["Light Version"] = "Light Version",
+	["Render Scale"] = "Render Scale",
+	["Warning"] = "Warning",
+	["Rendering scale above 100%% will drop performance and visual bugs may occur."] = "Rendering scale above 100%% will drop performance and visual bugs may occur."
   }
 }
 

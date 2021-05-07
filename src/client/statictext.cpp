@@ -21,11 +21,11 @@
  */
 
 #include "statictext.h"
-#include "map.h"
 #include <framework/core/clock.h>
 #include <framework/core/eventdispatcher.h>
-#include <framework/graphics/graphics.h>
 #include <framework/graphics/fontmanager.h>
+#include <framework/graphics/graphics.h>
+#include "map.h"
 
 StaticText::StaticText()
 {
@@ -37,15 +37,15 @@ StaticText::StaticText()
 
 void StaticText::drawText(const Point& dest, const Rect& parentRect)
 {
-    Size textSize = m_cachedText.getTextSize();
-    Rect rect = Rect(dest - Point(textSize.width() / 2, textSize.height()) + Point(20, 5), textSize);
+    const Size textSize = m_cachedText.getTextSize();
+    const Rect rect = Rect(dest - Point(textSize.width() / 2, textSize.height()) + Point(20, 5), textSize);
     Rect boundRect = rect;
     boundRect.bind(parentRect);
 
     // draw only if the real center is not too far from the parent center, or its a yell
     //if(g_map.isAwareOfPosition(m_position) || isYell()) {
-        g_painter->setColor(m_color);
-        m_cachedText.draw(boundRect);
+    g_painter->setColor(m_color);
+    m_cachedText.draw(boundRect);
     //}
 }
 
@@ -106,7 +106,7 @@ void StaticText::update()
 
 void StaticText::scheduleUpdate()
 {
-    int delay = std::max<int>(m_messages.front().second - g_clock.millis(), 0);
+    const int delay = std::max<int>(m_messages.front().second - g_clock.millis(), 0);
 
     auto self = asStaticText();
     m_updateEvent = g_dispatcher.scheduleEvent([self]() {
@@ -133,7 +133,7 @@ void StaticText::compose()
         text += " yells:\n";
         m_color = Color(239, 239, 0);
     } else if(m_mode == Otc::MessageMonsterSay || m_mode == Otc::MessageMonsterYell || m_mode == Otc::MessageSpell
-              || m_mode == Otc::MessageBarkLow || m_mode == Otc::MessageBarkLoud) {
+               || m_mode == Otc::MessageBarkLow || m_mode == Otc::MessageBarkLoud) {
         m_color = Color(254, 101, 0);
     } else if(m_mode == Otc::MessageNpcFrom || m_mode == Otc::MessageNpcFromStartBlock) {
         text += m_name;

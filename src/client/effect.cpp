@@ -21,69 +21,85 @@
  */
 
 #include "effect.h"
-#include "map.h"
-#include "game.h"
 #include <framework/core/eventdispatcher.h>
+#include "game.h"
+#include "map.h"
 
-void Effect::drawEffect(const Point& dest, float scaleFactor, bool animate, int offsetX, int offsetY, LightView *lightView)
+Effect::Effect() : m_timeToStartDrawing(0) {}
+
+void Effect::drawEffect(const Point& dest, float scaleFactor, int frameFlag, LightView* lightView)
 {
-    if(m_id == 0)
-        return;
+    if(m_id == 0) return;
 
-    int animationPhase = 0;
-    if(animate) {
-        if(g_game.getFeature(Otc::GameEnhancedAnimations)) {
-            // This requires a separate getPhaseAt method as using getPhase would make all magic effects use the same phase regardless of their appearance time
-            animationPhase = rawGetThingType()->getAnimator()->getPhaseAt(m_animationTimer.ticksElapsed());
-        } else {
-            // hack to fix some animation phases duration, currently there is no better solution
-            int ticks = EFFECT_TICKS_PER_FRAME;
-            if (m_id == 33) {
-                ticks <<= 2;
-            }
+    // It only starts to draw when the first effect as it is about to end.
+    if(m_animationTimer.ticksElapsed() < m_timeToStartDrawing) return;
 
-            animationPhase = std::min<int>((int)(m_animationTimer.ticksElapsed() / ticks), getAnimationPhases() - 1);
+    int animationPhase;
+
+    if(g_game.getFeature(Otc::GameEnhancedAnimations)) {
+        // This requires a separate getPhaseAt method as using getPhase would make all magic effects use the same phase regardless of their appearance time
+        animationPhase = rawGetThingType()->getAnimator()->getPhaseAt(m_animationTimer.ticksElapsed());
+    } else {
+        // hack to fix some animation phases duration, currently there is no better solution
+        int ticks = Otc::EFFECT_TICKS_PER_FRAME;
+        if(m_id == 33) {
+            ticks <<= 2;
         }
+
+        animationPhase = std::min<int>(static_cast<int>(m_animationTimer.ticksElapsed() / ticks), getAnimationPhases() - 1);
     }
 
-    int xPattern = offsetX % getNumPatternX();
-    if(xPattern < 0)
-        xPattern += getNumPatternX();
+    const int xPattern = m_position.x % getNumPatternX();
+    const int yPattern = m_position.y % getNumPatternY();
 
-    int yPattern = offsetY % getNumPatternY();
-    if(yPattern < 0)
-        yPattern += getNumPatternY();
-
-    rawGetThingType()->draw(dest, scaleFactor, 0, xPattern, yPattern, 0, animationPhase, lightView);
+    rawGetThingType()->draw(dest, scaleFactor, 0, xPattern, yPattern, 0, animationPhase, false, frameFlag, lightView);
 }
 
 void Effect::onAppear()
 {
     m_animationTimer.restart();
 
-    int duration = 0;
+    // Cache m_duration
+    getAnimationInterval();
+
+    // schedule removal
+    const auto self = asEffect();
+    g_dispatcher.scheduleEvent([self]() { g_map.removeThing(self); }, m_duration);
+}
+
+int Effect::getAnimationInterval()
+{
+    int ticksPerFrame;
     if(g_game.getFeature(Otc::GameEnhancedAnimations)) {
-        duration = getThingType()->getAnimator()->getTotalDuration();
+        m_duration = getThingType()->getAnimator()->getTotalDuration();
+
+        ticksPerFrame = getThingType()->getAnimator()->getAverageDuration();
     } else {
-        duration = EFFECT_TICKS_PER_FRAME;
+        m_duration = Otc::EFFECT_TICKS_PER_FRAME;
 
         // hack to fix some animation phases duration, currently there is no better solution
         if(m_id == 33) {
-            duration <<= 2;
+            m_duration <<= 2;
         }
 
-        duration *= getAnimationPhases();
+        ticksPerFrame = m_duration;
+
+        m_duration *= getAnimationPhases();
     }
 
-    // schedule removal
-    auto self = asEffect();
-    g_dispatcher.scheduleEvent([self]() { g_map.removeThing(self); }, duration);
+    return ticksPerFrame;
+}
+
+void Effect::waitFor(const EffectPtr& firstEffect)
+{
+    m_timeToStartDrawing = (firstEffect->m_duration * .6) - firstEffect->m_animationTimer.ticksElapsed();
 }
 
 void Effect::setId(uint32 id)
 {
     if(!g_things.isValidDatId(id, ThingCategoryEffect))
         id = 0;
+
     m_id = id;
 }
 
@@ -92,7 +108,7 @@ const ThingTypePtr& Effect::getThingType()
     return g_things.getThingType(m_id, ThingCategoryEffect);
 }
 
-ThingType *Effect::rawGetThingType()
+ThingType* Effect::rawGetThingType()
 {
     return g_things.rawGetThingType(m_id, ThingCategoryEffect);
 }

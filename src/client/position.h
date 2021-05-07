@@ -33,41 +33,42 @@
 class Position
 {
 public:
-    Position() : x(65535), y(65535), z(255) { }
-    Position(uint16 x, uint16 y, uint8 z) : x(x), y(y), z(z) { }
+    Position() : x(UINT16_MAX), y(UINT16_MAX), z(UINT8_MAX) {}
+    Position(int32 x, int32 y, uint8 z) : x(x), y(y), z(z) {}
 
-    Position(const Position &position) = default;
+    Position(const Position& position) = default;
 
-    Position translatedToDirection(Otc::Direction direction) {
+    Position translatedToDirection(Otc::Direction direction)
+    {
         Position pos = *this;
         switch(direction) {
         case Otc::North:
-            pos.y--;
+            --pos.y;
             break;
         case Otc::East:
-            pos.x++;
+            ++pos.x;
             break;
         case Otc::South:
-            pos.y++;
+            ++pos.y;
             break;
         case Otc::West:
-            pos.x--;
+            --pos.x;
             break;
         case Otc::NorthEast:
-            pos.x++;
-            pos.y--;
+            ++pos.x;
+            --pos.y;
             break;
         case Otc::SouthEast:
-            pos.x++;
-            pos.y++;
+            ++pos.x;
+            ++pos.y;
             break;
         case Otc::SouthWest:
-            pos.x--;
-            pos.y++;
+            --pos.x;
+            ++pos.y;
             break;
         case Otc::NorthWest:
-            pos.x--;
-            pos.y--;
+            --pos.x;
+            --pos.y;
             break;
         default:
             break;
@@ -75,36 +76,37 @@ public:
         return pos;
     }
 
-    Position translatedToReverseDirection(Otc::Direction direction) {
+    Position translatedToReverseDirection(Otc::Direction direction)
+    {
         Position pos = *this;
         switch(direction) {
         case Otc::North:
-            pos.y++;
+            ++pos.y;
             break;
         case Otc::East:
-            pos.x--;
+            --pos.x;
             break;
         case Otc::South:
-            pos.y--;
+            --pos.y;
             break;
         case Otc::West:
-            pos.x++;
+            ++pos.x;
             break;
         case Otc::NorthEast:
-            pos.x--;
-            pos.y++;
+            --pos.x;
+            ++pos.y;
             break;
         case Otc::SouthEast:
-            pos.x--;
-            pos.y--;
+            --pos.x;
+            --pos.y;
             break;
         case Otc::SouthWest:
-            pos.x++;
-            pos.y--;
+            ++pos.x;
+            --pos.y;
             break;
         case Otc::NorthWest:
-            pos.x++;
-            pos.y++;
+            ++pos.x;
+            ++pos.y;
             break;
         default:
             break;
@@ -112,7 +114,8 @@ public:
         return pos;
     }
 
-    std::vector<Position> translatedToDirections(const std::vector<Otc::Direction>& dirs) const {
+    std::vector<Position> translatedToDirections(const std::vector<Otc::Direction>& dirs) const
+    {
         Position lastPos = *this;
         std::vector<Position> positions;
 
@@ -131,10 +134,13 @@ public:
         return positions;
     }
 
-    static double getAngleFromPositions(const Position& fromPos, const Position& toPos) {
+    static bool isDiagonal(const Otc::Direction dir) { return dir == Otc::NorthWest || dir == Otc::NorthEast || dir == Otc::SouthWest || dir == Otc::SouthEast; };
+
+    static double getAngleFromPositions(const Position& fromPos, const Position& toPos)
+    {
         // Returns angle in radians from 0 to 2Pi. -1 means positions are equal.
-        int dx = toPos.x - fromPos.x;
-        int dy = toPos.y - fromPos.y;
+        const int32 dx = toPos.x - fromPos.x;
+        const int32 dy = toPos.y - fromPos.y;
         if(dx == 0 && dy == 0)
             return -1;
 
@@ -145,67 +151,99 @@ public:
         return angle;
     }
 
-    double getAngleFromPosition(const Position& position) const {
+    double getAngleFromPosition(const Position& position) const
+    {
         return getAngleFromPositions(*this, position);
     }
 
-    static Otc::Direction getDirectionFromPositions(const Position& fromPos,
-                                                    const Position& toPos)
+    static Otc::Direction getDirectionFromPositions(const Position& fromPos, const Position& toPos)
     {
-        float angle = getAngleFromPositions(fromPos, toPos) * RAD_TO_DEC;
+        const float angle = getAngleFromPositions(fromPos, toPos) * RAD_TO_DEC;
 
         if(angle >= 360 - 22.5 || angle < 0 + 22.5)
             return Otc::East;
-        else if(angle >= 45 - 22.5 && angle < 45 + 22.5)
+
+        if(angle >= 45 - 22.5 && angle < 45 + 22.5)
             return Otc::NorthEast;
-        else if(angle >= 90 - 22.5 && angle < 90 + 22.5)
+
+        if(angle >= 90 - 22.5 && angle < 90 + 22.5)
             return Otc::North;
-        else if(angle >= 135 - 22.5 && angle < 135 + 22.5)
+
+        if(angle >= 135 - 22.5 && angle < 135 + 22.5)
             return Otc::NorthWest;
-        else if(angle >= 180 - 22.5 && angle < 180 + 22.5)
+
+        if(angle >= 180 - 22.5 && angle < 180 + 22.5)
             return Otc::West;
-        else if(angle >= 225 - 22.5 && angle < 225 + 22.5)
+
+        if(angle >= 225 - 22.5 && angle < 225 + 22.5)
             return Otc::SouthWest;
-        else if(angle >= 270 - 22.5 && angle < 270 + 22.5)
+
+        if(angle >= 270 - 22.5 && angle < 270 + 22.5)
             return Otc::South;
-        else if(angle >= 315 - 22.5 && angle < 315 + 22.5)
+
+        if(angle >= 315 - 22.5 && angle < 315 + 22.5)
             return Otc::SouthEast;
-        else
-            return Otc::InvalidDirection;
+
+        return Otc::InvalidDirection;
     }
 
-    Otc::Direction getDirectionFromPosition(const Position& position) const {
+    Otc::Direction getDirectionFromPosition(const Position& position) const
+    {
         return getDirectionFromPositions(*this, position);
     }
 
-    bool isMapPosition() const { return (x >=0 && y >= 0 && z >= 0 && x < 65535 && y < 65535 && z <= Otc::MAX_Z); }
-    bool isValid() const { return !(x == 65535 && y == 65535 && z == 255); }
-    float distance(const Position& pos) const { return sqrt(pow((pos.x - x), 2) + pow((pos.y - y), 2)); }
-    int manhattanDistance(const Position& pos) const { return std::abs(pos.x - x) + std::abs(pos.y - y); }
+    bool isMapPosition() const { return ((x >= 0) && (y >= 0) && (x < UINT16_MAX) && (y < UINT16_MAX) && (z <= Otc::MAX_Z)); }
+    bool isValid() const { return !(x == UINT16_MAX && y == UINT16_MAX && z == UINT8_MAX); }
+    float distance(const Position& pos) const { return sqrt(pow(pos.x - x, 2) + pow(pos.y - y, 2)); }
+    uint16 manhattanDistance(const Position& pos) const { return std::abs(pos.x - x) + std::abs(pos.y - y); }
 
-    void translate(int dx, int dy, short dz = 0) { x += dx; y += dy; z += dz; }
-    Position translated(int dx, int dy, short dz = 0) const { Position pos = *this; pos.x += dx; pos.y += dy; pos.z += dz; return pos; }
+    void translate(int32 dx, int32 dy, int8 dz = 0) { x += dx; y += dy; z += dz; }
+    Position translated(int32 dx, int32 dy, int8 dz = 0) const { Position pos = *this; pos.x += dx; pos.y += dy; pos.z += dz; return pos; }
 
-    Position operator+(const Position& other) const { return Position(x + other.x, y + other.y, z + other.z);   }
-    Position& operator+=(const Position& other) { x+=other.x; y+=other.y; z +=other.z; return *this; }
-    Position operator-(const Position& other) const { return Position(x - other.x, y - other.y, z - other.z);   }
-    Position& operator-=(const Position& other) { x-=other.x; y-=other.y; z-=other.z; return *this; }
+    std::array<Position, (uint8)8> getPositionsAround() const
+    {
+        std::array<Position, (uint8)8> positions;
+        int_fast8_t i = -1;
+        for(int_fast32_t xi = -1; xi <= 1; ++xi) {
+            for(int_fast32_t yi = -1; yi <= 1; ++yi) {
+                const Position pos = translated(xi, yi);
+                if(pos == *this)
+                    continue;
+
+                positions[++i] = pos;
+            }
+        }
+
+        return positions;
+    }
+
+    Position operator+(const Position& other) const { return Position(x + other.x, y + other.y, z + other.z); }
+    Position& operator+=(const Position& other) { x += other.x; y += other.y; z += other.z; return *this; }
+    Position operator-(const Position& other) const { return Position(x - other.x, y - other.y, z - other.z); }
+    Position& operator-=(const Position& other) { x -= other.x; y -= other.y; z -= other.z; return *this; }
     // Point conversion(s)
     Position operator+(const Point& other) const { return Position(x + other.x, y + other.y, z); }
     Position& operator+=(const Point& other) { x += other.x; y += other.y; return *this; }
 
     Position& operator=(const Position& other) { x = other.x; y = other.y; z = other.z; return *this; }
     bool operator==(const Position& other) const { return other.x == x && other.y == y && other.z == z; }
-    bool operator!=(const Position& other) const { return other.x!=x || other.y!=y || other.z!=z; }
-    bool isInRange(const Position& pos, int xRange, int yRange) const { return std::abs(x-pos.x) <= xRange && std::abs(y-pos.y) <= yRange && z == pos.z; }
-    bool isInRange(const Position& pos, int minXRange, int maxXRange, int minYRange, int maxYRange) const {
-        return (pos.x >= x-minXRange && pos.x <= x+maxXRange && pos.y >= y-minYRange && pos.y <= y+maxYRange && pos.z == z);
+    bool operator!=(const Position& other) const { return other.x != x || other.y != y || other.z != z; }
+    bool isInRange(const Position& pos, uint16 xRange, uint16 yRange, const bool ignoreZ = false) const
+    {
+        if(!ignoreZ && pos.z != z) return false;
+        return std::abs(x - pos.x) <= xRange && std::abs(y - pos.y) <= yRange;
+    }
+    bool isInRange(const Position& pos, uint16 minXRange, uint16 maxXRange, uint16 minYRange, uint16 maxYRange, const bool ignoreZ = false) const
+    {
+        if(!ignoreZ && pos.z != z) return false;
+        return pos.x >= x - minXRange && pos.x <= x + maxXRange && pos.y >= y - minYRange && pos.y <= y + maxYRange;
     }
     // operator less than for std::map
     bool operator<(const Position& other) const { return x < other.x || y < other.y || z < other.z; }
 
-    bool up(int n = 1) {
-        int nz = z-n;
+    bool up(int8 n = 1)
+    {
+        const int8 nz = z - n;
         if(nz >= 0 && nz <= Otc::MAX_Z) {
             z = nz;
             return true;
@@ -213,58 +251,68 @@ public:
         return false;
     }
 
-    bool down(int n = 1) {
-        int nz = z+n;
+    bool down(int8 n = 1)
+    {
+        const int8 nz = z + n;
         if(nz >= 0 && nz <= Otc::MAX_Z) {
             z = nz;
             return true;
         }
+
         return false;
     }
 
-    bool coveredUp(int n = 1) {
-        int nx = x+n, ny = y+n, nz = z-n;
-        if(nx >= 0 && nx <= 65535 && ny >= 0 && ny <= 65535 && nz >= 0 && nz <= Otc::MAX_Z) {
+    bool coveredUp(int8 n = 1)
+    {
+        const int32 nx = x + n, ny = y + n;
+        const int8 nz = z - n;
+        if(nx >= 0 && nx <= UINT16_MAX && ny >= 0 && ny <= UINT16_MAX && nz >= 0 && nz <= Otc::MAX_Z) {
             x = nx; y = ny; z = nz;
             return true;
         }
+
         return false;
     }
 
-    bool coveredDown(int n = 1) {
-        int nx = x-n, ny = y-n, nz = z+n;
-        if(nx >= 0 && nx <= 65535 && ny >= 0 && ny <= 65535 && nz >= 0 && nz <= Otc::MAX_Z) {
+    bool coveredDown(int8 n = 1)
+    {
+        const int32 nx = x - n, ny = y - n;
+        const int8 nz = z + n;
+        if(nx >= 0 && nx <= UINT16_MAX && ny >= 0 && ny <= UINT16_MAX && nz >= 0 && nz <= Otc::MAX_Z) {
             x = nx; y = ny; z = nz;
             return true;
         }
+
         return false;
     }
 
-    int x;
-    int y;
-    short z;
-};
+    int32 x;
+    int32 y;
+    uint8 z;
 
-struct PositionHasher : std::unary_function<Position, std::size_t> {
-    std::size_t operator()(const Position& pos) const {
-        return (((pos.x * 8192) + pos.y) * 16) + pos.z;
-    }
+    // NOTE: This does not increase the size of the struct.
+    struct Hasher
+    {
+        std::size_t operator() (const Position& pos) const {
+            return (((pos.x * 8192) + pos.y) * 16) + pos.z;
+        }
+    };
 };
 
 inline std::ostream& operator<<(std::ostream& out, const Position& pos)
 {
-    out << (int)pos.x << " " << (int)pos.y << " " << (int)pos.z;
+    out << static_cast<int>(pos.x) << " " << static_cast<int>(pos.y) << " " << static_cast<int>(pos.z);
     return out;
 }
 
 inline std::istream& operator>>(std::istream& in, Position& pos)
 {
-    int x, y, z;
+    int32 x, y;
+    uint8 z;
     in >> x >> y >> z;
     pos.x = x;
     pos.y = y;
     pos.z = z;
     return in;
 }
-
 #endif
