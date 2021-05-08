@@ -46,7 +46,7 @@ struct EdgeGroup {
 // @bindclass
 class UIWidget : public LuaObject
 {
-// widget core
+    // widget core
 public:
     UIWidget();
     virtual ~UIWidget();
@@ -160,7 +160,7 @@ private:
     stdext::boolean<false> m_loadingStyle;
 
 
-// state managment
+    // state managment
 protected:
     bool setState(Fw::WidgetState state, bool on);
     bool hasState(Fw::WidgetState state);
@@ -178,7 +178,7 @@ private:
     int m_states;
 
 
-// event processing
+    // event processing
 protected:
     virtual void onStyleApply(const std::string& styleName, const OTMLNodePtr& styleNode);
     virtual void onGeometryChange(const Rect& oldRect, const Rect& newRect);
@@ -212,7 +212,7 @@ protected:
     bool propagateOnMouseMove(const Point& mousePos, const Point& mouseMoved, UIWidgetList& widgetList);
 
 
-// function shortcuts
+    // function shortcuts
 public:
     void resize(int width, int height) { setRect(Rect(getPosition(), Size(width, height))); }
     void move(int x, int y) { setRect(Rect(x, y, getSize())); }
@@ -268,7 +268,7 @@ public:
     Point getLastClickPosition() { return m_lastClickPosition; }
 
 
-// base style
+    // base style
 private:
     void initBaseStyle();
     void parseBaseStyle(const OTMLNodePtr& styleNode);
@@ -395,7 +395,7 @@ public:
     float getRotation() { return m_rotation; }
 
 
-// image
+    // image
 private:
     void initImage();
     void parseImageStyle(const OTMLNodePtr& styleNode);
@@ -462,7 +462,7 @@ public:
     int getImageTextureWidth() { return m_imageTexture ? m_imageTexture->getWidth() : 0; }
     int getImageTextureHeight() { return m_imageTexture ? m_imageTexture->getHeight() : 0; }
 
-// text related
+    // text related
 private:
     void initText();
     void parseTextStyle(const OTMLNodePtr& styleNode);

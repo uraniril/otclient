@@ -167,21 +167,26 @@ namespace Otc
         LastStatistic
     };
 
-    enum Skill : uint8 {
-        Fist = 0,
-        Club,
-        Sword,
-        Axe,
-        Distance,
-        Shielding,
-        Fishing,
-        CriticalChance,
-        CriticalDamage,
-        LifeLeechChance,
-        LifeLeechAmount,
-        ManaLeechChance,
-        ManaLeechAmount,
-        LastSkill
+    enum skills_t : uint8_t {
+        SKILL_FIST = 0,
+        SKILL_CLUB = 1,
+        SKILL_SWORD = 2,
+        SKILL_AXE = 3,
+        SKILL_DISTANCE = 4,
+        SKILL_SHIELD = 5,
+        SKILL_FISHING = 6,
+        SKILL_CRITICAL_HIT_CHANCE = 7,
+        SKILL_CRITICAL_HIT_DAMAGE = 8,
+        SKILL_LIFE_LEECH_CHANCE = 9,
+        SKILL_LIFE_LEECH_AMOUNT = 10,
+        SKILL_MANA_LEECH_CHANCE = 11,
+        SKILL_MANA_LEECH_AMOUNT = 12,
+
+        SKILL_MAGLEVEL = 13,
+        SKILL_LEVEL = 14,
+
+        SKILL_FIRST = SKILL_FIST,
+        SKILL_LAST = SKILL_MANA_LEECH_AMOUNT
     };
 
     enum Direction : uint8 {
@@ -288,7 +293,7 @@ namespace Otc
         NpcIconTradeQuest
     };
 
-    enum PlayerStates : uint32 {
+    enum PlayerIcons : uint32 {
         IconNone = 0,
         IconPoison = 1,
         IconBurn = 2,
@@ -366,6 +371,22 @@ namespace Otc
         MessageNpcFromStartBlock = 51,
         LastMessage = 52,
         MessageInvalid = 255
+    };
+
+    enum PreyState_t : uint8_t
+    {
+        PREY_STATE_LOCKED = 0,
+        PREY_STATE_INACTIVE = 1,
+        PREY_STATE_ACTIVE = 2,
+        PREY_STATE_SELECTION = 3,
+        PREY_STATE_SELECTION_CHANGE_MONSTER = 4,
+    };
+
+    enum CreatureIcon_t {
+        CREATUREICON_NONE = 0,
+        CREATUREICON_HIGHERRECEIVEDDAMAGE = 1,
+        CREATUREICON_LOWERDEALTDAMAGE = 2,
+        CREATUREICON_TURNEDMELEE = 3,
     };
 
     enum GameFeature : uint8 {
@@ -532,6 +553,15 @@ namespace Otc
         StateNew = 1,
         StateSale = 2,
         StateTimed = 3
+    };
+
+    enum MagicEffectsType_t : uint8_t {
+        MAGIC_EFFECTS_END_LOOP = 0,
+        MAGIC_EFFECTS_DELTA = 1,
+        MAGIC_EFFECTS_DELAY = 2,
+        MAGIC_EFFECTS_CREATE_EFFECT = 3,
+        MAGIC_EFFECTS_CREATE_DISTANCEEFFECT = 4,
+        MAGIC_EFFECTS_CREATE_DISTANCEEFFECT_REVERSED = 5,
     };
 }
 

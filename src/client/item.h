@@ -154,9 +154,11 @@ private:
     uint16 m_clientId;
     uint16 m_serverId;
     uint8 m_countOrSubType;
+    Color m_color;
+
     stdext::packed_storage<uint8> m_attribs;
     ItemVector m_containerItems;
-    Color m_color;
+
     uint8 m_phase;
     ticks_t m_lastPhase;
 

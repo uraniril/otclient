@@ -57,7 +57,7 @@ Creature::Creature() : Thing()
     m_skull = Otc::SkullNone;
     m_shield = Otc::ShieldNone;
     m_emblem = Otc::EmblemNone;
-    m_type = Proto::CreatureTypeUnknown;
+    m_type = Proto::CREATURE_TYPE_UNKNOW;
     m_icon = Otc::NpcIconNone;
     m_lastStepDirection = Otc::InvalidDirection;
     m_nameCache.setFont(g_fonts.getFont("verdana-11px-rounded"));
@@ -71,7 +71,6 @@ void Creature::draw(const Point& dest, float scaleFactor, bool animate, const Hi
 {
     if(!canBeSeen())
         return;
-
 
     if(frameFlags & Otc::FUpdateThing) {
         if(m_showTimedSquare) {
@@ -332,7 +331,7 @@ void Creature::drawInformation(const Rect& parentRect, const Point& dest, float 
         const Rect emblemRect = Rect(backgroundRect.x() + 13.5 + 12, backgroundRect.y() + 16, m_emblemTexture->getSize());
         g_painter->drawTexturedRect(emblemRect, m_emblemTexture);
     }
-    if(m_type != Proto::CreatureTypeUnknown && m_typeTexture) {
+    if(m_type != Proto::CREATURE_TYPE_UNKNOW && m_typeTexture) {
         g_painter->resetColor();
         const Rect typeRect = Rect(backgroundRect.x() + 13.5 + 12 + 12, backgroundRect.y() + 16, m_typeTexture->getSize());
         g_painter->drawTexturedRect(typeRect, m_typeTexture);
@@ -717,7 +716,7 @@ void Creature::setDirection(Otc::Direction direction)
 
 void Creature::setOutfit(const Outfit& outfit)
 {
-    if(m_type != Proto::CreatureTypeUnknown) {
+    if(m_type != Proto::CREATURE_TYPE_UNKNOW) {
         cancelScheduledPainting();
     }
 
@@ -739,7 +738,7 @@ void Creature::setOutfit(const Outfit& outfit)
 
     callLuaField("onOutfitChange", m_outfit, oldOutfit);
 
-    if(m_type != Proto::CreatureTypeUnknown) {
+    if(m_type != Proto::CREATURE_TYPE_UNKNOW) {
         g_map.schedulePainting(m_position, Otc::FupdateCreature);
         g_map.schedulePainting(m_position, Otc::FUpdateThing, getAnimationInterval());
     }

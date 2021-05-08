@@ -41,9 +41,9 @@ public:
     bool autoWalk(const Position& destination);
     bool canWalk(Otc::Direction direction);
 
-    void setStates(int states);
-    void setSkill(Otc::Skill skill, int level, int levelPercent);
-    void setBaseSkill(Otc::Skill skill, int baseLevel);
+    void setIcons(int icons);
+    void setSkill(Otc::skills_t skill, int level, int levelPercent);
+    void setBaseSkill(Otc::skills_t skill, int baseLevel);
     void setHealth(double health, double maxHealth);
     void setFreeCapacity(double freeCapacity);
     void setTotalCapacity(double totalCapacity);
@@ -64,10 +64,10 @@ public:
     void setSpells(const std::vector<int>& spells);
     void setBlessings(int blessings);
 
-    int getStates() { return m_states; }
-    int getSkillLevel(Otc::Skill skill) { return m_skillsLevel[skill]; }
-    int getSkillBaseLevel(Otc::Skill skill) { return m_skillsBaseLevel[skill]; }
-    int getSkillLevelPercent(Otc::Skill skill) { return m_skillsLevelPercent[skill]; }
+    int getIcons() { return m_icons; }
+    int getSkillLevel(Otc::skills_t skill) { return m_skillsLevel[skill]; }
+    int getSkillBaseLevel(Otc::skills_t skill) { return m_skillsBaseLevel[skill]; }
+    int getSkillLevelPercent(Otc::skills_t skill) { return m_skillsLevelPercent[skill]; }
     int getVocation() { return m_vocation; }
     double getHealth() { return m_health; }
     double getMaxHealth() { return m_maxHealth; }
@@ -134,12 +134,12 @@ private:
 
     ItemPtr m_inventoryItems[Otc::LastInventorySlot];
 
-    std::array<int, Otc::LastSkill> m_skillsLevel;
-    std::array<int, Otc::LastSkill> m_skillsBaseLevel;
-    std::array<int, Otc::LastSkill> m_skillsLevelPercent;
+    std::array<int, Otc::SKILL_LAST + 1> m_skillsLevel;
+    std::array<int, Otc::SKILL_LAST + 1> m_skillsBaseLevel;
+    std::array<int, Otc::SKILL_LAST + 1> m_skillsLevelPercent;
     std::vector<int> m_spells;
 
-    int m_states;
+    int m_icons;
     int m_vocation;
     int m_blessings;
 

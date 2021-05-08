@@ -370,9 +370,9 @@ void Item::calculatePatterns(int& xPattern, int& yPattern, int& zPattern)
         xPattern = (color % 4) % getNumPatternX();
         yPattern = (color / 4) % getNumPatternY();
     } else {
-        xPattern = m_position.x % getNumPatternX();
-        yPattern = m_position.y % getNumPatternY();
-        zPattern = m_position.z % getNumPatternZ();
+        xPattern = m_position.x % std::max<int>(getNumPatternX(), 1);
+        yPattern = m_position.y % std::max<int>(getNumPatternY(), 1);
+        zPattern = m_position.z % std::max<int>(getNumPatternZ(), 1);
     }
 }
 

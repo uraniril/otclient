@@ -29,7 +29,7 @@
 
 LocalPlayer::LocalPlayer()
 {
-    m_states = 0;
+    m_icons = 0;
     m_vocation = 0;
     m_blessings = Otc::BlessingNone;
     m_walkLockExpiration = 0;
@@ -299,19 +299,19 @@ void LocalPlayer::onPositionChange(const Position& newPos, const Position& oldPo
     }
 }
 
-void LocalPlayer::setStates(int states)
+void LocalPlayer::setIcons(int icons)
 {
-    if(m_states != states) {
-        const int oldStates = m_states;
-        m_states = states;
+    if(m_icons != icons) {
+        const int oldIcons = m_icons;
+        m_icons = icons;
 
-        callLuaField("onStatesChange", states, oldStates);
+        callLuaField("onIconsChange", icons, oldIcons);
     }
 }
 
-void LocalPlayer::setSkill(Otc::Skill skill, int level, int levelPercent)
+void LocalPlayer::setSkill(Otc::skills_t skill, int level, int levelPercent)
 {
-    if(skill >= Otc::LastSkill) {
+    if(skill > Otc::SKILL_LAST) {
         g_logger.traceError("invalid skill");
         return;
     }
@@ -327,9 +327,9 @@ void LocalPlayer::setSkill(Otc::Skill skill, int level, int levelPercent)
     }
 }
 
-void LocalPlayer::setBaseSkill(Otc::Skill skill, int baseLevel)
+void LocalPlayer::setBaseSkill(Otc::skills_t skill, int baseLevel)
 {
-    if(skill >= Otc::LastSkill) {
+    if(skill > Otc::SKILL_LAST) {
         g_logger.traceError("invalid skill");
         return;
     }
