@@ -8,6 +8,10 @@
 
 ![GitHub repo size](https://img.shields.io/github/repo-size/opentibiabr/otclient)
 
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/77c808ed38c0461f92a3487ada1fc57f)](https://www.codacy.com/gh/opentibiabr/otclient/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=opentibiabr/otclient&amp;utm_campaign=Badge_Grade)
+[![CodeQL](https://github.com/opentibiabr/otclient/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/opentibiabr/otclient/actions/workflows/codeql-analysis.yml)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=opentibiabr_otclient&metric=alert_status)](https://sonarcloud.io/dashboard?id=opentibiabr_otclient)
+
 ## Builds
 
 [![Build Status](https://ci.appveyor.com/api/projects/status/github/opentibiabr/otclient?branch=develop&passingText=develop%20-%20OK&svg=true)](https://ci.appveyor.com/project/opentibiabr/otclient)

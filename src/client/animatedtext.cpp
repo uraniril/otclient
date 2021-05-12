@@ -85,23 +85,23 @@ void AnimatedText::setText(const std::string& text)
 
 bool AnimatedText::merge(const AnimatedTextPtr& other)
 {
-    if(other->getColor() != m_color)
-        return false;
+  if(other->getColor() != m_color)
+      return false;
 
-    if(other->getCachedText().getFont() != m_cachedText.getFont())
-        return false;
+  if(other->getCachedText().getFont() != m_cachedText.getFont())
+      return false;
 
-    if(m_animationTimer.ticksElapsed() > Otc::ANIMATED_TEXT_DURATION / 2.5)
-        return false;
+  if(m_animationTimer.ticksElapsed() > Otc::ANIMATED_TEXT_DURATION / 2.5)
+      return false;
 
-    try {
-        const int number = stdext::safe_cast<int>(m_cachedText.getText());
-        const int otherNumber = stdext::safe_cast<int>(other->getCachedText().getText());
+  try {
+      const int number = stdext::safe_cast<int>(m_cachedText.getText());
+      const int otherNumber = stdext::safe_cast<int>(other->getCachedText().getText());
 
-        const std::string text = stdext::format("%d", number + otherNumber);
-        m_cachedText.setText(text);
-        return true;
-    } catch(...) {
-        return false;
-    }
+      const std::string text = stdext::format("%d", number + otherNumber);
+      m_cachedText.setText(text);
+      return true;
+  } catch(...) {
+      return false;
+  }
 }

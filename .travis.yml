@@ -1,38 +1,66 @@
+---
+arch: amd64
+os: linux
+dist: bionic
 language: cpp
-compiler:
-  - gcc
-before_script:
-  - |-
-    set -o errexit
+compiler: gcc
+env:
+  - VCPKG_TRIPLET=x64-linux
 
-    sudo apt-get update
-    sudo apt-get install -y \
-      build-essential \
-      cmake \
-      git-core \
-      libboost-all-dev \
-      libglew-dev \
-      liblua5.1-0-dev \
-      libncurses5-dev \
-      libopenal-dev \
-      libssl-dev \
-      libvorbis-dev \
-      mercurial \
-      zlib1g-dev
+git:
+  strategy: clone
+  depth: false
 
-    hg clone -r stable-3.0 http://hg.icculus.org/icculus/physfs/
-    mkdir -p physfs/build
-    pushd physfs/build
-    cmake ..
-    make -j$(nproc)
-    sudo make install
-    popd
-script: |
-  cmake . -DCMAKE_BUILD_TYPE=Release
-  make -j$(nproc)
-notifications:
-  irc:
-    channels:
-      - "irc.freenode.org#otclient"
-    on_success: change
-    skip_join: true
+addons:
+  sonarcloud:
+    organization: opentibiabr
+    token:
+      secure: "oehCDyjGS3x0JTnr4qVPktiH/SviOcNOmbkh06FVxgBVlMD5JtXb5wVYPL5pVwDQxKujAh44y63zAHcucjoxEpaJhRO/5RTek6t+Z3PvxcoX3yHssog4vyaGYcWBZFdz+l7AHa5YFQjLJjSWQYSQWrdAmt4VsF02TBLTVnHPUD2mywZtUbm2X/bg25YLref9dV7n0iXDD3srFnZh59ASj2/c7E7MT2vQk/qVbK69CfOAGfyiyjythb6VUB/D6Z101HICjQSgizC8evDQqEod0722Fm/cXqF7G3OIkfia9xeut2aleBTvIIAQ6Cot276lRR8NFpScDBFg0k7EvervYU/oUx77CwTneHNSEuHVBBjK1oScYGoXW8+/UNZwrSSAm4RGUeImodpwJ6Gj5fGtUNh379NoQvktl33SfT3envBicqHbc2Au9ctU6kukwWcT812gGirzio3GN2aynFzoy4L0XekYh2wU14HZD/qxqFF/98rwt7iKqkIwJxpOY4rAepIHYwgWQW+Az/qqZiGs2vfvEoTViOBBbPA+E6DPhAminAv4OHPosW/3wy3tWI/GYN/aAa/diZjmhKl79dQLo4PuYwKo5fZjd3ElpPYKnAxWcoCAkSLseriVVfXWVwqUY590vAqT1bpIjqu1fAeVOWQu31ZLDE+NSE4upFIRldI="
+  apt:
+    update: true
+    packages:
+      - ccache
+      - build-essential
+      - cmake
+      - libluajit-5.1-dev
+      - tar
+      - curl
+      - zip
+      - unzip
+      - build-essential
+      - cmake
+      - git-core
+      - libboost-all-dev
+      - libglew-dev
+      - liblua5.1-0-dev
+      - libncurses5-dev
+      - libopenal-dev
+      - libssl-dev
+      - libvorbis-dev
+      - mercurial
+      - zlib1g-dev
+
+install:
+  - hg clone -r stable-3.0 http://hg.icculus.org/icculus/physfs/
+  - mkdir -p physfs/build
+  - cd physfs/build
+  - cmake ..
+  - make -j$(nproc)
+  - sudo make install
+  - cd ../../
+
+script:
+  - mkdir build
+  - cd build
+  - cmake ..
+  - cd ..
+  - NUMBER_OF_PROCESSORS=$(nproc --all)
+  - build-wrapper-linux-x86-64 --out-dir bw-output cmake --build build/
+  - sonar-scanner -Dsonar.cfamily.cache.enabled=true -Dsonar.cfamily.cache.path=${TRAVIS_HOME}/.cfamily -Dsonar.cfamily.threads=${NUMBER_OF_PROCESSORS}
+
+cache:
+  directories:
+    - $HOME/.sonar/cache
+    - $HOME/.cache
+    - $HOME/.ccache
+    - $HOME/.cfamily

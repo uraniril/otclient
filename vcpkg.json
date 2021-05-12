@@ -1,0 +1,24 @@
+{
+  "name": "otclient",
+  "version-string": "1.0.0",
+  "dependencies": [
+    "boost-iostreams",
+    "boost-asio",
+    "boost-system",
+    "boost-variant",
+    "boost-lockfree",
+    "glew",
+    "boost-filesystem",
+    "boost-uuid",
+    "physfs",
+    "openal-soft",
+    "libogg",
+    "libvorbis",
+    "zlib",
+    "opengl",
+    {
+      "name": "luajit",
+      "platform": "windows"
+    }
+  ]
+}
