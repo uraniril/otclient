@@ -26,11 +26,6 @@
 #include <typeinfo>
 #include <framework/core/application.h>
 
-LuaObject::LuaObject() :
-    m_fieldsTableRef(-1)
-{
-}
-
 LuaObject::~LuaObject()
 {
 #ifndef NDEBUG
@@ -87,8 +82,8 @@ void LuaObject::luaGetField(const std::string& key)
 void LuaObject::luaGetMetatable()
 {
     static std::unordered_map<const std::type_info*, int> metatableMap;
-    const std::type_info& tinfo = typeid(*this);
-    auto it = metatableMap.find(&tinfo);
+    const auto& tinfo = typeid(*this);
+    const auto it = metatableMap.find(&tinfo);
 
     int metatableRef;
     if(it == metatableMap.end()) {

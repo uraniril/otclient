@@ -22,6 +22,8 @@
 
 #include "clock.h"
 
+#include "framework/stdext/time.h"
+
 Clock g_clock;
 
 Clock::Clock()

@@ -20,14 +20,13 @@
  * THE SOFTWARE.
  */
 
-
 #include "framebuffermanager.h"
 
 FrameBufferManager g_framebuffers;
 
 void FrameBufferManager::init()
 {
-    m_temporaryFramebuffer = FrameBufferPtr(new FrameBuffer());
+    m_temporaryFramebuffer = FrameBufferPtr(new FrameBuffer(true, 25));
     m_temporaryFramebuffer->setSmooth(true);
 }
 
@@ -37,9 +36,9 @@ void FrameBufferManager::terminate()
     m_temporaryFramebuffer = nullptr;
 }
 
-FrameBufferPtr FrameBufferManager::createFrameBuffer()
+FrameBufferPtr FrameBufferManager::createFrameBuffer(const bool useAlphaWriting, const uint16_t minTimeUpdate)
 {
-    FrameBufferPtr fbo = FrameBufferPtr(new FrameBuffer());
+    auto fbo = FrameBufferPtr(new FrameBuffer(useAlphaWriting, minTimeUpdate));
     m_framebuffers.push_back(fbo);
     return fbo;
 }

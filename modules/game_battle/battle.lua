@@ -504,7 +504,6 @@ end
 
 function removeAllCreatures() -- Remove all creatures from our binary tree
 	removeCreature(false, true)
-return true
 end
 
 function removeCreature(creature, all) -- Remove a single creature or all
@@ -608,8 +607,9 @@ function onAttack(creature) -- Update battleButton once you're attacking a targe
 		updateBattleButton(battleButton)
 	elseif creature then
 		creature:showStaticSquare(UICreatureButton.getCreatureButtonColors().onTargeted.notHovered)
-		lastCreatureSelected = creature
 	end
+
+	lastCreatureSelected = creature
 end
 
 function onFollow(creature) -- Update battleButton once you're following a target
@@ -624,8 +624,8 @@ function onFollow(creature) -- Update battleButton once you're following a targe
 		updateBattleButton(battleButton)
 	elseif creature then
 		creature:showStaticSquare(UICreatureButton.getCreatureButtonColors().onFollowed.notHovered)
-		lastCreatureSelected = creature
 	end
+	lastCreatureSelected = creature
 end
 
 function onCreatureOutfitChange(creature, outfit, oldOutfit) -- Insert/Remove creature when it becomes visible/invisible

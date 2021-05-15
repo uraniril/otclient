@@ -15,9 +15,9 @@ SpeakTypesSettings = {
   channelOrange = { speakType = MessageModes.ChannelHighlight, color = '#FE6500' },
   monsterSay = { speakType = MessageModes.MonsterSay, color = '#FE6500', hideInConsole = true},
   monsterYell = { speakType = MessageModes.MonsterYell, color = '#FE6500', hideInConsole = true},
-  rvrAnswerFrom = { speakType = MessageModes.RVRAnswer, color = '#FE6500' },
-  rvrAnswerTo = { speakType = MessageModes.RVRAnswer, color = '#FE6500' },
-  rvrContinue = { speakType = MessageModes.RVRContinue, color = '#FFFF00' },
+  AttentionFrom = { speakType = MessageModes.Attention, color = '#FE6500' },
+  AttentionTo = { speakType = MessageModes.Attention, color = '#FE6500' },
+  BoostedCreature = { speakType = MessageModes.BoostedCreature, color = '#FFFF00' },
 }
 
 SpeakTypes = {
@@ -36,8 +36,8 @@ SpeakTypes = {
   [MessageModes.MonsterSay] = SpeakTypesSettings.monsterSay,
   [MessageModes.MonsterYell] = SpeakTypesSettings.monsterYell,
   [MessageModes.RVRChannel] = SpeakTypesSettings.channelWhite,
-  [MessageModes.RVRContinue] = SpeakTypesSettings.rvrContinue,
-  [MessageModes.RVRAnswer] = SpeakTypesSettings.rvrAnswerFrom,
+  [MessageModes.BoostedCreature] = SpeakTypesSettings.BoostedCreature,
+  [MessageModes.Attention] = SpeakTypesSettings.AttentionFrom,
   [MessageModes.NpcFromStartBlock] = SpeakTypesSettings.privateNpcToPlayer,
 
   -- ignored types
@@ -945,10 +945,10 @@ function sendMessage(message, tab)
         modules.game_textmessage.displayFailureMessage('Wait for a gamemaster reply.')
         return
       end
-      speaktypedesc = 'rvrContinue'
+      speaktypedesc = 'boostedCreature'
       tabname = tr('Report Rule') .. '...'
     elseif tab.violationChatName then
-      speaktypedesc = 'rvrAnswerTo'
+      speaktypedesc = 'AttentionTo'
       name = tab.violationChatName
       tabname = tab.violationChatName .. '\'...'
     else
@@ -1074,10 +1074,10 @@ function onTalk(name, level, mode, message, channelId, creaturePos)
 
   local composedMessage = applyMessagePrefixies(name, level, message)
 
-  if mode == MessageModes.RVRAnswer then
+  if mode == MessageModes.Attention then
     violationReportTab.locked = false
     addTabText(composedMessage, speaktype, violationReportTab, name)
-  elseif mode == MessageModes.RVRContinue then
+  elseif mode == MessageModes.BoostedCreature then
     addText(composedMessage, speaktype, name .. '\'...', name)
   elseif speaktype.private then
     addPrivateText(composedMessage, speaktype, name, false, name)

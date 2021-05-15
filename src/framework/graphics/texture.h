@@ -31,7 +31,7 @@ public:
     Texture();
     Texture(const Size& size);
     Texture(const ImagePtr& image, bool buildMipmaps = false, bool compress = false);
-    virtual ~Texture();
+    ~Texture() override;
 
     void uploadPixels(const ImagePtr& image, bool buildMipmaps = false, bool compress = false);
     void bind();

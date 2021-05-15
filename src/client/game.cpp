@@ -20,19 +20,21 @@
  * THE SOFTWARE.
  */
 
-#include "game.h"
 #include <framework/core/application.h>
 #include <framework/core/eventdispatcher.h>
 #include <framework/ui/uimanager.h>
-#include "container.h"
-#include "creature.h"
-#include "localplayer.h"
-#include "luavaluecasts.h"
-#include "map.h"
-#include "protocolcodes.h"
-#include "protocolgame.h"
-#include "statictext.h"
-#include "tile.h"
+#include <client/game.h>
+#include <client/thing/type/container.h>
+#include <client/thing/creature/creature.h>
+#include <client/thing/creature/localplayer.h>
+#include <client/lua/luavaluecasts.h>
+#include <client/map/map.h>
+#include <client/protocol/protocolcodes.h>
+#include <client/protocol/protocolgame.h>
+#include <client/thing/text/statictext.h>
+#include <client/map/tile.h>
+
+const uint16_t CLIENT_VERSION = 1264;
 
 Game g_game;
 
@@ -151,7 +153,7 @@ void Game::processLoginAdvice(const std::string& message)
     g_lua.callGlobalField("g_game", "onLoginAdvice", message);
 }
 
-void Game::processLoginWait(const std::string& message, int time)
+void Game::processLoginWait(const std::string& message, uint8 time)
 {
     g_lua.callGlobalField("g_game", "onLoginWait", message, time);
 }
@@ -191,11 +193,9 @@ void Game::processGameStart()
     g_lua.callGlobalField("g_game", "onGameStart");
     disableBotCall();
 
-    if(g_game.getFeature(Otc::GameClientPing) || g_game.getFeature(Otc::GameExtendedClientPing)) {
-        m_pingEvent = g_dispatcher.scheduleEvent([this] {
-            g_game.ping();
-        }, m_pingDelay);
-    }
+    m_pingEvent = g_dispatcher.scheduleEvent([this] {
+        g_game.ping();
+    }, m_pingDelay);
 
     m_checkConnectionEvent = g_dispatcher.cycleEvent([this] {
         if(!g_game.isConnectionOk() && !m_connectionFailWarned) {
@@ -228,12 +228,12 @@ void Game::processGameEnd()
     g_map.cleanDynamicThings();
 }
 
-void Game::processDeath(int deathType, int penality)
+void Game::processDeath(uint8 deathType, uint8 penality, bool deathRedemption)
 {
     m_dead = true;
     m_localPlayer->stopWalk();
 
-    g_lua.callGlobalField("g_game", "onDeath", deathType, penality);
+    g_lua.callGlobalField("g_game", "onDeath", deathType, penality, deathRedemption);
 }
 
 void Game::processGMActions(const std::vector<uint8>& actions)
@@ -292,7 +292,7 @@ void Game::processTalk(const std::string& name, int level, Otc::MessageMode mode
 void Game::processOpenContainer(int containerId, const ItemPtr& containerItem, const std::string& name, int capacity, bool hasParent, const std::vector<ItemPtr>& items, bool isUnlocked, bool hasPages, int containerSize, int firstIndex)
 {
     ContainerPtr previousContainer = getContainer(containerId);
-    ContainerPtr container = ContainerPtr(new Container(containerId, capacity, name, containerItem, hasParent, isUnlocked, hasPages, containerSize, firstIndex));
+    auto container = ContainerPtr(new Container(containerId, capacity, name, containerItem, hasParent, isUnlocked, hasPages, containerSize, firstIndex));
     m_containers[containerId] = container;
     container->onAddItems(items);
 
@@ -305,9 +305,9 @@ void Game::processOpenContainer(int containerId, const ItemPtr& containerItem, c
         previousContainer->onClose();
 }
 
-void Game::processCloseContainer(int containerId)
+void Game::processCloseContainer(uint8 containerId)
 {
-    ContainerPtr container = getContainer(containerId);
+    const ContainerPtr& container = getContainer(containerId);
     if(!container) {
         return;
     }
@@ -318,7 +318,7 @@ void Game::processCloseContainer(int containerId)
 
 void Game::processContainerAddItem(int containerId, const ItemPtr& item, int slot)
 {
-    ContainerPtr container = getContainer(containerId);
+    const ContainerPtr& container = getContainer(containerId);
     if(!container) {
         return;
     }
@@ -328,7 +328,7 @@ void Game::processContainerAddItem(int containerId, const ItemPtr& item, int slo
 
 void Game::processContainerUpdateItem(int containerId, int slot, const ItemPtr& item)
 {
-    ContainerPtr container = getContainer(containerId);
+    const ContainerPtr& container = getContainer(containerId);
     if(!container) {
         return;
     }
@@ -338,7 +338,7 @@ void Game::processContainerUpdateItem(int containerId, int slot, const ItemPtr& 
 
 void Game::processContainerRemoveItem(int containerId, int slot, const ItemPtr& lastItem)
 {
-    ContainerPtr container = getContainer(containerId);
+    const ContainerPtr& container = getContainer(containerId);
     if(!container) {
         return;
     }
@@ -354,7 +354,7 @@ void Game::processInventoryChange(int slot, const ItemPtr& item)
     m_localPlayer->setInventoryItem(static_cast<Otc::InventorySlot>(slot), item);
 }
 
-void Game::processChannelList(const std::vector<std::tuple<int, std::string> >& channelList)
+void Game::processChannelList(const std::vector<std::tuple<uint8, std::string> >& channelList)
 {
     g_lua.callGlobalField("g_game", "onChannelList", channelList);
 }
@@ -426,33 +426,29 @@ void Game::processRemoveAutomapFlag(const Position& pos, int icon, const std::st
     g_lua.callGlobalField("g_game", "onRemoveAutomapFlag", pos, icon, message);
 }
 
-void Game::processOpenOutfitWindow(const Outfit& currentOutfit, const std::vector<std::tuple<int, std::string, int> >& outfitList,
-                                   const std::vector<std::tuple<int, std::string> >& mountList)
+void Game::processOpenOutfitWindow(const Outfit& currentOutfit, const std::vector<std::tuple<uint16, std::string, uint8> >& outfitList,
+                                   const std::vector<std::tuple<uint16, std::string> >& mountList)
 {
-    // create virtual creature outfit
-    CreaturePtr virtualOutfitCreature = CreaturePtr(new Creature);
-    virtualOutfitCreature->setDirection(Otc::South);
-
     Outfit outfit = currentOutfit;
     outfit.setMount(0);
+
+    Outfit mountOutfit;
+    mountOutfit.setId(0);
+
+    const int mount = currentOutfit.getMount();
+    if(mount > 0) {
+        mountOutfit.setId(mount);
+    }
+
+    // create virtual creature outfit
+    auto virtualOutfitCreature = CreaturePtr(new Creature);
+    virtualOutfitCreature->setDirection(Otc::South);
     virtualOutfitCreature->setOutfit(outfit);
 
     // creature virtual mount outfit
-    CreaturePtr virtualMountCreature = nullptr;
-    if(getFeature(Otc::GamePlayerMounts))
-    {
-        virtualMountCreature = CreaturePtr(new Creature);
-        virtualMountCreature->setDirection(Otc::South);
-
-        Outfit mountOutfit;
-        mountOutfit.setId(0);
-
-        const int mount = currentOutfit.getMount();
-        if(mount > 0)
-            mountOutfit.setId(mount);
-
-        virtualMountCreature->setOutfit(mountOutfit);
-    }
+    auto virtualMountCreature = CreaturePtr(new Creature);
+    virtualMountCreature->setDirection(Otc::South);
+    virtualMountCreature->setOutfit(mountOutfit);
 
     g_lua.callGlobalField("g_game", "onOpenOutfitWindow", virtualOutfitCreature, outfitList, virtualMountCreature, mountList);
 }
@@ -462,7 +458,7 @@ void Game::processOpenNpcTrade(const std::vector<std::tuple<ItemPtr, std::string
     g_lua.callGlobalField("g_game", "onOpenNpcTrade", items);
 }
 
-void Game::processPlayerGoods(int money, const std::vector<std::tuple<ItemPtr, int> >& goods)
+void Game::processPlayerGoods(uint64 money, const std::vector<std::tuple<ItemPtr, uint16> >& goods)
 {
     g_lua.callGlobalField("g_game", "onPlayerGoods", money, goods);
 }
@@ -497,7 +493,7 @@ void Game::processEditList(uint id, int doorId, const std::string& text)
     g_lua.callGlobalField("g_game", "onEditList", id, doorId, text);
 }
 
-void Game::processQuestLog(const std::vector<std::tuple<int, std::string, bool> >& questList)
+void Game::processQuestLog(const std::vector<std::tuple<uint16, std::string, bool> >& questList)
 {
     g_lua.callGlobalField("g_game", "onQuestLog", questList);
 }
@@ -590,7 +586,7 @@ bool Game::walk(const Otc::Direction direction)
     // check we can walk and add new walk event if false
     if(!m_localPlayer->canWalk(direction)) {
         if(m_lastWalkDir != direction) {
-            // must add a new walk event            
+            // must add a new walk event
             if(m_walkEvent) {
                 m_walkEvent->cancel();
                 m_walkEvent = nullptr;
@@ -683,11 +679,8 @@ void Game::autoWalk(std::vector<Otc::Direction> dirs)
     TilePtr toTile = g_map.getTile(m_localPlayer->getPosition().translatedToDirection(direction));
     if(toTile && toTile->isWalkable() && !m_localPlayer->isServerWalking()) {
         m_localPlayer->preWalk(direction);
-
-        if(getFeature(Otc::GameForceFirstAutoWalkStep)) {
-            forceWalk(direction);
-            dirs.erase(it);
-        }
+        forceWalk(direction);
+        dirs.erase(it);
     }
 
     g_lua.callGlobalField("g_game", "onAutoWalk", dirs);
@@ -771,7 +764,7 @@ void Game::look(const ThingPtr& thing, bool isBattleList)
     if(!canPerformGameAction() || !thing)
         return;
 
-    if(thing->isCreature() && isBattleList && m_protocolVersion >= 961)
+    if(thing->isCreature() && isBattleList)
         m_protocolGame->sendLookCreature(thing->getId());
     else
         m_protocolGame->sendLook(thing->getPosition(), thing->getId(), thing->getStackPos());
@@ -830,7 +823,7 @@ void Game::useInventoryItem(int itemId)
     if(!canPerformGameAction() || !g_things.isValidDatId(itemId, ThingCategoryItem))
         return;
 
-    const Position pos = Position(0xFFFF, 0, 0); // means that is a item in inventory
+    const auto pos = Position(0xFFFF, 0, 0); // means that is a item in inventory
 
     m_protocolGame->sendUseItem(pos, itemId, 0, 0);
 }
@@ -855,7 +848,7 @@ void Game::useInventoryItemWith(int itemId, const ThingPtr& toThing)
     if(!canPerformGameAction() || !toThing)
         return;
 
-    const Position pos = Position(0xFFFF, 0, 0); // means that is a item in inventory
+    const auto pos = Position(0xFFFF, 0, 0); // means that is a item in inventory
 
     if(toThing->isCreature())
         m_protocolGame->sendUseOnCreature(pos, itemId, 0, toThing->getId());
@@ -925,15 +918,10 @@ void Game::attack(CreaturePtr creature)
     setAttackingCreature(creature);
     m_localPlayer->stopAutoWalk();
 
-    if(m_protocolVersion >= 963) {
-        if(creature)
-            m_seq = creature->getId();
-    } else
-        ++m_seq;
+    if(creature)
+        m_seq = creature->getId();
 
     m_protocolGame->sendAttack(creature ? creature->getId() : 0, m_seq);
-
-    g_map.schedulePainting(Otc::FUpdateThing);
 }
 
 void Game::follow(CreaturePtr creature)
@@ -951,11 +939,8 @@ void Game::follow(CreaturePtr creature)
     setFollowingCreature(creature);
     m_localPlayer->stopAutoWalk();
 
-    if(m_protocolVersion >= 963) {
-        if(creature)
-            m_seq = creature->getId();
-    } else
-        ++m_seq;
+    if(creature)
+        m_seq = creature->getId();
 
     m_protocolGame->sendFollow(creature ? creature->getId() : 0, m_seq);
 }
@@ -967,6 +952,7 @@ void Game::cancelAttackAndFollow()
 
     if(isFollowing())
         setFollowingCreature(nullptr);
+
     if(isAttacking())
         setAttackingCreature(nullptr);
 
@@ -981,7 +967,8 @@ void Game::talk(const std::string& message)
 {
     if(!canPerformGameAction() || message.empty())
         return;
-    talkChannel(Otc::MessageSay, 0, message);
+
+    talkChannel(Otc::MESSAGE_SAY, 0, message);
 }
 
 void Game::talkChannel(Otc::MessageMode mode, int channelId, const std::string& message)
@@ -1142,8 +1129,7 @@ void Game::editVip(int playerId, const std::string& description, int iconId, boo
     std::get<3>(m_vips[playerId]) = iconId;
     std::get<4>(m_vips[playerId]) = notifyLogin;
 
-    if(getFeature(Otc::GameAdditionalVipInfo))
-        m_protocolGame->sendEditVip(playerId, description, iconId, notifyLogin);
+    m_protocolGame->sendEditVip(playerId, description, iconId, notifyLogin);
 }
 
 void Game::setChaseMode(Otc::ChaseModes chaseMode)
@@ -1183,10 +1169,10 @@ void Game::setPVPMode(Otc::PVPModes pvpMode)
 {
     if(!canPerformGameAction())
         return;
-    if(!getFeature(Otc::GamePVPMode))
-        return;
+
     if(m_pvpMode == pvpMode)
         return;
+
     m_pvpMode = pvpMode;
     m_protocolGame->sendChangeFightModes(m_fightMode, m_chaseMode, m_safeFight, m_pvpMode);
     g_lua.callGlobalField("g_game", "onPVPModeChange", pvpMode);
@@ -1196,8 +1182,7 @@ void Game::setUnjustifiedPoints(UnjustifiedPoints unjustifiedPoints)
 {
     if(!canPerformGameAction())
         return;
-    if(!getFeature(Otc::GameUnjustifiedPoints))
-        return;
+
     if(m_unjustifiedPoints == unjustifiedPoints)
         return;
 
@@ -1215,7 +1200,6 @@ void Game::setOpenPvpSituations(int openPvpSituations)
     m_openPvpSituations = openPvpSituations;
     g_lua.callGlobalField("g_game", "onOpenPvpSituationsChange", openPvpSituations);
 }
-
 
 void Game::inspectNpcTrade(const ItemPtr& item)
 {
@@ -1481,12 +1465,10 @@ void Game::setProtocolVersion(int version)
     if(isOnline())
         stdext::throw_exception("Unable to change protocol version while online");
 
-    if(version != 1264)
+    if(version != CLIENT_VERSION)
         stdext::throw_exception(stdext::format("Protocol version %d not supported", version));
 
     m_protocolVersion = version;
-
-    Proto::buildMessageModesMap(version);
 
     g_lua.callGlobalField("g_game", "onProtocolVersionChange", version);
 }
@@ -1499,173 +1481,12 @@ void Game::setClientVersion(int version)
     if(isOnline())
         stdext::throw_exception("Unable to change client version while online");
 
-    if(version != 1264)
+    if(version != CLIENT_VERSION)
         stdext::throw_exception(stdext::format("Client version %d not supported", version));
 
     m_features.reset();
+
     enableFeature(Otc::GameFormatCreatureName);
-
-    if(version >= 770) {
-        enableFeature(Otc::GameLooktypeU16);
-        enableFeature(Otc::GameMessageStatements);
-        enableFeature(Otc::GameLoginPacketEncryption);
-    }
-
-    if(version >= 780) {
-        enableFeature(Otc::GamePlayerAddons);
-        enableFeature(Otc::GamePlayerStamina);
-        enableFeature(Otc::GameNewFluids);
-        enableFeature(Otc::GameMessageLevel);
-        enableFeature(Otc::GamePlayerStateU16);
-        enableFeature(Otc::GameNewOutfitProtocol);
-    }
-
-    if(version >= 790) {
-        enableFeature(Otc::GameWritableDate);
-    }
-
-    if(version >= 840) {
-        enableFeature(Otc::GameProtocolChecksum);
-        enableFeature(Otc::GameAccountNames);
-        enableFeature(Otc::GameDoubleFreeCapacity);
-    }
-
-    if(version >= 841) {
-        enableFeature(Otc::GameChallengeOnLogin);
-        enableFeature(Otc::GameMessageSizeCheck);
-    }
-
-    if(version >= 854) {
-        enableFeature(Otc::GameCreatureEmblems);
-    }
-
-    if(version >= 860) {
-        enableFeature(Otc::GameAttackSeq);
-    }
-
-    if(version >= 862) {
-        enableFeature(Otc::GamePenalityOnDeath);
-    }
-
-    if(version >= 870) {
-        enableFeature(Otc::GameDoubleExperience);
-        enableFeature(Otc::GamePlayerMounts);
-        enableFeature(Otc::GameSpellList);
-    }
-
-    if(version >= 910) {
-        enableFeature(Otc::GameNameOnNpcTrade);
-        enableFeature(Otc::GameTotalCapacity);
-        enableFeature(Otc::GameSkillsBase);
-        enableFeature(Otc::GamePlayerRegenerationTime);
-        enableFeature(Otc::GameChannelPlayerList);
-        enableFeature(Otc::GameEnvironmentEffect);
-        enableFeature(Otc::GameItemAnimationPhase);
-    }
-
-    if(version >= 940) {
-        enableFeature(Otc::GamePlayerMarket);
-    }
-
-    if(version >= 953) {
-        enableFeature(Otc::GamePurseSlot);
-        enableFeature(Otc::GameClientPing);
-    }
-
-    if(version >= 960) {
-        enableFeature(Otc::GameSpritesU32);
-        enableFeature(Otc::GameOfflineTrainingTime);
-    }
-
-    if(version >= 963) {
-        enableFeature(Otc::GameAdditionalVipInfo);
-    }
-
-    if(version >= 980) {
-        enableFeature(Otc::GamePreviewState);
-        enableFeature(Otc::GameClientVersion);
-    }
-
-    if(version >= 981) {
-        enableFeature(Otc::GameLoginPending);
-        enableFeature(Otc::GameNewSpeedLaw);
-    }
-
-    if(version >= 984) {
-        enableFeature(Otc::GameContainerPagination);
-        enableFeature(Otc::GameBrowseField);
-    }
-
-    if(version >= 1000) {
-        enableFeature(Otc::GameThingMarks);
-        enableFeature(Otc::GamePVPMode);
-    }
-
-    if(version >= 1035) {
-        enableFeature(Otc::GameDoubleSkills);
-        enableFeature(Otc::GameBaseSkillU16);
-    }
-
-    if(version >= 1036) {
-        enableFeature(Otc::GameCreatureIcons);
-        enableFeature(Otc::GameHideNpcNames);
-    }
-
-    if(version >= 1038) {
-        enableFeature(Otc::GamePremiumExpiration);
-    }
-
-    if(version >= 1050) {
-        enableFeature(Otc::GameEnhancedAnimations);
-    }
-
-    if(version >= 1053) {
-        enableFeature(Otc::GameUnjustifiedPoints);
-    }
-
-    if(version >= 1054) {
-        enableFeature(Otc::GameExperienceBonus);
-    }
-
-    if(version >= 1055) {
-        enableFeature(Otc::GameDeathType);
-    }
-
-    if(version >= 1057) {
-        enableFeature(Otc::GameIdleAnimations);
-    }
-
-    if(version >= 1061) {
-        enableFeature(Otc::GameOGLInformation);
-    }
-
-    if(version >= 1071) {
-        enableFeature(Otc::GameContentRevision);
-    }
-
-    if(version >= 1072) {
-        enableFeature(Otc::GameAuthenticator);
-    }
-
-    if(version >= 1074) {
-        enableFeature(Otc::GameSessionKey);
-    }
-
-    if(version >= 1080) {
-        enableFeature(Otc::GameIngameStore);
-    }
-
-    if(version >= 1092) {
-        enableFeature(Otc::GameIngameStoreServiceType);
-    }
-
-    if(version >= 1093) {
-        enableFeature(Otc::GameIngameStoreHighlights);
-    }
-
-    if(version >= 1094) {
-        enableFeature(Otc::GameAdditionalSkills);
-    }
 
     m_clientVersion = version;
 
@@ -1693,6 +1514,7 @@ void Game::setFollowingCreature(const CreaturePtr& creature)
 std::string Game::formatCreatureName(const std::string& name)
 {
     std::string formatedName = name;
+
     if(getFeature(Otc::GameFormatCreatureName) && name.length() > 0) {
         bool upnext = true;
         for(char& i : formatedName) {

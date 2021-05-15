@@ -25,15 +25,15 @@
 
 #include "uilayout.h"
 
-// @bindclass
+ // @bindclass
 class UIGridLayout : public UILayout
 {
 public:
     UIGridLayout(UIWidgetPtr parentWidget);
 
-    void applyStyle(const OTMLNodePtr& styleNode);
-    void removeWidget(const UIWidgetPtr& widget);
-    void addWidget(const UIWidgetPtr& widget);
+    void applyStyle(const OTMLNodePtr& styleNode) override;
+    void removeWidget(const UIWidgetPtr& widget) override;
+    void addWidget(const UIWidgetPtr& widget) override;
 
     void setCellSize(const Size& size) { m_cellSize = size; update(); }
     void setCellWidth(int width) { m_cellSize.setWidth(width); update(); }
@@ -50,10 +50,10 @@ public:
     int getNumColumns() { return m_numColumns; }
     int getNumLines() { return m_numLines; }
 
-    virtual bool isUIGridLayout() { return true; }
+    bool isUIGridLayout() override { return true; }
 
 protected:
-    bool internalUpdate();
+    bool internalUpdate() override;
 
 private:
     Size m_cellSize;

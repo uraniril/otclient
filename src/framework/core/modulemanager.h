@@ -25,7 +25,7 @@
 
 #include "module.h"
 
-// @bindsingleton g_modules
+ // @bindsingleton g_modules
 class ModuleManager
 {
 public:
@@ -42,7 +42,7 @@ public:
     std::deque<ModulePtr> getModules() { return m_modules; }
 
 protected:
-    void updateModuleLoadOrder(ModulePtr module);
+    void updateModuleLoadOrder(const ModulePtr& module);
 
     friend class Module;
 

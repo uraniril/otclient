@@ -35,8 +35,8 @@ class PlatformWindow
         KEY_PRESS_REPEAT_INTERVAL = 30,
     };
 
-    typedef std::function<void(const Size&)> OnResizeCallback;
-    typedef std::function<void(const InputEvent&)> OnInputEventCallback;
+    using OnResizeCallback = std::function<void(const Size&)>;
+    using OnInputEventCallback = std::function<void(const InputEvent&)>;
 
 public:
     virtual void init() = 0;
@@ -51,7 +51,7 @@ public:
     virtual void swapBuffers() = 0;
     virtual void showMouse() = 0;
     virtual void hideMouse() = 0;
-    virtual void displayFatalError(const std::string& /*message*/) { }
+    virtual void displayFatalError(const std::string& /*message*/) {}
 
     int loadMouseCursor(const std::string& file, const Point& hotSpot);
     virtual void setMouseCursor(int cursorId) = 0;

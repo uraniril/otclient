@@ -17,6 +17,9 @@
         - Hover over offers for purchase information (balance after transaction, etc)
   ]]
 
+-- temporarily disabled, needs refactoring.
+enableMartket = false
+
 Market = {}
 
 local protocol = runinsandbox('marketprotocol')
@@ -897,6 +900,8 @@ local function initInterface()
 end
 
 function init()
+  if not enableMartket then return end
+
   g_ui.importStyle('market')
   g_ui.importStyle('ui/general/markettabs')
   g_ui.importStyle('ui/general/marketbuttons')
@@ -918,6 +923,8 @@ function init()
 end
 
 function terminate()
+  if not enableMartket then return end
+
   Market.close()
 
   unregisterMessageMode(MessageModes.Market, onMarketMessage)

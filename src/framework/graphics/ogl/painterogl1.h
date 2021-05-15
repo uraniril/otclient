@@ -44,29 +44,29 @@ public:
 
     PainterOGL1();
 
-    void bind();
-    void unbind();
+    void bind() override;
+    void unbind() override;
 
-    void refreshState();
+    void refreshState() override;
 
-    void drawCoords(CoordsBuffer& coordsBuffer, DrawMode drawMode = Triangles);
-    void drawFillCoords(CoordsBuffer& coordsBuffer);
-    void drawTextureCoords(CoordsBuffer& coordsBuffer, const TexturePtr& texture);
-    void drawTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src);
-    void drawUpsideDownTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src);
-    void drawRepeatedTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src);
-    void drawFilledRect(const Rect& dest);
-    void drawFilledTriangle(const Point& a, const Point& b, const Point& c);
-    void drawBoundingRect(const Rect& dest, int innerLineWidth);
+    void drawCoords(CoordsBuffer& coordsBuffer, DrawMode drawMode = Triangles) override;
+    void drawFillCoords(CoordsBuffer& coordsBuffer) override;
+    void drawTextureCoords(CoordsBuffer& coordsBuffer, const TexturePtr& texture) override;
+    void drawTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src) override;
+    void drawUpsideDownTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src) override;
+    void drawRepeatedTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src) override;
+    void drawFilledRect(const Rect& dest) override;
+    void drawFilledTriangle(const Point& a, const Point& b, const Point& c) override;
+    void drawBoundingRect(const Rect& dest, int innerLineWidth) override;
 
     void setMatrixMode(MatrixMode matrixMode);
-    void setTransformMatrix(const Matrix3& transformMatrix);
-    void setProjectionMatrix(const Matrix3& projectionMatrix);
-    void setTextureMatrix(const Matrix3& textureMatrix);
-    void setColor(const Color& color);
-    void setOpacity(float opacity);
+    void setTransformMatrix(const Matrix3& transformMatrix) override;
+    void setProjectionMatrix(const Matrix3& projectionMatrix) override;
+    void setTextureMatrix(const Matrix3& textureMatrix) override;
+    void setColor(const Color& color) override;
+    void setOpacity(float opacity) override;
 
-    bool hasShaders() { return false; }
+    bool hasShaders() override { return false; }
 
 private:
     void updateGlColor();

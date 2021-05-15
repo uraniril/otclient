@@ -20,36 +20,38 @@
  * THE SOFTWARE.
  */
 
-#include "time.h"
+#include <ctime>
 
 #include <chrono>
 #include <ctime>
 #include <thread>
 
+#include "types.h"
+
 namespace stdext {
+    const static auto startup_time = std::chrono::high_resolution_clock::now();
 
-const static auto startup_time = std::chrono::high_resolution_clock::now();
+    ticks_t time()
+    {
+        return std::time(nullptr);
+    }
 
-ticks_t time() {
-    return std::time(nullptr);
-}
+    ticks_t millis()
+    {
+        return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - startup_time).count();
+    }
+    ticks_t micros()
+    {
+        return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - startup_time).count();
+    }
 
-ticks_t millis()
-{
-    return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - startup_time).count();
-}
-ticks_t micros() {
-    return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - startup_time).count();
-}
+    void millisleep(size_t ms)
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+    };
 
-void millisleep(size_t ms)
-{
-    std::this_thread::sleep_for(std::chrono::milliseconds(ms));
-};
-
-void microsleep(size_t us)
-{
-    std::this_thread::sleep_for(std::chrono::microseconds(us));
-};
-
+    void microsleep(size_t us)
+    {
+        std::this_thread::sleep_for(std::chrono::microseconds(us));
+    };
 }

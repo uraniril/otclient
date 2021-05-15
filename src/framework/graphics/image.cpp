@@ -20,12 +20,13 @@
  * THE SOFTWARE.
  */
 
-
 #include "image.h"
 
 #include <framework/core/resourcemanager.h>
 #include <framework/core/filestream.h>
 #include <framework/graphics/apngloader.h>
+
+#include "framework/stdext/math.h"
 
 Image::Image(const Size& size, int bpp, uint8* pixels)
 {
@@ -72,7 +73,7 @@ void Image::savePNG(const std::string& fileName)
 
     fin->cache();
     std::stringstream data;
-    save_png(data, m_size.width(), m_size.height(), 4, static_cast<unsigned char*>(getPixelData()));
+    save_png(data, m_size.width(), m_size.height(), 4, getPixelData());
     fin->write(data.str().c_str(), data.str().length());
     fin->flush();
     fin->close();
@@ -129,9 +130,9 @@ void Image::blit(const Point& dest, const ImagePtr& other)
 
     uint8* otherPixels = other->getPixelData();
     for(int p = 0; p < other->getPixelCount(); ++p) {
-        int x = p % other->getWidth();
-        int y = p / other->getWidth();
-        int pos = ((dest.y + y) * m_size.width() + (dest.x + x)) * 4;
+        const int x = p % other->getWidth();
+        const int y = p / other->getWidth();
+        const int pos = ((dest.y + y) * m_size.width() + (dest.x + x)) * 4;
 
         if(otherPixels[p * 4 + 3] != 0) {
             m_pixels[pos + 0] = otherPixels[p * 4 + 0];
@@ -152,9 +153,9 @@ void Image::paste(const ImagePtr& other)
 
     uint8* otherPixels = other->getPixelData();
     for(int p = 0; p < other->getPixelCount(); ++p) {
-        int x = p % other->getWidth();
-        int y = p / other->getWidth();
-        int pos = (y * m_size.width() + x) * 4;
+        const int x = p % other->getWidth();
+        const int y = p / other->getWidth();
+        const int pos = (y * m_size.width() + x) * 4;
 
         m_pixels[pos + 0] = otherPixels[p * 4 + 0];
         m_pixels[pos + 1] = otherPixels[p * 4 + 1];
@@ -168,13 +169,13 @@ bool Image::nextMipmap()
     assert(m_bpp == 4);
     assert(stdext::is_power_of_two(m_size.width()) && stdext::is_power_of_two(m_size.height()));
 
-    int iw = m_size.width();
-    int ih = m_size.height();
+    const int iw = m_size.width();
+    const int ih = m_size.height();
     if(iw == 1 && ih == 1)
         return false;
 
-    int ow = iw > 1 ? iw / 2 : 1;
-    int oh = ih > 1 ? ih / 2 : 1;
+    const int ow = iw > 1 ? iw / 2 : 1;
+    const int oh = ih > 1 ? ih / 2 : 1;
 
     std::vector<uint8> pixels(ow * oh * 4, 0xFF);
 
@@ -190,17 +191,18 @@ bool Image::nextMipmap()
                 uint8* outPixel = &pixels[(y * ow + x) * 4];
 
                 int pixelsSum[4];
-                for(int i = 0; i < 4; ++i)
-                    pixelsSum[i] = 0;
+                for(int& i : pixelsSum)
+                    i = 0;
 
                 int usedPixels = 0;
-                for(int j = 0; j < 4; ++j) {
+                for(auto& j : inPixel)
+                {
                     // ignore colors of complete alpha pixels
-                    if(inPixel[j][3] < 16)
+                    if(j[3] < 16)
                         continue;
 
                     for(int i = 0; i < 4; ++i)
-                        pixelsSum[i] += inPixel[j][i];
+                        pixelsSum[i] += j[i];
 
                     usedPixels++;
                 }

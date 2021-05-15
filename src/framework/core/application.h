@@ -26,12 +26,12 @@
 #include <framework/global.h>
 #include <framework/core/adaptativeframecounter.h>
 
-//@bindsingleton g_app
+ //@bindsingleton g_app
 class Application
 {
 public:
     Application();
-    virtual ~Application() {}
+    virtual ~Application() = default;
 
     virtual void init(std::vector<std::string>& args);
     virtual void deinit();

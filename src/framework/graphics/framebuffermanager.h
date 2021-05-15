@@ -20,7 +20,6 @@
  * THE SOFTWARE.
  */
 
-
 #ifndef FRAMEBUFFERMANAGER_H
 #define FRAMEBUFFERMANAGER_H
 
@@ -33,12 +32,15 @@ public:
     void terminate();
     void clear();
 
-    FrameBufferPtr createFrameBuffer();
+    FrameBufferPtr createFrameBuffer(bool useAlphaWriting = false, uint16_t minTimeUpdate = MIN_TIME_UPDATE);
     const FrameBufferPtr& getTemporaryFrameBuffer() { return m_temporaryFramebuffer; }
 
 protected:
     FrameBufferPtr m_temporaryFramebuffer;
     std::vector<FrameBufferPtr> m_framebuffers;
+
+private:
+    const static uint16_t MIN_TIME_UPDATE = 16;
 };
 
 extern FrameBufferManager g_framebuffers;

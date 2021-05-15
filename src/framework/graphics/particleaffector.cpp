@@ -24,6 +24,8 @@
 #include "particleaffector.h"
 #include <framework/core/clock.h>
 
+#include "framework/stdext/math.h"
+
 ParticleAffector::ParticleAffector()
 {
     m_active = false;
@@ -122,15 +124,15 @@ void AttractionAffector::updateParticle(const ParticlePtr& particle, float elaps
     if(!m_active)
         return;
 
-    PointF pPosition = particle->getPosition();
-    PointF d = PointF(m_position.x - pPosition.x, pPosition.y - m_position.y);
+    const PointF pPosition = particle->getPosition();
+    const auto d = PointF(m_position.x - pPosition.x, pPosition.y - m_position.y);
     if(d.length() == 0)
         return;
 
-    PointF direction = PointF(1, 1);
+    auto direction = PointF(1, 1);
     if(m_repelish)
         direction = PointF(-1, -1);
 
-    PointF pVelocity = particle->getVelocity() + (d / d.length() * m_acceleration * elapsedTime) * direction;
-    particle->setVelocity(pVelocity - pVelocity * m_reduction/100.f * elapsedTime);
+    const PointF pVelocity = particle->getVelocity() + (d / d.length() * m_acceleration * elapsedTime) * direction;
+    particle->setVelocity(pVelocity - pVelocity * m_reduction / 100.f * elapsedTime);
 }

@@ -20,7 +20,6 @@ local defaultOptions = {
   enableMusicSound = true,
   musicSoundVolume = 100,
   enableLights = true,
-  floorShadowing = ShadowFloor.Bottom,
   drawViewportEdge = false,
   floatingEffect = false,
   ambientLight = 0,
@@ -31,10 +30,9 @@ local defaultOptions = {
   dontStretchShrink = false,
   turnDelay = 50,
   hotkeyDelay = 70,
-  crosshair = 'default',
+  crosshair = 'full',
   enableHighlightMouseTarget = true,
-  antiAliasing = true,
-  renderScale = 100
+  antialiasingMode = 1
 }
 
 local optionsWindow
@@ -48,7 +46,7 @@ local soundPanel
 local audioButton
 
 local crosshairCombobox
-local renderScaleCombobox
+local antialiasingModeCombobox
 
 local function setupGraphicsEngines()
   local enginesRadioGroup = UIRadioGroup.create()
@@ -89,7 +87,6 @@ local function setupGraphicsEngines()
 end
 
 function init()
-  local _init = false
   for k,v in pairs(defaultOptions) do
     g_settings.setDefault(k, v)
     options[k] = v
@@ -121,42 +118,7 @@ function init()
   optionsButton = modules.client_topmenu.addLeftButton('optionsButton', tr('Options'), '/images/topbuttons/options', toggle)
   audioButton = modules.client_topmenu.addLeftButton('audioButton', tr('Audio'), '/images/topbuttons/audio', function() toggleOption('enableAudio') end)
 
-  crosshairCombobox = generalPanel:recursiveGetChildById('crosshair')
-
-  crosshairCombobox:addOption('Disabled', 'disabled')
-  crosshairCombobox:addOption('Default', 'default')
-  crosshairCombobox:addOption('Full', 'full')
-
-  crosshairCombobox.onOptionChange = function(comboBox, option)
-    setOption('crosshair', comboBox:getCurrentOption().data)
-  end
-
-  renderScaleCombobox = graphicsPanel:recursiveGetChildById('renderScale')
-
-  renderScaleCombobox:addOption('50%', 50)
-  renderScaleCombobox:addOption('75%', 75)
-  renderScaleCombobox:addOption('100%', 100)
-  renderScaleCombobox:addOption('150%', 150)
-  renderScaleCombobox:addOption('200%', 200)
-
-  renderScaleCombobox.onOptionChange = function(comboBox, option)
-    setOption('renderScale', comboBox:getCurrentOption().data)
-    if _init and comboBox:getCurrentOption().data > 100 then
-      displayInfoBox(tr('Warning'), tr('Rendering scale above 100%% will drop performance and visual bugs may occur.'))
-    end
-  end
-
-  floorShadowingComboBox= graphicsPanel:recursiveGetChildById('floorShadowing')
-  floorShadowingComboBox.onOptionChange = function(comboBox, option)
-    setOption('floorShadowing', floorShadowingComboBox:getCurrentOption().data)
-  end
-
-  floorShadowingComboBox:addOption('Disabled', ShadowFloor.Disabled)
-  floorShadowingComboBox:addOption('Bottom', ShadowFloor.Bottom)
-  floorShadowingComboBox:addOption('Upside', ShadowFloor.Upside)
-  floorShadowingComboBox:addOption('Both', ShadowFloor.Both)
-
-  addEvent(function() setup() _init = true end)
+  addEvent(function() setup() end)
 end
 
 function terminate()
@@ -167,7 +129,30 @@ function terminate()
   audioButton:destroy()
 end
 
+function setupComboBox()
+  crosshairCombobox = generalPanel:recursiveGetChildById('crosshair')
+
+  crosshairCombobox:addOption('Disabled', 'disabled')
+  crosshairCombobox:addOption('Default', 'default')
+  crosshairCombobox:addOption('Full', 'full')
+
+  crosshairCombobox.onOptionChange = function(comboBox, option)
+    setOption('crosshair', comboBox:getCurrentOption().data)
+  end
+
+  antialiasingModeCombobox = graphicsPanel:recursiveGetChildById('antialiasingMode')
+
+  antialiasingModeCombobox:addOption('None', 0)
+  antialiasingModeCombobox:addOption('Antialiasing', 1)
+  antialiasingModeCombobox:addOption('Smooth Retro', 2)
+
+  antialiasingModeCombobox.onOptionChange = function(comboBox, option)
+    setOption('antialiasingMode', comboBox:getCurrentOption().data)
+  end
+end
+
 function setup()
+  setupComboBox()
   setupGraphicsEngines()
 
   -- load options
@@ -222,6 +207,7 @@ end
 
 function setOption(key, value, force)
   if not force and options[key] == value then return end
+
   local gameMapPanel = modules.game_interface.getMapPanel()
 
   if key == 'vsync' then
@@ -293,18 +279,18 @@ function setOption(key, value, force)
     if  newValue == 'disabled' then
       newValue = nil
     end
+
+    gameMapPanel:setCrosshairEffect(newValue == 'full' and 57 or 0)
     gameMapPanel:setCrosshairTexture(newValue and crossPath .. newValue or nil)
-    crosshairCombobox:setCurrentOptionByData(newValue, false)
+    crosshairCombobox:setCurrentOptionByData(newValue, true)
   elseif key == 'enableHighlightMouseTarget' then
     gameMapPanel:setDrawHighlightTarget(value)
-  elseif key == 'floorShadowing' then
-    gameMapPanel:setFloorShadowingFlag(value)
-    floorShadowingComboBox:setCurrentOptionByData(value, false)
-  elseif key == 'antiAliasing' then
-    gameMapPanel:setAntiAliasing(value)
-  elseif key == 'renderScale' then
-    gameMapPanel:setRenderScale(value)
-    renderScaleCombobox:setCurrentOptionByData(value, false)
+  elseif key == 'antialiasingMode' then
+    gameMapPanel:setAntiAliasingMode(value)
+    antialiasingModeCombobox:setCurrentOptionByData(value, true)
+    if not force and value == 2 then -- Smooth Retro
+      displayInfoBox(tr('Warning'), tr('Smooth Retro is in beta, so performance can be reduced and visual errors may occur.'))
+    end
   end
 
   -- change value for keybind updates
@@ -326,6 +312,10 @@ end
 
 function getOption(key)
   return options[key]
+end
+
+function refreshOption(key)
+  return setOption(key, getOption(key), true)
 end
 
 function addTab(name, panel, icon)

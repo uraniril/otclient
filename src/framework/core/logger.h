@@ -27,9 +27,10 @@
 
 #include <framework/stdext/thread.h>
 #include <fstream>
+#include <utility>
 
 struct LogMessage {
-    LogMessage(Fw::LogLevel level, const std::string& message, std::size_t when) : level(level), message(message), when(when) { }
+    LogMessage(Fw::LogLevel level, std::string message, std::size_t when) : level(level), message(std::move(message)), when(when) {}
     Fw::LogLevel level;
     std::string message;
     std::size_t when;
@@ -42,7 +43,7 @@ class Logger
         MAX_LOG_HISTORY = 1000
     };
 
-    typedef std::function<void(Fw::LogLevel, const std::string&, int64)> OnLogCallback;
+    using OnLogCallback = std::function<void(Fw::LogLevel, const std::string&, int64)>;
 
 public:
     void log(Fw::LogLevel level, const std::string& message);

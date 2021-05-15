@@ -106,8 +106,8 @@ private:
     T wd, ht;
 };
 
-typedef TSize<int> Size;
-typedef TSize<float> SizeF;
+using Size = TSize<int>;
+using SizeF = TSize<float>;
 
 template<class T>
 std::ostream& operator<<(std::ostream& out, const TSize<T>& size)

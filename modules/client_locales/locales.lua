@@ -1,5 +1,7 @@
 dofile 'neededtranslations'
 
+local sendLocalToServer = false
+
 -- private variables
 local defaultLocaleName = 'en'
 local installedLocales
@@ -48,7 +50,9 @@ end
 
 -- hooked functions
 function onGameStart()
-  sendLocale(currentLocale.name)
+  if sendLocalToServer then
+    sendLocale(currentLocale.name)
+  end
 end
 
 function onExtendedLocales(protocol, opcode, buffer)

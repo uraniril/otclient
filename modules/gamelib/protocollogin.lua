@@ -41,42 +41,27 @@ function ProtocolLogin:sendLoginPacket()
 
   msg:addU16(g_game.getProtocolVersion())
 
-  if g_game.getFeature(GameClientVersion) then
-    msg:addU32(g_game.getClientVersion())
-  end
+  msg:addU32(g_game.getClientVersion())
 
-  if g_game.getFeature(GameContentRevision) then
-    msg:addU16(g_things.getContentRevision())
-    msg:addU16(0)
-  else
-    msg:addU32(g_things.getDatSignature())
-  end
+  msg:addU16(g_things.getContentRevision())
+  msg:addU16(0)
   msg:addU32(g_sprites.getSprSignature())
   msg:addU32(PIC_SIGNATURE)
 
-  if g_game.getFeature(GamePreviewState) then
-    msg:addU8(0)
-  end
+  msg:addU8(0)
 
-  local offset = msg:getMessageSize()
-  if g_game.getFeature(GameLoginPacketEncryption) then
-    -- first RSA byte must be 0
-    msg:addU8(0)
+  -- first RSA byte must be 0
+  msg:addU8(0)
 
-    -- xtea key
-    self:generateXteaKey()
-    local xteaKey = self:getXteaKey()
-    msg:addU32(xteaKey[1])
-    msg:addU32(xteaKey[2])
-    msg:addU32(xteaKey[3])
-    msg:addU32(xteaKey[4])
-  end
+  -- xtea key
+  self:generateXteaKey()
+  local xteaKey = self:getXteaKey()
+  msg:addU32(xteaKey[1])
+  msg:addU32(xteaKey[2])
+  msg:addU32(xteaKey[3])
+  msg:addU32(xteaKey[4])
 
-  if g_game.getFeature(GameAccountNames) then
-    msg:addString(self.accountName)
-  else
-    msg:addU32(tonumber(self.accountName))
-  end
+  msg:addString(self.accountName)
 
   msg:addString(self.accountPassword)
 
@@ -85,57 +70,46 @@ function ProtocolLogin:sendLoginPacket()
     msg:addString(data)
   end
 
+  local offset = msg:getMessageSize()
   local paddingBytes = g_crypt.rsaGetSize() - (msg:getMessageSize() - offset)
   assert(paddingBytes >= 0)
   for i = 1, paddingBytes do
     msg:addU8(math.random(0, 0xff))
   end
 
-  if g_game.getFeature(GameLoginPacketEncryption) then
-    msg:encryptRsa()
-  end
+  msg:encryptRsa()
 
-  if g_game.getFeature(GameOGLInformation) then
-    msg:addU8(1) --unknown
-    msg:addU8(1) --unknown
+  msg:addU8(1) --unknown
+  msg:addU8(1) --unknown
 
-    if g_game.getClientVersion() >= 1072 then
-      msg:addString(string.format('%s %s', g_graphics.getVendor(), g_graphics.getRenderer()))
-    else
-      msg:addString(g_graphics.getRenderer())
-    end
-    msg:addString(g_graphics.getVersion())
+  if g_game.getClientVersion() >= 1072 then
+    msg:addString(string.format('%s %s', g_graphics.getVendor(), g_graphics.getRenderer()))
+  else
+    msg:addString(g_graphics.getRenderer())
   end
+  msg:addString(g_graphics.getVersion())
 
   -- add RSA encrypted auth token
-  if g_game.getFeature(GameAuthenticator) then
-    offset = msg:getMessageSize()
+  offset = msg:getMessageSize()
 
-    -- first RSA byte must be 0
-    msg:addU8(0)
-    msg:addString(self.authenticatorToken)
+  -- first RSA byte must be 0
+  msg:addU8(0)
+  msg:addString(self.authenticatorToken)
 
-    if g_game.getFeature(GameSessionKey) then
-      msg:addU8(booleantonumber(self.stayLogged))
-    end
+  msg:addU8(booleantonumber(self.stayLogged))
 
-    paddingBytes = g_crypt.rsaGetSize() - (msg:getMessageSize() - offset)
-    assert(paddingBytes >= 0)
-    for i = 1, paddingBytes do
-      msg:addU8(math.random(0, 0xff))
-    end
-
-    msg:encryptRsa()
+  paddingBytes = g_crypt.rsaGetSize() - (msg:getMessageSize() - offset)
+  assert(paddingBytes >= 0)
+  for i = 1, paddingBytes do
+    msg:addU8(math.random(0, 0xff))
   end
 
-  if g_game.getFeature(GameProtocolChecksum) then
-    self:enableChecksum()
-  end
+  msg:encryptRsa()
+
+  self:enableChecksum()
 
   self:send(msg)
-  if g_game.getFeature(GameLoginPacketEncryption) then
-    self:enableXteaEncryption()
-  end
+  self:enableXteaEncryption()
   self:recv()
 end
 
@@ -231,27 +205,19 @@ function ProtocolLogin:parseCharacterList(msg)
       character.worldIp = iptostring(msg:getU32())
       character.worldPort = msg:getU16()
 
-      if g_game.getFeature(GamePreviewState) then
         character.previewState = msg:getU8()
-      end
 
       characters[i] = character
     end
   end
 
   local account = {}
-  if g_game.getProtocolVersion() > 1077 then
-    account.status = msg:getU8()
-    account.subStatus = msg:getU8()
+  account.status = msg:getU8()
+  account.subStatus = msg:getU8()
 
-    account.premDays = msg:getU32()
-    if account.premDays ~= 0 and account.premDays ~= 65535 then
-      account.premDays = math.floor((account.premDays - os.time()) / 86400)
-    end
-  else
-    account.status = AccountStatus.Ok
-    account.premDays = msg:getU16()
-    account.subStatus = account.premDays > 0 and SubscriptionStatus.Premium or SubscriptionStatus.Free
+  account.premDays = msg:getU32()
+  if account.premDays ~= 0 and account.premDays ~= 65535 then
+    account.premDays = math.floor((account.premDays - os.time()) / 86400)
   end
 
   signalcall(self.onCharacterList, self, characters, account)

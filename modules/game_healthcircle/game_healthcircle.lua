@@ -166,7 +166,7 @@ end
 function whenManaChange()
   if g_game.isOnline() then
     local maxMana = g_game.getLocalPlayer():getMaxMana()
-    if maxMana <= 0 then 
+    if maxMana <= 0 then
         manaCircle:setVisible(false)
         manaCircleFront:setVisible(false)
         return
@@ -179,7 +179,7 @@ function whenManaChange()
     local Ymppc = math.floor(208 * (1 - (manaPercent / 100)))
     local rect = { x = 0, y = Ymppc, width = 63, height = 208 }
     manaCircleFront:setImageClip(rect)
-    
+
     manaCircleFront:setY(manaCircle:getY() + Ymppc)
   end
 end
@@ -224,7 +224,7 @@ function whenSkillsChange()
         Xskillpc = math.floor(208 * (1 - player:getSkillLevelPercent(6) / 100))
         skillCircleFront:setImageColor('#ffff33')
       end
-      
+
       local rect = { x = -1 * Xskillpc, y = 0, width = 208, height = 63 }
       skillCircleFront:setImageClip(rect)
 
@@ -235,7 +235,6 @@ end
 
 function whenMapResizeChange()
   if g_game.isOnline() then
-
     local barDistance = 90
     if not (math.floor(mapPanel:getHeight() / 2 * 0.2) < 100) then --0.381
       barDistance = math.floor(mapPanel:getHeight() / 2 * 0.2)
@@ -267,7 +266,7 @@ function whenMapResizeChange()
     else
       healthCircleFront:setX(mapPanel:getX() + mapPanel:getWidth() / 2 - healthCircle:getWidth() - barDistance - distanceFromCenter)
       manaCircleFront:setX(mapPanel:getX() + mapPanel:getWidth() / 2 + barDistance + distanceFromCenter)
-      
+
       healthCircle:setX(mapPanel:getX() + mapPanel:getWidth() / 2 - healthCircle:getWidth() - barDistance - distanceFromCenter)
       manaCircle:setX(mapPanel:getX() + mapPanel:getWidth() / 2 + barDistance + distanceFromCenter)
 
@@ -367,7 +366,7 @@ function setSkillType(skill)
   if not skillsLoaded then
     return
   end
-  
+
   if skill == 'magic' or skill == 'fist' or skill == 'club' or skill == 'sword' or skill == 'axe' or skill == 'distance' or skill == 'shielding' or skill == 'fishing' then
     skillType = skill
     whenMapResizeChange()
@@ -432,7 +431,7 @@ function addToOptionsModule()
   opacityLabel = optionPanel:recursiveGetChildById('opacityLabel')
   opacityScrollbar = optionPanel:recursiveGetChildById('opacityScrollbar')
 
-  --ComboBox start values 
+  --ComboBox start values
   chooseSkillComboBox:addOption('magic')
   chooseSkillComboBox:addOption('fist')
   chooseSkillComboBox:addOption('club')

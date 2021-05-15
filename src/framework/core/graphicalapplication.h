@@ -20,7 +20,6 @@
  * THE SOFTWARE.
  */
 
-
 #ifndef GRAPHICALAPPLICATION_H
 #define GRAPHICALAPPLICATION_H
 
@@ -35,12 +34,12 @@ class GraphicalApplication : public Application
     };
 
 public:
-    void init(std::vector<std::string>& args);
-    void deinit();
-    void terminate();
-    void run();
-    void poll();
-    void close();
+    void init(std::vector<std::string>& args) override;
+    void deinit() override;
+    void terminate() override;
+    void run() override;
+    void poll() override;
+    void close() override;
 
     bool willRepaint() { return m_mustRepaint; }
     void repaint() { m_mustRepaint = true; }

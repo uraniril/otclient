@@ -64,7 +64,7 @@ void Graphics::init()
     g_painterOGL1 = new PainterOGL1;
 #else
     // init GL extensions
-    GLenum err = glewInit();
+    const GLenum err = glewInit();
     if(err != GLEW_OK)
         g_logger.fatal(stdext::format("Unable to init GLEW: %s", glewGetErrorString(err)));
 
@@ -95,7 +95,7 @@ void Graphics::init()
     if(m_maxTextureSize == -1 || m_maxTextureSize > maxTextureSize)
         m_maxTextureSize = maxTextureSize;
 
-    if(Size(m_maxTextureSize,m_maxTextureSize) < g_window.getDisplaySize())
+    if(Size(m_maxTextureSize, m_maxTextureSize) < g_window.getDisplaySize())
         m_cacheBackbuffer = false;
 
     m_alphaBits = 0;
@@ -163,7 +163,7 @@ bool Graphics::parseOption(const std::string& option)
     return true;
 }
 
-bool Graphics::isPainterEngineAvailable(Graphics::PainterEngine painterEngine)
+bool Graphics::isPainterEngineAvailable(PainterEngine painterEngine)
 {
 #if defined(WIN32) && defined(DIRECTX)
     if(g_painterDX9 && painterEngine == Painter_DirectX9)
@@ -184,8 +184,8 @@ bool Graphics::isPainterEngineAvailable(Graphics::PainterEngine painterEngine)
 
 bool Graphics::selectPainterEngine(PainterEngine painterEngine)
 {
-    Painter *painter = nullptr;
-    Painter *fallbackPainter = nullptr;
+    Painter* painter = nullptr;
+    Painter* fallbackPainter = nullptr;
     PainterEngine fallbackPainterEngine = Painter_Any;
 
 #ifdef PAINTER_DX9

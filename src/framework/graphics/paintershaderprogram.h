@@ -53,7 +53,7 @@ protected:
 public:
     PainterShaderProgram();
 
-    bool link();
+    bool link() override;
 
     void setTransformMatrix(const Matrix3& transformMatrix);
     void setProjectionMatrix(const Matrix3& projectionMatrix);

@@ -48,26 +48,10 @@ namespace Otc
         MAX_AUTOWALK_DIST = 127,
     };
 
-    enum Operation : uint8 {
-        OPERATION_ADD, OPERATION_REMOVE, OPERATION_CLEAN
-    };
-
-    enum ShadowFloor : uint8 {
-        SHADOWFLOOR_DISABLED = 0,
-        SHADOWFLOOR_BOTTOM = 1 << 0,
-        SHADOWFLOOR_UPSIDE = 1 << 1,
-        SHADOWFLOOR_BOTH = SHADOWFLOOR_BOTTOM | SHADOWFLOOR_UPSIDE,
-    };
-
     enum FrameUpdate : uint32 {
         FUpdateThing = 1 << 0,
         FUpdateLight = 1 << 1,
-        FUpdateStaticText = 1 << 2,
-        FUpdateCreatureInformation = 1 << 3,
-        FupdateCreature = FUpdateThing | FUpdateCreatureInformation,
-        FUpdateTextInformation = FUpdateStaticText | FUpdateCreatureInformation,
-
-        FUpdateAll = FUpdateThing | FUpdateLight | FUpdateStaticText | FUpdateCreatureInformation
+        FUpdateAll = FUpdateThing | FUpdateLight
     };
 
     enum DrawFlags : uint32 {
@@ -314,63 +298,79 @@ namespace Otc
         IconHungry = 65536
     };
 
-    enum MessageMode : uint8 {
-        MessageNone = 0,
-        MessageSay = 1,
-        MessageWhisper = 2,
-        MessageYell = 3,
-        MessagePrivateFrom = 4,
-        MessagePrivateTo = 5,
-        MessageChannelManagement = 6,
-        MessageChannel = 7,
-        MessageChannelHighlight = 8,
-        MessageSpell = 9,
-        MessageNpcFrom = 10,
-        MessageNpcTo = 11,
-        MessageGamemasterBroadcast = 12,
-        MessageGamemasterChannel = 13,
-        MessageGamemasterPrivateFrom = 14,
-        MessageGamemasterPrivateTo = 15,
-        MessageLogin = 16,
-        MessageWarning = 17,
-        MessageGame = 18,
-        MessageFailure = 19,
-        MessageLook = 20,
-        MessageDamageDealed = 21,
-        MessageDamageReceived = 22,
-        MessageHeal = 23,
-        MessageExp = 24,
-        MessageDamageOthers = 25,
-        MessageHealOthers = 26,
-        MessageExpOthers = 27,
-        MessageStatus = 28,
-        MessageLoot = 29,
-        MessageTradeNpc = 30,
-        MessageGuild = 31,
-        MessagePartyManagement = 32,
-        MessageParty = 33,
-        MessageBarkLow = 34,
-        MessageBarkLoud = 35,
-        MessageReport = 36,
-        MessageHotkeyUse = 37,
-        MessageTutorialHint = 38,
-        MessageThankyou = 39,
-        MessageMarket = 40,
-        MessageMana = 41,
-        MessageBeyondLast = 42,
+    enum MessageMode : uint32 {
+        MESSAGE_NONE = 0, /* None */
 
-        // deprecated
-        MessageMonsterYell = 43,
-        MessageMonsterSay = 44,
-        MessageRed = 45,
-        MessageBlue = 46,
-        MessageRVRChannel = 47,
-        MessageRVRAnswer = 48,
-        MessageRVRContinue = 49,
-        MessageGameHighlight = 50,
-        MessageNpcFromStartBlock = 51,
-        LastMessage = 52,
-        MessageInvalid = 255
+        MESSAGE_SAY = 1,
+        MESSAGE_WHISPER = 2,
+        MESSAGE_YELL = 3,
+        MESSAGE_PRIVATE_FROM = 4,
+        MESSAGE_PRIVATE_TO = 5,
+        MESSAGE_CHANNEL_MANAGER = 6,
+        MESSAGE_CHANNEL_Y = 7,
+        MESSAGE_CHANNEL_O = 8,
+        MESSAGE_SPELL_USE = 9,
+        MESSAGE_PRIVATE_NP = 10,
+        MESSAGE_NPC_UNKOWN = 11, /* no effect (?)*/
+        MESSAGE_PRIVATE_PN = 12,
+        MESSAGE_BROADCAST = 13,
+
+        MESSAGE_GAMEMASTER_CONSOLE = 13, /* Red message in the console*/ /* MESSAGE_BROADCAST */
+
+        MESSAGE_CHANNEL_R1 = 14, //red - #c text
+        MESSAGE_PRIVATE_RED_FROM = 15, //@name@text
+        MESSAGE_PRIVATE_RED_TO = 16, //@name@text
+
+        MESSAGE_LOGIN = 17, /* White message at the bottom of the game window and in the console*/
+        MESSAGE_ADMINISTRADOR = 18, /* Red message in game window and in the console*/
+        MESSAGE_EVENT_ADVANCE = 19, /* White message in game window and in the console*/
+        MESSAGE_GAME_HIGHLIGHT = 20, /* Red message in game window and in the console*/
+        MESSAGE_FAILURE = 21, /* White message at the bottom of the game window"*/
+        MESSAGE_LOOK = 22, /* Green message in game window and in the console*/
+        MESSAGE_DAMAGE_DEALT = 23, /* White message on the console*/
+        MESSAGE_DAMAGE_RECEIVED = 24, /* White message on the console*/
+        MESSAGE_HEALED = 25, /* White message on the console*/
+        MESSAGE_EXPERIENCE = 26, /* White message on the console*/
+        MESSAGE_DAMAGE_OTHERS = 27, /* White message on the console*/
+        MESSAGE_HEALED_OTHERS = 28, /* White message on the console*/
+        MESSAGE_EXPERIENCE_OTHERS = 29, /* White message on the console*/
+        MESSAGE_STATUS = 30, /* White message at the bottom of the game window and in the console*/
+        MESSAGE_LOOT = 31, /* White message on the game window and in the console*/
+        MESSAGE_TRADE = 32, /* Green message in game window and in the console*/
+        MESSAGE_GUILD = 33, /* White message in channel (+ channelId)*/
+        MESSAGE_PARTY_MANAGEMENT = 34, /* Green message in game window and in the console*/
+        MESSAGE_PARTY = 35, /* White message on the console*/
+
+        MESSAGE_MONSTER_SAY = 36,
+        MESSAGE_MONSTER_YELL = 37,
+
+        MESSAGE_REPORT = 38, /* White message on the game window and in the console*/
+        MESSAGE_HOTKEY_PRESSED = 39, /* Green message in game window and in the console*/
+        MESSAGE_TUTORIAL_HINT = 40, /* no effect (?)*/
+        MESSAGE_THANK_YOU = 41, /* no effect (?)*/
+        MESSAGE_MARKET = 42, /* Popout a modal window with the message and a 'ok' button*/
+        MESSAGE_MANA = 43, /* no effect (?)*/
+        MESSAGE_BEYOND_LAST = 44, /* White message on the game window and in the console*/
+        MESSAGE_ATTENTION = 48, /* White message on the console*/
+        MESSAGE_BOOSTED_CREATURE = 49, /* White message on the game window and in the console*/
+        MESSAGE_OFFLINE_TRAINING = 50, /* White message on the game window and in the console*/
+        MESSAGE_TRANSACTION = 51, /* White message on the game window and in the console*/
+        MESSAGE_POTION = 52, /* Orange creature say*/
+        MESSAGE_CHANNEL_R2 = 0xFF, //#d
+    };
+
+    enum ImpactAnalyzerAndTracker_t : uint8_t {
+        ANALYZER_HEAL = 0,
+        ANALYZER_DAMAGE_DEALT = 1,
+        ANALYZER_DAMAGE_RECEIVED = 2
+    };
+
+    enum PartyState_t : uint8_t {
+        PARTY_STATE_CREATURE_UPDATE = 0,
+        PARTY_STATE_PLAYER_MANA = 11,
+        PARTY_STATE_CREATURE_SHOW_STATUS = 12,
+        PARTY_STATE_PLAYER_VOCATION = 13,
+        PARTY_STATE_CREATURE_ICON = 14,
     };
 
     enum PreyState_t : uint8_t
@@ -390,81 +390,14 @@ namespace Otc
     };
 
     enum GameFeature : uint8 {
-        GameProtocolChecksum = 1,
-        GameAccountNames = 2,
-        GameChallengeOnLogin = 3,
-        GamePenalityOnDeath = 4,
-        GameNameOnNpcTrade = 5,
-        GameDoubleFreeCapacity = 6,
-        GameDoubleExperience = 7,
-        GameTotalCapacity = 8,
-        GameSkillsBase = 9,
-        GamePlayerRegenerationTime = 10,
-        GameChannelPlayerList = 11,
-        GamePlayerMounts = 12,
-        GameEnvironmentEffect = 13,
-        GameCreatureEmblems = 14,
-        GameItemAnimationPhase = 15,
-        GameMagicEffectU16 = 16,
-        GamePlayerMarket = 17,
-        GameSpritesU32 = 18,
-        // 19 unused
-        GameOfflineTrainingTime = 20,
-        GamePurseSlot = 21,
-        GameFormatCreatureName = 22,
-        GameSpellList = 23,
-        GameClientPing = 24,
-        GameExtendedClientPing = 25,
-        GameDoubleHealth = 28,
-        GameDoubleSkills = 29,
-        GameChangeMapAwareRange = 30,
-        GameMapMovePosition = 31,
-        GameAttackSeq = 32,
-        GameBlueNpcNameColor = 33,
-        GameDiagonalAnimatedText = 34,
-        GameLoginPending = 35,
-        GameNewSpeedLaw = 36,
-        GameForceFirstAutoWalkStep = 37,
-        GameMinimapRemove = 38,
-        GameDoubleShopSellAmount = 39,
-        GameContainerPagination = 40,
-        GameThingMarks = 41,
-        GameLooktypeU16 = 42,
-        GamePlayerStamina = 43,
-        GamePlayerAddons = 44,
-        GameMessageStatements = 45,
-        GameMessageLevel = 46,
-        GameNewFluids = 47,
-        GamePlayerStateU16 = 48,
-        GameNewOutfitProtocol = 49,
-        GamePVPMode = 50,
-        GameWritableDate = 51,
-        GameAdditionalVipInfo = 52,
-        GameBaseSkillU16 = 53,
-        GameCreatureIcons = 54,
-        GameHideNpcNames = 55,
-        GameSpritesAlphaChannel = 56,
-        GamePremiumExpiration = 57,
-        GameBrowseField = 58,
-        GameEnhancedAnimations = 59,
-        GameOGLInformation = 60,
-        GameMessageSizeCheck = 61,
-        GamePreviewState = 62,
-        GameLoginPacketEncryption = 63,
-        GameClientVersion = 64,
-        GameContentRevision = 65,
-        GameExperienceBonus = 66,
-        GameAuthenticator = 67,
-        GameUnjustifiedPoints = 68,
-        GameSessionKey = 69,
-        GameDeathType = 70,
-        GameIdleAnimations = 71,
-        GameKeepUnawareTiles = 72,
-        GameIngameStore = 73,
-        GameIngameStoreHighlights = 74,
-        GameIngameStoreServiceType = 75,
-        GameAdditionalSkills = 76,
-
+        GameDiagonalAnimatedText = 1,
+        GameFormatCreatureName = 2,
+        GameChangeMapAwareRange = 3,
+        GameMapMovePosition = 4,
+        GameBlueNpcNameColor = 5,
+        GameDoubleShopSellAmount = 6,
+        GameSpritesAlphaChannel = 7,
+        GameKeepUnawareTiles = 8,
         LastGameFeature = 101
     };
 
@@ -510,13 +443,6 @@ namespace Otc
         VipStateOffline = 0,
         VipStateOnline = 1,
         VipStatePending = 2
-    };
-
-    enum SpeedFormula : uint8 {
-        SpeedFormulaA = 0,
-        SpeedFormulaB,
-        SpeedFormulaC,
-        LastSpeedFormula
     };
 
     enum Blessings : uint32 {

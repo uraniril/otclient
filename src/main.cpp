@@ -42,7 +42,7 @@ int main(int argc, const char* argv[])
     if (!g_resources.discoverWorkDir("init.lua"))
         g_logger.fatal("Unable to find work directory, cannot find init.lua, the application cannot be initialized.");
 
-    if (!g_lua.safeRunScript("init.lua"))
+    if(!g_lua.safeRunScript("init.lua"))
         g_logger.fatal("Unable to run script init.lua!");
 
     // the run application main loop

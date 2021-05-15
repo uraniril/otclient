@@ -59,7 +59,7 @@ void UIWidget::parseBaseStyle(const OTMLNodePtr& styleNode)
                 g_lua.loadFunction(node->value(), funcOrigin);
                 luaSetField(funcName);
             }
-        // lua fields value
+            // lua fields value
         } else if(stdext::starts_with(node->tag(), "&")) {
             std::string fieldName = node->tag().substr(1);
             std::string fieldOrigin = "@" + node->source() + ": [" + node->tag() + "]";
@@ -159,8 +159,7 @@ void UIWidget::parseBaseStyle(const OTMLNodePtr& styleNode)
                 setBorderColor(stdext::safe_cast<Color>(split[1]));
             } else
                 throw OTMLException(node, "border param must have its width followed by its color");
-        }
-        else if(node->tag() == "border-width")
+        } else if(node->tag() == "border-width")
             setBorderWidth(node->value<int>());
         else if(node->tag() == "border-width-top")
             setBorderWidthTop(node->value<int>());
@@ -218,8 +217,7 @@ void UIWidget::parseBaseStyle(const OTMLNodePtr& styleNode)
                 setMarginBottom(margin);
                 setMarginLeft(margin);
             }
-        }
-        else if(node->tag() == "padding-top")
+        } else if(node->tag() == "padding-top")
             setPaddingTop(node->value<int>());
         else if(node->tag() == "padding-right")
             setPaddingRight(node->value<int>());
@@ -290,8 +288,7 @@ void UIWidget::parseBaseStyle(const OTMLNodePtr& styleNode)
             if(!parent) {
                 if(m_firstOnStyle)
                     throw OTMLException(node, "cannot create anchor, there is no parent widget!");
-                else
-                    continue;
+                continue;
             }
 
             UILayoutPtr layout = parent->getLayout();
@@ -351,28 +348,28 @@ void UIWidget::drawBorder(const Rect& screenCoords)
     if(m_borderWidth.top > 0) {
         g_painter->setColor(m_borderColor.top);
 
-        Rect borderRect(screenCoords.topLeft(), screenCoords.width(), m_borderWidth.top);
+        const Rect borderRect(screenCoords.topLeft(), screenCoords.width(), m_borderWidth.top);
         g_painter->drawFilledRect(borderRect);
     }
     // right
     if(m_borderWidth.right > 0) {
         g_painter->setColor(m_borderColor.right);
 
-        Rect borderRect(screenCoords.topRight() - Point(m_borderWidth.right - 1, 0), m_borderWidth.right, screenCoords.height());
+        const Rect borderRect(screenCoords.topRight() - Point(m_borderWidth.right - 1, 0), m_borderWidth.right, screenCoords.height());
         g_painter->drawFilledRect(borderRect);
     }
     // bottom
     if(m_borderWidth.bottom > 0) {
         g_painter->setColor(m_borderColor.bottom);
 
-        Rect borderRect(screenCoords.bottomLeft() - Point(0, m_borderWidth.bottom - 1), screenCoords.width(), m_borderWidth.bottom);
+        const Rect borderRect(screenCoords.bottomLeft() - Point(0, m_borderWidth.bottom - 1), screenCoords.width(), m_borderWidth.bottom);
         g_painter->drawFilledRect(borderRect);
     }
     // left
     if(m_borderWidth.left > 0) {
         g_painter->setColor(m_borderColor.left);
 
-        Rect borderRect(screenCoords.topLeft(), m_borderWidth.left, screenCoords.height());
+        const Rect borderRect(screenCoords.topLeft(), m_borderWidth.left, screenCoords.height());
         g_painter->drawFilledRect(borderRect);
     }
 }

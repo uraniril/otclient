@@ -29,10 +29,12 @@
 #include <framework/otml/declarations.h>
 #include <framework/graphics/coordsbuffer.h>
 
+#include <utility>
+
 class BitmapFont : public stdext::shared_object
 {
 public:
-    BitmapFont(const std::string& name) : m_name(name) { }
+    BitmapFont(std::string name) : m_name(std::move(name)) {}
 
     /// Load font from otml node
     void load(const OTMLNodePtr& fontNode);
@@ -76,6 +78,5 @@ private:
     Rect m_glyphsTextureCoords[256];
     Size m_glyphsSize[256];
 };
-
 
 #endif

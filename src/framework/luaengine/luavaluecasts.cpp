@@ -24,7 +24,7 @@
 #include "luainterface.h"
 #include <framework/otml/otmlnode.h>
 
-// bool
+ // bool
 int push_luavalue(bool b)
 {
     g_lua.pushBoolean(b);
@@ -120,9 +120,11 @@ bool luavalue_cast(int index, Color& color)
         g_lua.getField("a", index);
         color.setAlpha(static_cast<int>(g_lua.popInteger()));
         return true;
-    } else if(g_lua.isString()) {
+    }
+    if(g_lua.isString()) {
         return stdext::cast(g_lua.toString(index), color);
-    } else if(g_lua.isNil()) {
+    }
+    if(g_lua.isNil()) {
         color = Color::white;
         return true;
     }
@@ -156,9 +158,11 @@ bool luavalue_cast(int index, Rect& rect)
         g_lua.getField("height", index);
         rect.setHeight(g_lua.popInteger());
         return true;
-    } else if(g_lua.isString()) {
+    }
+    if(g_lua.isString()) {
         return stdext::cast(g_lua.toString(index), rect);
-    } else if(g_lua.isNil()) {
+    }
+    if(g_lua.isNil()) {
         rect = Rect();
         return true;
     }
@@ -184,9 +188,11 @@ bool luavalue_cast(int index, Point& point)
         g_lua.getField("y", index);
         point.y = g_lua.popInteger();
         return true;
-    } else if(g_lua.isString()) {
+    }
+    if(g_lua.isString()) {
         return stdext::cast(g_lua.toString(index), point);
-    } else if(g_lua.isNil()) {
+    }
+    if(g_lua.isNil()) {
         point = Point();
         return true;
     }
@@ -212,9 +218,11 @@ bool luavalue_cast(int index, Size& size)
         g_lua.getField("height", index);
         size.setHeight(g_lua.popInteger());
         return true;
-    } else if(g_lua.isString()) {
+    }
+    if(g_lua.isString()) {
         return stdext::cast(g_lua.toString(index), size);
-    } else if(g_lua.isNil()) {
+    }
+    if(g_lua.isNil()) {
         size = Size();
         return true;
     }
@@ -230,7 +238,7 @@ void push_otml_subnode_luavalue(const OTMLNodePtr& node)
             double d;
             long l;
         };
-        std::string value = node->rawValue();
+        const std::string value = node->rawValue();
         if(stdext::cast(value, b))
             g_lua.pushBoolean(b);
         else if(stdext::cast(value, l))
@@ -287,7 +295,7 @@ bool luavalue_cast(int index, OTMLNodePtr& node)
     node->setUnique(true);
     if(g_lua.isTable(index)) {
         g_lua.pushNil();
-        while(g_lua.next(index < 0 ? index-1 : index)) {
+        while(g_lua.next(index < 0 ? index - 1 : index)) {
             std::string cnodeName;
             if(g_lua.isString(-2)) {
                 g_lua.pushValue(-2);
@@ -323,11 +331,13 @@ bool luavalue_cast(int index, OTMLNodePtr& node)
 }
 
 // object ptr
-bool luavalue_cast(int index, LuaObjectPtr& obj) {
+bool luavalue_cast(int index, LuaObjectPtr& obj)
+{
     if(g_lua.isUserdata(index)) {
         obj = g_lua.toObject(index);
         return true;
-    } else if(g_lua.isNil(index)) {
+    }
+    if(g_lua.isNil(index)) {
         obj = nullptr;
         return true;
     }

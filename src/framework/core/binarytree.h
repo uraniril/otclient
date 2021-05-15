@@ -36,7 +36,7 @@ class BinaryTree : public stdext::shared_object
 {
 public:
     BinaryTree(const FileStreamPtr& fin);
-    ~BinaryTree();
+    ~BinaryTree() override;
 
     void seek(uint pos);
     void skip(uint len);
@@ -66,7 +66,7 @@ private:
 class OutputBinaryTree : public stdext::shared_object
 {
 public:
-    OutputBinaryTree(const FileStreamPtr& finish);
+    OutputBinaryTree(FileStreamPtr finish);
 
     void addU8(uint8 v);
     void addU16(uint16 v);
@@ -86,4 +86,3 @@ protected:
 };
 
 #endif
-

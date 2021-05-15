@@ -9,103 +9,53 @@ else(BOT_PROTECTION)
 endif(BOT_PROTECTION)
 
 set(client_SOURCES ${client_SOURCES}
-    # client
-    ${CMAKE_CURRENT_LIST_DIR}/const.h
-    ${CMAKE_CURRENT_LIST_DIR}/global.h
-	${CMAKE_CURRENT_LIST_DIR}/features.h
-    ${CMAKE_CURRENT_LIST_DIR}/luafunctions.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/thing/text/animatedtext.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/util/animator.cpp
     ${CMAKE_CURRENT_LIST_DIR}/client.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/client.h
-
-    # core
-    ${CMAKE_CURRENT_LIST_DIR}/animatedtext.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/animatedtext.h
-    ${CMAKE_CURRENT_LIST_DIR}/animator.h
-    ${CMAKE_CURRENT_LIST_DIR}/animator.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/container.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/container.h
-    ${CMAKE_CURRENT_LIST_DIR}/creature.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/creature.h
-    ${CMAKE_CURRENT_LIST_DIR}/declarations.h
-    ${CMAKE_CURRENT_LIST_DIR}/effect.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/effect.h
+    ${CMAKE_CURRENT_LIST_DIR}/thing/type/container.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/thing/creature/creature.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/manager/creatures.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/thing/effect.cpp
     ${CMAKE_CURRENT_LIST_DIR}/game.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/game.h
-    ${CMAKE_CURRENT_LIST_DIR}/shadermanager.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/shadermanager.h
-    ${CMAKE_CURRENT_LIST_DIR}/item.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/item.h
-    ${CMAKE_CURRENT_LIST_DIR}/localplayer.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/localplayer.h
-    ${CMAKE_CURRENT_LIST_DIR}/map.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/map.h
-    ${CMAKE_CURRENT_LIST_DIR}/mapio.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/mapview.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/mapview.h
-    ${CMAKE_CURRENT_LIST_DIR}/minimap.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/minimap.h
-    ${CMAKE_CURRENT_LIST_DIR}/lightview.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/lightview.h
-    ${CMAKE_CURRENT_LIST_DIR}/missile.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/missile.h
-    ${CMAKE_CURRENT_LIST_DIR}/outfit.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/outfit.h
-    ${CMAKE_CURRENT_LIST_DIR}/player.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/player.h
-    ${CMAKE_CURRENT_LIST_DIR}/spritemanager.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/spritemanager.h
-    ${CMAKE_CURRENT_LIST_DIR}/statictext.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/statictext.h
-    ${CMAKE_CURRENT_LIST_DIR}/thing.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/thing.h
-    ${CMAKE_CURRENT_LIST_DIR}/thingtypemanager.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/thingtypemanager.h
-    ${CMAKE_CURRENT_LIST_DIR}/thingtype.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/thingtype.h
-    ${CMAKE_CURRENT_LIST_DIR}/itemtype.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/itemtype.h
-    ${CMAKE_CURRENT_LIST_DIR}/tile.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/tile.h
-    ${CMAKE_CURRENT_LIST_DIR}/houses.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/houses.h
-    ${CMAKE_CURRENT_LIST_DIR}/towns.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/towns.h
-    ${CMAKE_CURRENT_LIST_DIR}/creatures.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/creatures.h
-
-    # lua
-    ${CMAKE_CURRENT_LIST_DIR}/luavaluecasts.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/luavaluecasts.h
-
-    # net
-    ${CMAKE_CURRENT_LIST_DIR}/protocolcodes.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/protocolcodes.h
-    ${CMAKE_CURRENT_LIST_DIR}/protocolgame.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/protocolgame.h
-    ${CMAKE_CURRENT_LIST_DIR}/protocolgameparse.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/protocolgamesend.cpp
-
-    # ui
-    ${CMAKE_CURRENT_LIST_DIR}/uicreature.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/uicreature.h
-    ${CMAKE_CURRENT_LIST_DIR}/uiitem.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/uiitem.h
-    ${CMAKE_CURRENT_LIST_DIR}/uimap.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/uimap.h
-    ${CMAKE_CURRENT_LIST_DIR}/uiminimap.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/uiminimap.h
-    ${CMAKE_CURRENT_LIST_DIR}/uiprogressrect.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/uiprogressrect.h
-    ${CMAKE_CURRENT_LIST_DIR}/uimapanchorlayout.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/uimapanchorlayout.h
-    ${CMAKE_CURRENT_LIST_DIR}/uisprite.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/uisprite.h
-
-    # util
-    ${CMAKE_CURRENT_LIST_DIR}/position.h
+    ${CMAKE_CURRENT_LIST_DIR}/manager/houses.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/thing/item.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/thing/type/itemtype.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/map/lightview.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/thing/creature/localplayer.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/lua/luafunctions.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/lua/luavaluecasts.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/map/map.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/manager/mapio.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/map/mapview.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/map/minimap.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/thing/missile.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/thing/creature/outfit.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/painter/creaturepainter.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/painter/mapviewpainter.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/painter/tilepainter.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/painter/thingpainter.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/thing/creature/player.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/protocol/protocolgame.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/protocol/protocolgameparse.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/protocol/protocolgamesend.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/manager/shadermanager.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/manager/spritemanager.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/thing/text/statictext.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/thing/thing.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/thing/type/thingtype.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/manager/thingtypemanager.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/map/tile.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/manager/towns.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ui/uicreature.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ui/uiitem.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ui/uimap.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ui/uimapanchorlayout.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ui/uiminimap.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ui/uiprogressrect.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/ui/uisprite.cpp
 )
 
 if(NOT MSVC)
-    set_source_files_properties(${CMAKE_CURRENT_LIST_DIR}/luafunctions.cpp
+    set_source_files_properties(${CMAKE_CURRENT_LIST_DIR}/lua/luafunctions.cpp
                                 PROPERTIES LANGUAGE CXX COMPILE_FLAGS "-g0 -Os")
 endif()

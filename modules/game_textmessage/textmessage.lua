@@ -47,6 +47,7 @@ MessageTypes = {
   [MessageModes.BeyondLast] = MessageSettings.centerWhite,
   [MessageModes.Report] = MessageSettings.consoleRed,
   [MessageModes.HotkeyUse] = MessageSettings.centerGreen,
+  [MessageModes.BoostedCreature] = MessageSettings.centerWhite,
 
   [254] = MessageSettings.private
 }

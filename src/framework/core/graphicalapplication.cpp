@@ -20,7 +20,6 @@
  * THE SOFTWARE.
  */
 
-
 #include "graphicalapplication.h"
 #include <framework/core/clock.h>
 #include <framework/core/eventdispatcher.h>
@@ -32,6 +31,8 @@
 #include <framework/graphics/painter.h>
 #include <framework/input/mouse.h>
 #include <framework/graphics/framebuffermanager.h>
+
+#include "framework/stdext/time.h"
 
 #ifdef FW_SOUND
 #include <framework/sound/soundmanager.h>
@@ -46,13 +47,11 @@ void GraphicalApplication::init(std::vector<std::string>& args)
     // setup platform window
     g_window.init();
     g_window.hide();
-    g_window.setOnResize(std::bind(&GraphicalApplication::resize, this, std::placeholders::_1));
-    g_window.setOnInputEvent(std::bind(&GraphicalApplication::inputEvent, this, std::placeholders::_1));
-    g_window.setOnClose(std::bind(&GraphicalApplication::close, this));
+    g_window.setOnResize([this](auto&& PH1) { resize(std::forward<decltype(PH1)>(PH1)); });
+    g_window.setOnInputEvent([this](auto&& PH1) { inputEvent(std::forward<decltype(PH1)>(PH1)); });
+    g_window.setOnClose([this] { close(); });
 
-    m_foregroundFrameCache = g_framebuffers.createFrameBuffer();
-    m_foregroundFrameCache->useSchedulePainting(false);
-    m_foregroundFrameCache->setMinTimeUpdate(40);
+    m_foregroundFrameCache = g_framebuffers.createFrameBuffer(true);
 
     g_mouse.init();
 
@@ -103,7 +102,6 @@ void GraphicalApplication::terminate()
     g_graphics.terminate();
     g_window.terminate();
 
-
     m_terminated = true;
 }
 
@@ -138,7 +136,7 @@ void GraphicalApplication::run()
             bool redraw = false;
             bool updateForeground = false;
 
-            bool cacheForeground = g_graphics.canCacheBackbuffer() && m_foregroundFrameCounter.getMaxFps() != 0;
+            const bool cacheForeground = g_graphics.canCacheBackbuffer() && m_foregroundFrameCounter.getMaxFps() != 0;
 
             if(m_backgroundFrameCounter.shouldProcessNextFrame()) {
                 redraw = true;
@@ -160,8 +158,6 @@ void GraphicalApplication::run()
                         // draw foreground
                         if(m_foregroundFrameCache->canUpdate()) {
                             m_foregroundFrameCache->bind();
-                            g_painter->setAlphaWriting(true);
-                            g_painter->clear(Color::alpha);
                             g_ui.render(Fw::ForegroundPane);
 
                             // copy the foreground to a texture
@@ -200,10 +196,9 @@ void GraphicalApplication::run()
                 g_lua.callGlobalField("g_app", "onFps", m_backgroundFrameCounter.getLastFps());
             m_foregroundFrameCounter.update();
 
-            int sleepMicros = m_backgroundFrameCounter.getMaximumSleepMicros();
+            const int sleepMicros = m_backgroundFrameCounter.getMaximumSleepMicros();
             if(sleepMicros >= AdaptativeFrameCounter::MINIMUM_MICROS_SLEEP)
                 stdext::microsleep(sleepMicros);
-
         } else {
             // sleeps until next poll to avoid massive cpu usage
             stdext::millisleep(POLL_CYCLE_DELAY + 1);

@@ -25,7 +25,7 @@
 
 #include "config.h"
 
-// @bindsingleton g_configs
+ // @bindsingleton g_configs
 class ConfigManager
 {
 public:
@@ -36,11 +36,11 @@ public:
     ConfigPtr get(const std::string& file);
 
     ConfigPtr create(const std::string& file);
-    ConfigPtr loadSettings(const std::string file);
+    ConfigPtr loadSettings(const std::string& file);
     ConfigPtr load(const std::string& file);
 
     bool unload(const std::string& file);
-    void remove(const ConfigPtr config);
+    void remove(const ConfigPtr& config);
 
 protected:
     ConfigPtr m_settings;
