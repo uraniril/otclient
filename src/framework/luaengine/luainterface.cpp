@@ -25,12 +25,10 @@
 
 #include <framework/core/resourcemanager.h>
 #if __has_include("luajit/lua.hpp")
-#include <luajit/lua.hpp>
+	#include <luajit/lua.hpp>
 #else
-#include <lua.hpp>
+	#include <lua.hpp>
 #endif
-
-#include "lbitlib.h"
 
 LuaInterface g_lua;
 
@@ -689,9 +687,6 @@ void LuaInterface::createLuaState()
 
     // load lua standard libraries
     luaL_openlibs(L);
-
-    // load bit32 lib for bitwise operations
-    luaopen_bit32(L);
 
     // creates weak table
     newTable();

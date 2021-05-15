@@ -32,7 +32,7 @@ int main(int argc, const char* argv[])
     // setup application name and version
     g_app.setName("OTClient");
     g_app.setCompactName("otclient");
-    g_app.setVersion(VERSION);
+    g_app.setVersion("1.0.0");
 
     // initialize application framework and otclient
     g_app.init(args);
@@ -40,7 +40,7 @@ int main(int argc, const char* argv[])
 
     // find script init.lua and run it
     if (!g_resources.discoverWorkDir("init.lua"))
-        g_logger.fatal("Unable to find work directory, the application cannot be initialized.");
+        g_logger.fatal("Unable to find work directory, cannot find init.lua, the application cannot be initialized.");
 
     if (!g_lua.safeRunScript("init.lua"))
         g_logger.fatal("Unable to run script init.lua!");
