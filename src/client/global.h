@@ -27,6 +27,7 @@
 
  // widely used headers
 #include <client/const.h>
+#include <client/config.h>
 #include <client/util/position.h>
 
 #endif

@@ -154,7 +154,9 @@ void Tile::addThing(const ThingPtr& thing, int stackPos)
     m_things.insert(m_things.begin() + stackPos, thing);
 
     analyzeThing(thing, true);
-    checkForDetachableThing();
+    if(checkForDetachableThing() && m_highlight.enabled) {
+        select();
+    }
 
     if(m_things.size() > MAX_THINGS)
         removeThing(m_things[MAX_THINGS]);
@@ -578,28 +580,28 @@ void Tile::checkTranslucentLight()
     tile->m_flags &= ~TILESTATE_TRANSLUECENT_LIGHT;
 }
 
-void Tile::checkForDetachableThing()
+bool Tile::checkForDetachableThing()
 {
     if(m_highlight.thing = getTopCreature())
-        return;
+        return true;
 
     if(m_countFlag.hasCommonItem) {
         for(const auto& item : m_things) {
-            if((!item->isCommon() || !item->canDraw() || item->isCloth()) && (!item->isUsable()) && (!item->hasLight())) {
+            if((!item->isCommon() || !item->canDraw() || item->isIgnoreLook() || item->isCloth()) && (!item->isUsable()) && (!item->hasLight())) {
                 continue;
             }
 
             m_highlight.thing = item;
-            return;
+            return true;
         }
     }
 
     if(m_countFlag.hasBottomItem) {
         for(auto it = m_things.rbegin(); it != m_things.rend(); ++it) {
             const auto& item = *it;
-            if(!item->isOnBottom() || !item->canDraw() || item->isFluidContainer()) continue;
+            if(!item->isOnBottom() || !item->canDraw() || item->isIgnoreLook() || item->isFluidContainer()) continue;
             m_highlight.thing = item;
-            return;
+            return true;
         }
     }
 
@@ -607,16 +609,17 @@ void Tile::checkForDetachableThing()
         for(auto it = m_things.rbegin(); it != m_things.rend(); ++it) {
             const auto& item = *it;
             if(!item->isOnTop()) break;
-            if(!item->canDraw()) continue;
+            if(!item->canDraw() || item->isIgnoreLook()) continue;
 
             if(item->hasLensHelp()) {
                 m_highlight.thing = item;
-                return;
+                return true;
             }
         }
     }
 
-    if(!m_highlight.thing) unselect();
+    unselect();
+    return false;
 }
 
 void Tile::analyzeThing(const ThingPtr& thing, bool add)
@@ -697,12 +700,12 @@ void Tile::analyzeThing(const ThingPtr& thing, bool add)
 
 void Tile::select()
 {
+    m_highlight.enabled = true;
+
     if(!m_highlight.thing) return;
 
-    m_highlight.enabled = true;
     m_highlight.invertedColorSelection = false;
-    m_highlight.fadeLevel = 0;
-
+    m_highlight.fadeLevel = HIGHTLIGHT_FADE_START;
     m_highlight.listeningEvent = g_dispatcher.cycleEvent([=]() {
         m_highlight.update = true;
     }, 40);
@@ -710,9 +713,9 @@ void Tile::select()
 
 void Tile::unselect()
 {
-    if(!m_highlight.listeningEvent) return;
-
     m_highlight.enabled = false;
-    m_highlight.listeningEvent->cancel();
-    m_highlight.listeningEvent = nullptr;
+    if(m_highlight.listeningEvent) {
+        m_highlight.listeningEvent->cancel();
+        m_highlight.listeningEvent = nullptr;
+    }
 }
