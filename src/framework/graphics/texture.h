@@ -69,11 +69,11 @@ protected:
     Size m_size;
     Size m_glSize;
     Matrix3 m_transformMatrix;
-    stdext::boolean<false> m_hasMipmaps;
-    stdext::boolean<false> m_smooth;
-    stdext::boolean<false> m_upsideDown;
-    stdext::boolean<false> m_repeat;
-    stdext::boolean<false> m_opaque;
+    bool m_hasMipmaps{ false },
+        m_smooth{ false },
+        m_upsideDown{ false },
+        m_repeat{ false },
+        m_opaque{ false };
 };
 
 #endif

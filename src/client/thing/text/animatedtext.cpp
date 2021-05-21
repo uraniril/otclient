@@ -39,7 +39,7 @@ void AnimatedText::onAppear()
 
     // schedule removal
     auto self = asAnimatedText();
-    g_dispatcher.scheduleEvent([self]() { g_map.removeThing(self); }, Otc::ANIMATED_TEXT_DURATION);
+    g_dispatcher.scheduleEvent([self]() { g_map.removeThing(self); }, ANIMATED_TEXT_DURATION);
 }
 
 void AnimatedText::setColor(uint8 color)
@@ -60,7 +60,7 @@ bool AnimatedText::merge(const AnimatedTextPtr& other)
     if(other->getCachedText().getFont() != m_cachedText.getFont())
         return false;
 
-    if(m_animationTimer.ticksElapsed() > Otc::ANIMATED_TEXT_DURATION / 2.5)
+    if(m_animationTimer.ticksElapsed() > ANIMATED_TEXT_DURATION / 2.5)
         return false;
 
     try {

@@ -192,21 +192,21 @@ namespace Fw
 
     enum AlignmentFlag {
         AlignNone = 0,
-        AlignLeft = 1,
-        AlignRight = 2,
-        AlignTop = 4,
-        AlignBottom = 8,
-        AlignHorizontalCenter = 16,
-        AlignVerticalCenter = 32,
-        AlignTopLeft = AlignTop | AlignLeft, // 5
-        AlignTopRight = AlignTop | AlignRight, // 6
-        AlignBottomLeft = AlignBottom | AlignLeft, // 9
-        AlignBottomRight = AlignBottom | AlignRight, // 10
-        AlignLeftCenter = AlignLeft | AlignVerticalCenter, // 33
-        AlignRightCenter = AlignRight | AlignVerticalCenter, // 34
-        AlignTopCenter = AlignTop | AlignHorizontalCenter, // 20
-        AlignBottomCenter = AlignBottom | AlignHorizontalCenter, // 24
-        AlignCenter = AlignVerticalCenter | AlignHorizontalCenter // 48
+        AlignLeft = 1 << 0,
+        AlignRight = 1 << 1,
+        AlignTop = 1 << 3,
+        AlignBottom = 1 << 4,
+        AlignHorizontalCenter = 1 << 5,
+        AlignVerticalCenter = 1 << 6,
+        AlignTopLeft = AlignTop | AlignLeft,
+        AlignTopRight = AlignTop | AlignRight,
+        AlignBottomLeft = AlignBottom | AlignLeft,
+        AlignBottomRight = AlignBottom | AlignRight,
+        AlignLeftCenter = AlignLeft | AlignVerticalCenter,
+        AlignRightCenter = AlignRight | AlignVerticalCenter,
+        AlignTopCenter = AlignTop | AlignHorizontalCenter,
+        AlignBottomCenter = AlignBottom | AlignHorizontalCenter,
+        AlignCenter = AlignVerticalCenter | AlignHorizontalCenter
     };
 
     enum AnchorEdge {
@@ -259,28 +259,28 @@ namespace Fw
 
     enum KeyboardModifier {
         KeyboardNoModifier = 0,
-        KeyboardCtrlModifier = 1,
-        KeyboardAltModifier = 2,
-        KeyboardShiftModifier = 4
+        KeyboardCtrlModifier = 1 << 0,
+        KeyboardAltModifier = 1 << 1,
+        KeyboardShiftModifier = 1 << 2
     };
 
     enum WidgetState {
         InvalidState = -1,
         DefaultState = 0,
-        ActiveState = 1,
-        FocusState = 2,
-        HoverState = 4,
-        PressedState = 8,
-        DisabledState = 16,
-        CheckedState = 32,
-        OnState = 64,
-        FirstState = 128,
-        MiddleState = 256,
-        LastState = 512,
-        AlternateState = 1024,
-        DraggingState = 2048,
-        HiddenState = 4096,
-        LastWidgetState = 8192
+        ActiveState = 1 << 0,
+        FocusState = 1 << 1,
+        HoverState = 1 << 2,
+        PressedState = 1 << 3,
+        DisabledState = 1 << 4,
+        CheckedState = 1 << 5,
+        OnState = 1 << 6,
+        FirstState = 1 << 7,
+        MiddleState = 1 << 8,
+        LastState = 1 << 9,
+        AlternateState = 1 << 10,
+        DraggingState = 1 << 11,
+        HiddenState = 1 << 12,
+        LastWidgetState = 1 << 13
     };
 
     enum DrawPane {

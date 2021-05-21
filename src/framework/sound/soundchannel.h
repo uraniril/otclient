@@ -57,7 +57,7 @@ private:
     };
     std::deque<QueueEntry> m_queue;
     SoundSourcePtr m_currentSource;
-    stdext::boolean<true> m_enabled;
+    bool m_enabled{ true };
     int m_id;
     float m_gain;
 };

@@ -40,7 +40,7 @@ public:
     void sendLogout();
     void sendPing();
     void sendPingBack();
-    void sendAutoWalk(const std::vector<Otc::Direction>& path);
+    void sendAutoWalk(const std::vector<Otc::Direction_t>& path);
     void sendWalkNorth();
     void sendWalkEast();
     void sendWalkSouth();
@@ -74,7 +74,7 @@ public:
     void sendEditList(uint id, int doorId, const std::string& text);
     void sendLook(const Position& position, int thingId, int stackpos);
     void sendLookCreature(uint creatureId);
-    void sendTalk(Otc::MessageMode mode, int channelId, const std::string& receiver, const std::string& message);
+    void sendTalk(Otc::MessageMode_t mode, int channelId, const std::string& receiver, const std::string& message);
     void sendRequestChannels();
     void sendJoinChannel(int channelId);
     void sendLeaveChannel(int channelId);
@@ -83,7 +83,7 @@ public:
     void sendCloseRuleViolation(const std::string& reporter);
     void sendCancelRuleViolation();
     void sendCloseNpcChannel();
-    void sendChangeFightModes(Otc::FightModes fightMode, Otc::ChaseModes chaseMode, bool safeFight, Otc::PVPModes pvpMode);
+    void sendChangeFightModes(Otc::FightModes_t fightMode, Otc::ChaseModes_t chaseMode, bool safeFight, Otc::PVPModes_t pvpMode);
     void sendAttack(uint creatureId, uint seq);
     void sendFollow(uint creatureId, uint seq);
     void sendInviteToParty(uint creatureId);
@@ -165,6 +165,7 @@ private:
     void parsePingBack(const InputMessagePtr& msg);
     void parseChallenge(const InputMessagePtr& msg);
     void parseDeath(const InputMessagePtr& msg);
+    void parseOpenStash(const InputMessagePtr& msg);
     void parseSpecialContainersAvailable(const InputMessagePtr& msg);
     void parseMapDescription(const InputMessagePtr& msg);
     void parseMapMoveNorth(const InputMessagePtr& msg);
@@ -279,7 +280,7 @@ public:
     int setFloorDescription(const InputMessagePtr& msg, int x, int y, int z, int width, int height, int offset, int skip);
     int setTileDescription(const InputMessagePtr& msg, const Position& position);
 
-    Outfit getOutfit(const InputMessagePtr& msg, bool addMount = true);
+    Outfit getOutfit(const InputMessagePtr& msg, bool addMount = true, const bool forceMountData = false);
     ThingPtr getThing(const InputMessagePtr& msg);
     ThingPtr getMappedThing(const InputMessagePtr& msg);
     CreaturePtr getCreature(const InputMessagePtr& msg, uint16 type = 0);
@@ -288,10 +289,11 @@ public:
     Position getPosition(const InputMessagePtr& msg);
 
 private:
-    stdext::boolean<false> m_enableSendExtendedOpcode;
-    stdext::boolean<false> m_gameInitialized;
-    stdext::boolean<false> m_mapKnown;
-    stdext::boolean<true> m_firstRecv;
+    bool m_enableSendExtendedOpcode{ false },
+        m_gameInitialized{ false },
+        m_mapKnown{ false },
+        m_firstRecv{ true };
+
     std::string m_accountName;
     std::string m_accountPassword;
     std::string m_authenticatorToken;

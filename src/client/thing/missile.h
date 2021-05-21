@@ -49,7 +49,7 @@ private:
     uint8 m_distance;
     float m_duration;
     uint16 m_id;
-    Otc::Direction m_direction;
+    Otc::Direction_t m_direction;
 
     friend class ThingPainter;
 };

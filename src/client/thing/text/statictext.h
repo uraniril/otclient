@@ -35,14 +35,14 @@ public:
     StaticText();
 
     std::string getName() { return m_name; }
-    Otc::MessageMode getMessageMode() { return m_mode; }
+    Otc::MessageMode_t getMessageMode() { return m_mode; }
     std::string getFirstMessage() { return m_messages[0].first; }
 
     bool isYell() { return m_mode == Otc::MESSAGE_YELL || m_mode == Otc::MESSAGE_MONSTER_YELL; }
 
     void setText(const std::string& text);
     void setFont(const std::string& fontName);
-    bool addMessage(const std::string& name, Otc::MessageMode mode, const std::string& text);
+    bool addMessage(const std::string& name, Otc::MessageMode_t mode, const std::string& text);
 
     StaticTextPtr asStaticText() { return static_self_cast<StaticText>(); }
     bool isStaticText() override { return true; }
@@ -55,11 +55,11 @@ private:
     void scheduleUpdate();
     void compose();
 
-    stdext::boolean<false> m_yell;
+    bool m_yell{ false };
     std::deque<std::pair<std::string, ticks_t>> m_messages;
     std::string m_name;
-    Otc::MessageMode m_mode;
-    Color m_color;
+    Otc::MessageMode_t m_mode{ Otc::MESSAGE_NONE };
+    Color m_color{ Color::white };
     CachedText m_cachedText;
     ScheduledEventPtr m_updateEvent;
 

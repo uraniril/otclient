@@ -26,10 +26,7 @@
 
 HouseManager g_houses;
 
-House::House()
-= default;
-
-House::House(uint32 hId, const std::string & name, const Position & pos)
+House::House(uint32 hId, const std::string& name, const Position& pos)
 {
     setId(hId);
     setName(name);
@@ -37,14 +34,14 @@ House::House(uint32 hId, const std::string & name, const Position & pos)
         setEntry(pos);
 }
 
-void House::setTile(const TilePtr & tile)
+void House::setTile(const TilePtr& tile)
 {
     tile->setFlag(TILESTATE_HOUSE);
     tile->setHouseId(getId());
     m_tiles.insert(std::make_pair(tile->getPosition(), tile));
 }
 
-TilePtr House::getTile(const Position & position)
+TilePtr House::getTile(const Position& position)
 {
     const TileMap::const_iterator iter = m_tiles.find(position);
     if(iter != m_tiles.end())
@@ -52,7 +49,7 @@ TilePtr House::getTile(const Position & position)
     return nullptr;
 }
 
-void House::addDoor(const ItemPtr & door)
+void House::addDoor(const ItemPtr& door)
 {
     if(!door) return;
     door->setDoorId(m_lastDoorId);
@@ -67,7 +64,7 @@ void House::removeDoorById(uint32 doorId)
     m_doors[doorId] = nullptr;
 }
 
-void House::load(const TiXmlElement * elem)
+void House::load(const TiXmlElement* elem)
 {
     std::string name = elem->Attribute("name");
     if(name.empty())
@@ -86,7 +83,7 @@ void House::load(const TiXmlElement * elem)
     setEntry(entryPos);
 }
 
-void House::save(TiXmlElement * elem)
+void House::save(TiXmlElement* elem)
 {
     elem->SetAttribute("name", getName());
     elem->SetAttribute("houseid", getId());

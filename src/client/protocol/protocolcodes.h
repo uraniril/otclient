@@ -56,6 +56,7 @@ namespace Proto {
         GameServerPing = 0x1E,
         GameServerChallenge = 0x1F,
         GameServerDeath = 0x28,
+        GameServerOpenStash = 0x29,
 
         GameServerSpecialContainersAvailable = 0x2a,
 

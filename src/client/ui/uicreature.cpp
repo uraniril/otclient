@@ -54,25 +54,19 @@ void UICreature::onStyleApply(const std::string& styleName, const OTMLNodePtr& s
     for(const OTMLNodePtr& node : styleNode->children()) {
         if(node->tag() == "fixed-creature-size")
             setFixedCreatureSize(node->value<bool>());
-        else if(node->tag() == "outfit-id") {
+        else if(node->tag().rfind("outfit-", 0) == 0) {
             Outfit outfit = m_creature ? m_creature->getOutfit() : Outfit();
-            outfit.setId(node->value<int>());
-            setOutfit(outfit);
-        } else if(node->tag() == "outfit-head") {
-            Outfit outfit = m_creature ? m_creature->getOutfit() : Outfit();
-            outfit.setHead(node->value<int>());
-            setOutfit(outfit);
-        } else if(node->tag() == "outfit-body") {
-            Outfit outfit = m_creature ? m_creature->getOutfit() : Outfit();
-            outfit.setBody(node->value<int>());
-            setOutfit(outfit);
-        } else if(node->tag() == "outfit-legs") {
-            Outfit outfit = m_creature ? m_creature->getOutfit() : Outfit();
-            outfit.setLegs(node->value<int>());
-            setOutfit(outfit);
-        } else if(node->tag() == "outfit-feet") {
-            Outfit outfit = m_creature ? m_creature->getOutfit() : Outfit();
-            outfit.setFeet(node->value<int>());
+            if(node->tag() == "outfit-id") {
+                outfit.getClothes().id = node->value<int>();
+            } else if(node->tag() == "outfit-head") {
+                outfit.getClothes().setHead(node->value<int>());
+            } else if(node->tag() == "outfit-body") {
+                outfit.getClothes().setBody(node->value<int>());
+            } else if(node->tag() == "outfit-legs") {
+                outfit.getClothes().setLegs(node->value<int>());
+            } else if(node->tag() == "outfit-feet") {
+                outfit.getClothes().setFeet(node->value<int>());
+            }
             setOutfit(outfit);
         }
     }

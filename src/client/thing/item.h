@@ -140,7 +140,7 @@ public:
     void clearContainerItems() { m_containerItems.clear(); }
 
     void calculatePatterns(int& xPattern, int& yPattern, int& zPattern);
-    int calculateAnimationPhase(bool animate);
+    int calculateAnimationPhase();
     int getExactSize(int layer = 0, int xPattern = 0, int yPattern = 0, int zPattern = 0, int animationPhase = 0) override;
 
     const ThingTypePtr& getThingType() override;
@@ -158,7 +158,7 @@ private:
     uint8 m_phase{ 0 };
     ticks_t m_lastPhase{ 0 };
 
-    stdext::boolean<true> m_async;
+    bool m_async{ true };
 
     friend class ThingPainter;
 };

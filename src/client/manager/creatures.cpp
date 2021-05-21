@@ -71,10 +71,10 @@ void Spawn::load(TiXmlElement* node)
             continue;
 
         cType->setSpawnTime(cNode->readType<int>("spawntime"));
-        Otc::Direction dir = Otc::North;
+        Otc::Direction_t dir = Otc::North;
         int16 dir_ = cNode->readType<int16>("direction");
         if(dir_ >= Otc::East && dir_ <= Otc::West)
-            dir = static_cast<Otc::Direction>(dir_);
+            dir = static_cast<Otc::Direction_t>(dir_);
         cType->setDirection(dir);
 
         Position placePos;
@@ -321,19 +321,19 @@ void CreatureManager::internalLoadCreatureBuffer(TiXmlElement* attrib, const Cre
     const int32 type = attrib->readType<int32>("type");
     if(type > 0) {
         out.setCategory(ThingCategoryCreature);
-        out.setId(type);
+        out.getClothes().id = type;
     } else {
         out.setCategory(ThingCategoryItem);
         out.setAuxId(attrib->readType<int32>("typeex"));
     }
 
     {
-        out.setHead(attrib->readType<int>("head"));
-        out.setBody(attrib->readType<int>("body"));
-        out.setLegs(attrib->readType<int>("legs"));
-        out.setFeet(attrib->readType<int>("feet"));
+        out.getClothes().setHead(attrib->readType<int>("head"));
+        out.getClothes().setBody(attrib->readType<int>("body"));
+        out.getClothes().setLegs(attrib->readType<int>("legs"));
+        out.getClothes().setFeet(attrib->readType<int>("feet"));
         out.setAddons(attrib->readType<int>("addons"));
-        out.setMount(attrib->readType<int>("mount"));
+        out.getMountClothes().id = attrib->readType<int>("mount");
     }
 
     m->setOutfit(out);
@@ -357,8 +357,7 @@ const CreatureTypePtr& CreatureManager::getCreatureByLook(int look)
 {
     auto findFun = [=](const CreatureTypePtr& c) -> bool
     {
-        const Outfit& o = c->getOutfit();
-        return o.getId() == look || o.getAuxId() == look;
+        return c->getOutfit().getClothes().id == look || c->getOutfit().getAuxId() == look;
     };
     const auto it = std::find_if(m_creatures.begin(), m_creatures.end(), findFun);
     if(it != m_creatures.end())

@@ -48,8 +48,8 @@ void ThingPainter::drawText(const StaticTextPtr& text, const Point& dest, const 
 
 void ThingPainter::drawText(const AnimatedTextPtr& text, const Point& dest, const Rect& visibleRect)
 {
-    const static float tf = Otc::ANIMATED_TEXT_DURATION;
-    const static float tftf = Otc::ANIMATED_TEXT_DURATION * Otc::ANIMATED_TEXT_DURATION;
+    const static float tf = ANIMATED_TEXT_DURATION;
+    const static float tftf = ANIMATED_TEXT_DURATION * ANIMATED_TEXT_DURATION;
 
     Point p = dest;
     const Size textSize = text->m_cachedText.getTextSize();
@@ -77,13 +77,13 @@ void ThingPainter::drawText(const AnimatedTextPtr& text, const Point& dest, cons
     }
 }
 
-void ThingPainter::draw(const ItemPtr& item, const Point& dest, float scaleFactor, bool animate, const Highlight& highLight, int frameFlag, LightView* lightView)
+void ThingPainter::draw(const ItemPtr& item, const Point& dest, float scaleFactor, const Highlight& highLight, int frameFlag, LightView* lightView)
 {
     if(item->m_clientId == 0 || !item->canDraw())
         return;
 
     // determine animation phase
-    const int animationPhase = item->calculateAnimationPhase(animate);
+    const int animationPhase = item->calculateAnimationPhase();
 
     // determine x,y,z patterns
     int xPattern = 0, yPattern = 0, zPattern = 0;
@@ -193,7 +193,7 @@ void ThingPainter::draw(const ThingTypePtr& thingType, const Point& dest, float 
         textureRect = thingType->m_texturesFramesRects[animationPhase][frameIndex];
     }
 
-    const Rect screenRect(dest + (textureOffset - thingType->m_displacement - (thingType->m_size.toPoint() - Point(1)) * Otc::TILE_PIXELS) * scaleFactor,
+    const Rect screenRect(dest + (textureOffset - thingType->m_displacement - (thingType->m_size.toPoint() - Point(1)) * SPRITE_SIZE) * scaleFactor,
                           textureRect.size() * scaleFactor);
 
     if(frameFlags & Otc::FUpdateThing) {

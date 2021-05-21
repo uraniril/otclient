@@ -91,8 +91,8 @@ public:
     void setOutfit(const Outfit& o) { m_attribs.set(CreatureAttrOutfit, o); }
     Outfit getOutfit() { return m_attribs.get<Outfit>(CreatureAttrOutfit); }
 
-    void setDirection(Otc::Direction dir) { m_attribs.set(CreatureAttrDir, dir); }
-    Otc::Direction getDirection() { return m_attribs.get<Otc::Direction>(CreatureAttrDir); }
+    void setDirection(Otc::Direction_t dir) { m_attribs.set(CreatureAttrDir, dir); }
+    Otc::Direction_t getDirection() { return m_attribs.get<Otc::Direction_t>(CreatureAttrDir); }
 
     void setRace(CreatureRace race) { m_attribs.set(CreatureAttrRace, race); }
     CreatureRace getRace() { return m_attribs.get<CreatureRace>(CreatureAttrRace); }
@@ -138,7 +138,7 @@ protected:
 private:
     std::vector<CreatureTypePtr> m_creatures;
     std::unordered_map<Position, SpawnPtr, Position::Hasher> m_spawns;
-    stdext::boolean<false> m_loaded, m_spawnLoaded;
+    bool m_loaded{ false }, m_spawnLoaded{ false };
     CreatureTypePtr m_nullCreature;
 };
 

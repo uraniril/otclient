@@ -23,6 +23,7 @@
 #ifndef MAPVIEW_H
 #define MAPVIEW_H
 
+#include <framework/core/inputevent.h>
 #include <framework/core/declarations.h>
 #include <framework/graphics/declarations.h>
 #include <framework/graphics/texturemanager.h>
@@ -61,9 +62,9 @@ public:
 public:
     // floor visibility related
     uint8 getLockedFirstVisibleFloor() { return m_lockedFirstVisibleFloor; }
-    uint8 getCachedFirstVisibleFloor() { return m_cachedFirstVisibleFloor; }
-    uint8 getCachedLastVisibleFloor() { return m_cachedLastVisibleFloor; }
     uint8 getTileSize() { return m_tileSize; }
+    uint8 getFloorMin() { return m_floorMin; }
+    uint8 getFloorMax() { return m_floorMax; }
 
     void lockFirstVisibleFloor(uint8 firstVisibleFloor);
     void unlockFirstVisibleFloor();
@@ -129,17 +130,18 @@ public:
 
     bool isInRange(const Position& pos, bool ignoreZ = false);
 
-    void setCrosshairTexture(const std::string& texturePath);
-
     void setMousePosition(const Position& mousePos) { m_mousePosition = mousePos; }
     const Position& getMousePosition() { return m_mousePosition; }
 
+    TilePtr getTopTile(Position tilePos);
+
+    void setCrosshairEffect(const uint32 id);
+    void setCrosshairTexture(const std::string& texturePath);
+    void setAntiAliasingMode(const AntialiasingMode mode);
     void setDrawHighlightTarget(const bool enable) { m_drawHighlightTarget = enable; }
 
-    void setAntiAliasingMode(const AntialiasingMode mode);
-    void setCrosshairEffect(const uint32 id);
-
     void onMouseMove(const Position& mousePos, bool isVirtualMove = false);
+    void onKeyRelease(const InputEvent& inputEvent);
 
 protected:
     void onCameraMove(const Point& offset);
@@ -160,7 +162,7 @@ private:
     struct FrameCache {
         FrameBufferPtr tile, staticText, dynamicText, creatureInformation;
 
-        uint32_t flags = 0;
+        uint32_t flags = Otc::FUpdateAll;
     };
 
     struct RectCache {
@@ -191,19 +193,18 @@ private:
                      (m_virtualCenterOffset.y + (position.y - relativePosition.y) - (relativePosition.z - position.z)) * m_tileSize);
     }
 
-    uint8 m_lockedFirstVisibleFloor,
-        m_cachedFirstVisibleFloor,
-        m_cachedLastVisibleFloor,
-        m_lightVersion,
-        m_renderScale,
+    uint8 m_lockedFirstVisibleFloor{ UINT8_MAX },
+        m_cachedFirstVisibleFloor{ SEA_FLOOR },
+        m_cachedLastVisibleFloor{ SEA_FLOOR },
+        m_renderScale{ 100 },
         m_tileSize,
-        m_floorMin,
-        m_floorMax,
+        m_floorMin{ 0 },
+        m_floorMax{ 0 },
         m_antiAliasingMode;
 
-    float m_minimumAmbientLight,
-        m_fadeInTime,
-        m_fadeOutTime,
+    float m_minimumAmbientLight{ 0 },
+        m_fadeInTime{ 0 },
+        m_fadeOutTime{ 0 },
         m_scaleFactor;
 
     Rect m_rectDimension;
@@ -223,27 +224,26 @@ private:
     std::array<AwareRange, Otc::InvalidDirection + 1> m_viewPortDirection;
     AwareRange m_viewport;
 
-    stdext::boolean<true>
-        m_mustUpdateVisibleTilesCache,
-        m_mustUpdateVisibleCreaturesCache,
-        m_shaderSwitchDone,
-        m_drawHealthBars,
-        m_drawManaBar,
-        m_multifloor,
-        m_drawTexts,
-        m_drawNames,
-        m_smooth,
-        m_follow,
-        m_antiAliasing;
-
-    stdext::boolean<false> m_drawLights,
-        m_autoViewMode,
-        m_drawViewportEdge,
-        m_drawHighlightTarget;
+    bool m_drawLights{ false },
+        m_autoViewMode{ false },
+        m_drawViewportEdge{ false },
+        m_drawHighlightTarget{ false },
+        m_shiftPressed{ false },
+        m_mustUpdateVisibleTilesCache{ true },
+        m_mustUpdateVisibleCreaturesCache{ true },
+        m_shaderSwitchDone{ true },
+        m_drawHealthBars{ true },
+        m_drawManaBar{ true },
+        m_multifloor{ true },
+        m_drawTexts{ true },
+        m_drawNames{ true },
+        m_smooth{ true },
+        m_follow{ true },
+        m_antiAliasing{ true };
 
     std::vector<CreaturePtr> m_visibleCreatures;
 
-    std::array<std::vector<TilePtr>, Otc::MAX_Z + 1> m_cachedVisibleTiles;
+    std::array<std::vector<TilePtr>, MAX_Z + 1> m_cachedVisibleTiles;
 
     PainterShaderProgramPtr m_shader, m_nextShader;
     LightViewPtr m_lightView;

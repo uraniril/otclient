@@ -25,52 +25,29 @@
 
 namespace Otc
 {
-    enum : uint16 {
-        TILE_PIXELS = 32,
-        MAX_ELEVATION = 24,
-
-        SEA_FLOOR = 7,
-        MAX_Z = 15,
-        UNDERGROUND_FLOOR = SEA_FLOOR + 1,
-        AWARE_UNDEGROUND_FLOOR_RANGE = 2,
-
-        INVISIBLE_TICKS_PER_FRAME = 500,
-        ITEM_TICKS_PER_FRAME = 500,
-
-        EFFECT_TICKS_PER_FRAME = 75,
-        MISSILE_TICKS_PER_FRAME = 75,
-
-        ANIMATED_TEXT_DURATION = 1000,
-        STATIC_DURATION_PER_CHARACTER = 60,
-        MIN_STATIC_TEXT_DURATION = 3000,
-        MAX_STATIC_TEXT_WIDTH = 200,
-        MAX_AUTOWALK_STEPS_RETRY = 10,
-        MAX_AUTOWALK_DIST = 127,
-    };
-
-    enum FrameUpdate : uint32 {
+    enum FrameUpdate_t : uint32 {
         FUpdateThing = 1 << 0,
         FUpdateLight = 1 << 1,
         FUpdateAll = FUpdateThing | FUpdateLight
     };
 
-    enum DrawFlags : uint32 {
-        DrawGround = 1,
-        DrawGroundBorders = 2,
-        DrawOnBottom = 4,
-        DrawOnTop = 8,
-        DrawItems = 16,
-        DrawCreatures = 32,
-        DrawEffects = 64,
-        DrawMissiles = 128,
-        DrawCreaturesInformation = 256,
-        DrawStaticTexts = 512,
-        DrawAnimatedTexts = 1024,
-        DrawAnimations = 2048,
-        DrawBars = 4096,
-        DrawNames = 8192,
-        DrawLights = 16384,
-        DrawManaBar = 32768,
+    enum DrawFlags_t : uint32 {
+        DrawGround = 1 << 0,
+        DrawGroundBorders = 1 << 1,
+        DrawOnBottom = 1 << 2,
+        DrawOnTop = 1 << 3,
+        DrawItems = 1 << 4,
+        DrawCreatures = 1 << 5,
+        DrawEffects = 1 << 6,
+        DrawMissiles = 1 << 7,
+        DrawCreaturesInformation = 1 << 8,
+        DrawStaticTexts = 1 << 9,
+        DrawAnimatedTexts = 1 << 10,
+        DrawAnimations = 1 << 11,
+        DrawBars = 1 << 12,
+        DrawNames = 1 << 13,
+        DrawLights = 1 << 14,
+        DrawManaBar = 1 << 15,
         DrawWalls = DrawOnBottom | DrawOnTop,
         DrawEverything = DrawGround | DrawGroundBorders | DrawWalls | DrawItems |
         DrawCreatures | DrawEffects | DrawMissiles | DrawCreaturesInformation |
@@ -78,45 +55,7 @@ namespace Otc
         DrawLights | DrawManaBar
     };
 
-    enum DatOpts : uint8 {
-        DatGround = 0,
-        DatGroundClip,
-        DatOnBottom,
-        DatOnTop,
-        DatContainer,
-        DatStackable,
-        DatForceUse,
-        DatMultiUse,
-        DatWritable,
-        DatWritableOnce,
-        DatFluidContainer,
-        DatSplash,
-        DatBlockWalk,
-        DatNotMoveable,
-        DatBlockProjectile,
-        DatBlockPathFind,
-        DatPickupable,
-        DatHangable,
-        DatHookSouth,
-        DatHookEast,
-        DatRotable,
-        DatLight,
-        DatDontHide,
-        DatTranslucent,
-        DatDisplacement,
-        DatElevation,
-        DatLyingCorpse,
-        DatAnimateAlways,
-        DatMinimapColor,
-        DatLensHelp,
-        DatFullGround,
-        DatIgnoreLook,
-        DatCloth,
-        DatAnimation, // lastest tibia
-        DatLastOpt = 255
-    };
-
-    enum InventorySlot : uint8 {
+    enum InventorySlot_t : uint8 {
         InventorySlotHead = 1,
         InventorySlotNecklace,
         InventorySlotBackpack,
@@ -133,22 +72,6 @@ namespace Otc
         InventorySlotExt3,
         InventorySlotExt4,
         LastInventorySlot
-    };
-
-    enum Statistic : uint8 {
-        Health = 0,
-        MaxHealth,
-        FreeCapacity,
-        Experience,
-        Level,
-        LevelPercent,
-        Mana,
-        MaxMana,
-        MagicLevel,
-        MagicLevelPercent,
-        Soul,
-        Stamina,
-        LastStatistic
     };
 
     enum skills_t : uint8_t {
@@ -173,7 +96,7 @@ namespace Otc
         SKILL_LAST = SKILL_MANA_LEECH_AMOUNT
     };
 
-    enum Direction : uint8 {
+    enum Direction_t : uint8 {
         North = 0,
         East,
         South,
@@ -185,7 +108,7 @@ namespace Otc
         InvalidDirection
     };
 
-    enum FluidsColor : uint8 {
+    enum FluidsColor_t : uint8 {
         FluidTransparent = 0,
         FluidBlue,
         FluidRed,
@@ -196,7 +119,7 @@ namespace Otc
         FluidPurple
     };
 
-    enum FluidsType : uint8 {
+    enum FluidsType_t : uint8 {
         FluidNone = 0,
         FluidWater,
         FluidMana,
@@ -217,25 +140,18 @@ namespace Otc
         FluidMead
     };
 
-    enum FightModes : uint8 {
+    enum FightModes_t : uint8 {
         FightOffensive = 1,
         FightBalanced = 2,
         FightDefensive = 3
     };
 
-    enum ChaseModes : uint8 {
+    enum ChaseModes_t : uint8 {
         DontChase = 0,
         ChaseOpponent = 1
     };
 
-    enum PVPModes : uint8 {
-        WhiteDove = 0,
-        WhiteHand = 1,
-        YellowHand = 2,
-        RedFist = 3
-    };
-
-    enum PlayerSkulls : uint8 {
+    enum PlayerSkulls_t : uint8 {
         SkullNone = 0,
         SkullYellow,
         SkullGreen,
@@ -245,7 +161,7 @@ namespace Otc
         SkullOrange
     };
 
-    enum PlayerShields : uint8 {
+    enum PlayerShields_t : uint8 {
         ShieldNone = 0,
         ShieldWhiteYellow, // 1 party leader
         ShieldWhiteBlue, // 2 party member
@@ -260,7 +176,7 @@ namespace Otc
         ShieldGray // 11 member of another party
     };
 
-    enum PlayerEmblems : uint8 {
+    enum PlayerEmblems_t : uint8 {
         EmblemNone = 0,
         EmblemGreen,
         EmblemRed,
@@ -269,7 +185,7 @@ namespace Otc
         EmblemOther
     };
 
-    enum CreatureIcons : uint8 {
+    enum CreatureIcons_t : uint8 {
         NpcIconNone = 0,
         NpcIconChat,
         NpcIconTrade,
@@ -277,28 +193,28 @@ namespace Otc
         NpcIconTradeQuest
     };
 
-    enum PlayerIcons : uint32 {
+    enum PlayerIcons_t : uint32 {
         IconNone = 0,
-        IconPoison = 1,
-        IconBurn = 2,
-        IconEnergy = 4,
-        IconDrunk = 8,
-        IconManaShield = 16,
-        IconParalyze = 32,
-        IconHaste = 64,
-        IconSwords = 128,
-        IconDrowning = 256,
-        IconFreezing = 512,
-        IconDazzled = 1024,
-        IconCursed = 2048,
-        IconPartyBuff = 4096,
-        IconPzBlock = 8192,
-        IconPz = 16384,
-        IconBleeding = 32768,
-        IconHungry = 65536
+        IconPoison = 1 << 0,
+        IconBurn = 1 << 1,
+        IconEnergy = 1 << 2,
+        IconDrunk = 1 << 3,
+        IconManaShield = 1 << 4,
+        IconParalyze = 1 << 5,
+        IconHaste = 1 << 6,
+        IconSwords = 1 << 7,
+        IconDrowning = 1 << 8,
+        IconFreezing = 1 << 9,
+        IconDazzled = 1 << 10,
+        IconCursed = 1 << 11,
+        IconPartyBuff = 1 << 12,
+        IconPzBlock = 1 << 13,
+        IconPz = 1 << 14,
+        IconBleeding = 1 << 15,
+        IconHungry = 1 << 16
     };
 
-    enum MessageMode : uint32 {
+    enum MessageMode_t : uint32 {
         MESSAGE_NONE = 0, /* None */
 
         MESSAGE_SAY = 1,
@@ -365,6 +281,13 @@ namespace Otc
         ANALYZER_DAMAGE_RECEIVED = 2
     };
 
+    enum PVPModes_t : uint8 {
+        WhiteDove = 0,
+        WhiteHand = 1,
+        YellowHand = 2,
+        RedFist = 3
+    };
+
     enum PartyState_t : uint8_t {
         PARTY_STATE_CREATURE_UPDATE = 0,
         PARTY_STATE_PLAYER_MANA = 11,
@@ -389,7 +312,7 @@ namespace Otc
         CREATUREICON_TURNEDMELEE = 3,
     };
 
-    enum GameFeature : uint8 {
+    enum GameFeature_t : uint8 {
         GameDiagonalAnimatedText = 1,
         GameFormatCreatureName = 2,
         GameChangeMapAwareRange = 3,
@@ -401,7 +324,7 @@ namespace Otc
         LastGameFeature = 101
     };
 
-    enum PathFindResult : uint8 {
+    enum PathFindResult_t : uint8 {
         PathFindResultOk = 0,
         PathFindResultSamePosition,
         PathFindResultImpossible,
@@ -409,45 +332,16 @@ namespace Otc
         PathFindResultNoWay
     };
 
-    enum PathFindFlags : uint8 {
-        PathFindAllowNotSeenTiles = 1,
-        PathFindAllowCreatures = 2,
-        PathFindAllowNonPathable = 4,
-        PathFindAllowNonWalkable = 8
+    enum PathFindFlags_t : uint8 {
+        PathFindAllowNotSeenTiles = 1 << 0,
+        PathFindAllowCreatures = 1 << 1,
+        PathFindAllowNonPathable = 1 << 2,
+        PathFindAllowNonWalkable = 1 << 3
     };
 
-    enum AutomapFlags : uint8 {
-        MapMarkTick = 0,
-        MapMarkQuestion,
-        MapMarkExclamation,
-        MapMarkStar,
-        MapMarkCross,
-        MapMarkTemple,
-        MapMarkKiss,
-        MapMarkShovel,
-        MapMarkSword,
-        MapMarkFlag,
-        MapMarkLock,
-        MapMarkBag,
-        MapMarkSkull,
-        MapMarkDollar,
-        MapMarkRedNorth,
-        MapMarkRedSouth,
-        MapMarkRedEast,
-        MapMarkRedWest,
-        MapMarkGreenNorth,
-        MapMarkGreenSouth
-    };
-
-    enum VipState : uint8 {
-        VipStateOffline = 0,
-        VipStateOnline = 1,
-        VipStatePending = 2
-    };
-
-    enum Blessings : uint32 {
+    enum Blessings_t : uint32 {
         BlessingNone = 0,
-        BlessingAdventurer = 1,
+        BlessingAdventurer = 1 << 0,
         BlessingSpiritualShielding = 1 << 1,
         BlessingEmbraceOfTibia = 1 << 2,
         BlessingFireOfSuns = 1 << 3,
@@ -455,30 +349,9 @@ namespace Otc
         BlessingSparkOfPhoenix = 1 << 5
     };
 
-    enum DeathType : uint8 {
-        DeathRegular = 0,
-        DeathBlessed = 1
-    };
-
-    enum StoreProductTypes : uint8 {
+    enum StoreProductTypes_t : uint8 {
         ProductTypeOther = 0,
         ProductTypeNameChange = 1
-    };
-
-    enum StoreErrorTypes : int8 {
-        StoreNoError = -1,
-        StorePurchaseError = 0,
-        StoreNetworkError = 1,
-        StoreHistoryError = 2,
-        StoreTransferError = 3,
-        StoreInformation = 4
-    };
-
-    enum StoreStates : uint8 {
-        StateNone = 0,
-        StateNew = 1,
-        StateSale = 2,
-        StateTimed = 3
     };
 
     enum MagicEffectsType_t : uint8_t {

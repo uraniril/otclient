@@ -26,22 +26,35 @@
 int push_luavalue(const Outfit& outfit)
 {
     g_lua.createTable(0, 8);
-    g_lua.pushInteger(outfit.getId());
+    g_lua.pushInteger(outfit.getClothes().id);
     g_lua.setField("type");
     g_lua.pushInteger(outfit.getAuxId());
     g_lua.setField("auxType");
     g_lua.pushInteger(outfit.getAddons());
     g_lua.setField("addons");
-    g_lua.pushInteger(outfit.getHead());
+    g_lua.pushInteger(outfit.getClothes().getHead());
     g_lua.setField("head");
-    g_lua.pushInteger(outfit.getBody());
+    g_lua.pushInteger(outfit.getClothes().getBody());
     g_lua.setField("body");
-    g_lua.pushInteger(outfit.getLegs());
+    g_lua.pushInteger(outfit.getClothes().getLegs());
     g_lua.setField("legs");
-    g_lua.pushInteger(outfit.getFeet());
+    g_lua.pushInteger(outfit.getClothes().getFeet());
     g_lua.setField("feet");
-    g_lua.pushInteger(outfit.getMount());
+
+    g_lua.pushInteger(outfit.getMountClothes().id);
     g_lua.setField("mount");
+    g_lua.pushInteger(outfit.getMountClothes().getHead());
+    g_lua.setField("mountHead");
+    g_lua.pushInteger(outfit.getMountClothes().getBody());
+    g_lua.setField("mountBody");
+    g_lua.pushInteger(outfit.getMountClothes().getLegs());
+    g_lua.setField("mountLegs");
+    g_lua.pushInteger(outfit.getMountClothes().getFeet());
+    g_lua.setField("mountFeet");
+
+    g_lua.pushInteger(outfit.getFamiliarId());
+    g_lua.setField("familiarType");
+
     return 1;
 }
 
@@ -49,21 +62,34 @@ bool luavalue_cast(int index, Outfit& outfit)
 {
     if(g_lua.isTable(index)) {
         g_lua.getField("type", index);
-        outfit.setId(g_lua.popInteger());
+        outfit.getClothes().id = g_lua.popInteger();
         g_lua.getField("auxType", index);
         outfit.setAuxId(g_lua.popInteger());
         g_lua.getField("addons", index);
         outfit.setAddons(g_lua.popInteger());
         g_lua.getField("head", index);
-        outfit.setHead(g_lua.popInteger());
+        outfit.getClothes().setHead(g_lua.popInteger());
         g_lua.getField("body", index);
-        outfit.setBody(g_lua.popInteger());
+        outfit.getClothes().setBody(g_lua.popInteger());
         g_lua.getField("legs", index);
-        outfit.setLegs(g_lua.popInteger());
+        outfit.getClothes().setLegs(g_lua.popInteger());
         g_lua.getField("feet", index);
-        outfit.setFeet(g_lua.popInteger());
+        outfit.getClothes().setFeet(g_lua.popInteger());
+
         g_lua.getField("mount", index);
-        outfit.setMount(g_lua.popInteger());
+        outfit.getMountClothes().id = g_lua.popInteger();
+        g_lua.getField("mountHead", index);
+        outfit.getMountClothes().setHead(g_lua.popInteger());
+        g_lua.getField("mountBody", index);
+        outfit.getMountClothes().setBody(g_lua.popInteger());
+        g_lua.getField("mountLegs", index);
+        outfit.getMountClothes().setLegs(g_lua.popInteger());
+        g_lua.getField("mountFeet", index);
+        outfit.getMountClothes().setFeet(g_lua.popInteger());
+
+        g_lua.getField("familiarType", index);
+        outfit.setFamiliarId(g_lua.popInteger());
+
         return true;
     }
     return false;

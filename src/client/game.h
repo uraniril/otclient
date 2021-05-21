@@ -63,8 +63,6 @@ using Vip = std::tuple<std::string, uint, std::string, int, bool>;
 class Game
 {
 public:
-    Game();
-
     void init();
     void terminate();
 
@@ -93,13 +91,13 @@ protected:
     void processGMActions(const std::vector<uint8>& actions);
     void processInventoryChange(int slot, const ItemPtr& item);
     void processAttackCancel(uint seq);
-    void processWalkCancel(Otc::Direction direction);
+    void processWalkCancel(Otc::Direction_t direction);
 
-    void processPlayerModes(Otc::FightModes fightMode, Otc::ChaseModes chaseMode, bool safeMode, Otc::PVPModes pvpMode);
+    void processPlayerModes(Otc::FightModes_t fightMode, Otc::ChaseModes_t chaseMode, bool safeMode, Otc::PVPModes_t pvpMode);
 
     // message related
-    static void processTextMessage(Otc::MessageMode mode, const std::string& text);
-    static void processTalk(const std::string& name, int level, Otc::MessageMode mode, const std::string& text, int channelId, const Position& pos);
+    static void processTextMessage(Otc::MessageMode_t mode, const std::string& text);
+    static void processTalk(const std::string& name, int level, Otc::MessageMode_t mode, const std::string& text, int channelId, const Position& pos);
 
     // container related
     void processOpenContainer(int containerId, const ItemPtr& containerItem, const std::string& name, int capacity, bool hasParent, const std::vector<ItemPtr>& items, bool isUnlocked, bool hasPages, int containerSize, int firstIndex);
@@ -132,7 +130,8 @@ protected:
 
     // outfit
     void processOpenOutfitWindow(const Outfit& currentOutfit, const std::vector<std::tuple<uint16, std::string, uint8> >& outfitList,
-                                 const std::vector<std::tuple<uint16, std::string> >& mountList);
+                                 const std::vector<std::tuple<uint16, std::string>>& mountList,
+                                 const std::vector<std::tuple<uint16, std::string>>& familiarList);
 
     // npc trade
     static void processOpenNpcTrade(const std::vector<std::tuple<ItemPtr, std::string, int, int, int> >& items);
@@ -168,10 +167,10 @@ public:
     void safeLogout();
 
     // walk related
-    bool walk(Otc::Direction direction);
-    void autoWalk(std::vector<Otc::Direction> dirs);
-    void forceWalk(Otc::Direction direction);
-    void turn(Otc::Direction direction);
+    bool walk(Otc::Direction_t direction);
+    void autoWalk(std::vector<Otc::Direction_t> dirs);
+    void forceWalk(Otc::Direction_t direction);
+    void turn(Otc::Direction_t direction);
     void stop();
 
     // item related
@@ -200,8 +199,8 @@ public:
 
     // talk related
     void talk(const std::string& message);
-    void talkChannel(Otc::MessageMode mode, int channelId, const std::string& message);
-    void talkPrivate(Otc::MessageMode mode, const std::string& receiver, const std::string& message);
+    void talkChannel(Otc::MessageMode_t mode, int channelId, const std::string& message);
+    void talkPrivate(Otc::MessageMode_t mode, const std::string& receiver, const std::string& message);
 
     // channel related
     void openPrivateChannel(const std::string& receiver);
@@ -231,14 +230,14 @@ public:
     void editVip(int playerId, const std::string& description, int iconId, bool notifyLogin);
 
     // fight modes related
-    void setChaseMode(Otc::ChaseModes chaseMode);
-    void setFightMode(Otc::FightModes fightMode);
+    void setChaseMode(Otc::ChaseModes_t chaseMode);
+    void setFightMode(Otc::FightModes_t fightMode);
     void setSafeFight(bool on);
-    void setPVPMode(Otc::PVPModes pvpMode);
-    Otc::ChaseModes getChaseMode() { return m_chaseMode; }
-    Otc::FightModes getFightMode() { return m_fightMode; }
+    void setPVPMode(Otc::PVPModes_t pvpMode);
+    Otc::ChaseModes_t getChaseMode() { return m_chaseMode; }
+    Otc::FightModes_t getFightMode() { return m_fightMode; }
     bool isSafeFight() { return m_safeFight; }
-    Otc::PVPModes getPVPMode() { return m_pvpMode; }
+    Otc::PVPModes_t getPVPMode() { return m_pvpMode; }
 
     // pvp related
     void setUnjustifiedPoints(UnjustifiedPoints unjustifiedPoints);
@@ -306,10 +305,10 @@ public:
     void changeMapAwareRange(int xrange, int yrange);
 
     // dynamic support for game features
-    void enableFeature(Otc::GameFeature feature) { m_features.set(feature, true); }
-    void disableFeature(Otc::GameFeature feature) { m_features.set(feature, false); }
-    void setFeature(Otc::GameFeature feature, bool enabled) { m_features.set(feature, enabled); }
-    bool getFeature(Otc::GameFeature feature) { return m_features.test(feature); }
+    void enableFeature(Otc::GameFeature_t feature) { m_features.set(feature, true); }
+    void disableFeature(Otc::GameFeature_t feature) { m_features.set(feature, false); }
+    void setFeature(Otc::GameFeature_t feature, bool enabled) { m_features.set(feature, enabled); }
+    bool getFeature(Otc::GameFeature_t feature) { return m_features.test(feature); }
 
     void setProtocolVersion(int version);
     int getProtocolVersion() { return m_protocolVersion; }
@@ -348,7 +347,7 @@ public:
     std::string getWorldName() { return m_worldName; }
     std::vector<uint8> getGMActions() { return m_gmActions; }
     bool isGM() { return !m_gmActions.empty(); }
-    Otc::Direction getLastWalkDir() { return m_lastWalkDir; }
+    Otc::Direction_t getLastWalkDir() { return m_lastWalkDir; }
 
     std::string formatCreatureName(const std::string& name);
     int findEmptyContainerId();
@@ -361,6 +360,23 @@ private:
     void setAttackingCreature(const CreaturePtr& creature);
     void setFollowingCreature(const CreaturePtr& creature);
 
+    bool m_online{ false };
+    bool m_denyBotCall{ false };
+    bool m_dead{ false };
+    bool m_safeFight{ false };
+    bool m_canReportBugs{ false };
+
+    uint16 m_serverBeat{ 50 };
+    ticks_t m_ping{ -1 };
+    uint m_seq{ 0 };
+    int m_pingDelay{ 1000 };
+    int m_clientCustomOs{ -1 };
+    int m_protocolVersion{ 0 };
+
+    Otc::FightModes_t m_fightMode{ Otc::FightBalanced };
+    Otc::ChaseModes_t m_chaseMode{ Otc::DontChase };
+    Otc::PVPModes_t m_pvpMode{ Otc::WhiteDove };
+
     LocalPlayerPtr m_localPlayer;
     CreaturePtr m_attackingCreature;
     CreaturePtr m_followingCreature;
@@ -368,26 +384,17 @@ private:
     std::map<uint8, ContainerPtr> m_containers;
     std::map<int, Vip> m_vips;
 
-    bool m_online;
-    bool m_denyBotCall;
-    bool m_dead;
     bool m_expertPvpMode;
-    uint16 m_serverBeat;
-    ticks_t m_ping;
+
     uint m_pingSent;
     uint m_pingReceived;
     stdext::timer m_pingTimer;
     Timer m_dashTimer;
-    uint m_seq;
-    int m_pingDelay;
-    Otc::FightModes m_fightMode;
-    Otc::ChaseModes m_chaseMode;
-    Otc::PVPModes m_pvpMode;
-    Otc::Direction m_lastWalkDir;
+
+    Otc::Direction_t m_lastWalkDir;
     UnjustifiedPoints m_unjustifiedPoints;
     int m_openPvpSituations;
-    bool m_safeFight;
-    bool m_canReportBugs;
+
     std::vector<uint8> m_gmActions;
     std::string m_characterName;
     std::string m_worldName;
@@ -396,10 +403,9 @@ private:
     ScheduledEventPtr m_walkEvent;
     ScheduledEventPtr m_checkConnectionEvent;
     bool m_connectionFailWarned;
-    int m_protocolVersion;
+
     int m_clientVersion;
     std::string m_clientSignature;
-    int m_clientCustomOs;
 };
 
 extern Game g_game;

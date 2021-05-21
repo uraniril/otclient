@@ -14,7 +14,6 @@
 
 ## Builds
 
-[![Build Status](https://ci.appveyor.com/api/projects/status/github/opentibiabr/otclient?branch=develop&passingText=develop%20-%20OK&svg=true)](https://ci.appveyor.com/project/opentibiabr/otclient)
 [![Build Status](https://travis-ci.com/opentibiabr/otclient.svg?branch=develop)](http://travis-ci.com/opentibiabr/otclient)
 [![Build Status](https://github.com/opentibiabr/otclient/actions/workflows/build-vcpkg.yml/badge.svg)](https://github.com/opentibiabr/otclient/actions/workflows/build-vcpkg.yml)
 
@@ -25,12 +24,9 @@ for that it uses LUA scripting for all game interface functionality and configur
 similar to CSS for the client interface design. Otclient works with a modular system, this means
 that each functionality is a separated module, giving the possibility to users modify and customize
 anything easily. Users can also create new mods and extend game interface for their own purposes.
-Otclient is written in C++11 and heavily scripted in lua.
+Otclient is written in C++17 and heavily scripted in lua.
 
 ### Where do I download?
-
-Compiled for Windows can be found here:
-* [AppVeyor](https://ci.appveyor.com/project/opentibiabr/otclient)
 
 Compiled for macOS, Ubuntu and Windows can be found here:
 * [Actions](https://github.com/opentibiabr/otclient/actions/workflows/build-vcpkg.yml)

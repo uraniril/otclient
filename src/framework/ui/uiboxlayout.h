@@ -41,7 +41,7 @@ public:
     bool isUIBoxLayout() override { return true; }
 
 protected:
-    stdext::boolean<false> m_fitChildren;
+    bool m_fitChildren{ false };
     int m_spacing;
 };
 

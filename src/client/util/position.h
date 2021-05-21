@@ -38,7 +38,7 @@ public:
 
     Position(const Position& position) = default;
 
-    Position translatedToDirection(Otc::Direction direction)
+    Position translatedToDirection(Otc::Direction_t direction)
     {
         Position pos = *this;
         switch(direction) {
@@ -76,7 +76,7 @@ public:
         return pos;
     }
 
-    Position translatedToReverseDirection(Otc::Direction direction)
+    Position translatedToReverseDirection(Otc::Direction_t direction)
     {
         Position pos = *this;
         switch(direction) {
@@ -114,7 +114,7 @@ public:
         return pos;
     }
 
-    std::vector<Position> translatedToDirections(const std::vector<Otc::Direction>& dirs) const
+    std::vector<Position> translatedToDirections(const std::vector<Otc::Direction_t>& dirs) const
     {
         Position lastPos = *this;
         std::vector<Position> positions;
@@ -134,7 +134,7 @@ public:
         return positions;
     }
 
-    static bool isDiagonal(const Otc::Direction dir) { return dir == Otc::NorthWest || dir == Otc::NorthEast || dir == Otc::SouthWest || dir == Otc::SouthEast; };
+    static bool isDiagonal(const Otc::Direction_t dir) { return dir == Otc::NorthWest || dir == Otc::NorthEast || dir == Otc::SouthWest || dir == Otc::SouthEast; };
 
     static double getAngleFromPositions(const Position& fromPos, const Position& toPos)
     {
@@ -156,7 +156,7 @@ public:
         return getAngleFromPositions(*this, position);
     }
 
-    static Otc::Direction getDirectionFromPositions(const Position& fromPos, const Position& toPos)
+    static Otc::Direction_t getDirectionFromPositions(const Position& fromPos, const Position& toPos)
     {
         const float angle = getAngleFromPositions(fromPos, toPos) * RAD_TO_DEC;
 
@@ -187,12 +187,12 @@ public:
         return Otc::InvalidDirection;
     }
 
-    Otc::Direction getDirectionFromPosition(const Position& position) const
+    Otc::Direction_t getDirectionFromPosition(const Position& position) const
     {
         return getDirectionFromPositions(*this, position);
     }
 
-    bool isMapPosition() const { return ((x >= 0) && (y >= 0) && (x < UINT16_MAX) && (y < UINT16_MAX) && (z <= Otc::MAX_Z)); }
+    bool isMapPosition() const { return ((x >= 0) && (y >= 0) && (x < UINT16_MAX) && (y < UINT16_MAX) && (z <= MAX_Z)); }
     bool isValid() const { return !(x == UINT16_MAX && y == UINT16_MAX && z == UINT8_MAX); }
     float distance(const Position& pos) const { return sqrt(pow(pos.x - x, 2) + pow(pos.y - y, 2)); }
     uint16 manhattanDistance(const Position& pos) const { return std::abs(pos.x - x) + std::abs(pos.y - y); }
@@ -244,7 +244,7 @@ public:
     bool up(int8 n = 1)
     {
         const int8 nz = z - n;
-        if(nz >= 0 && nz <= Otc::MAX_Z) {
+        if(nz >= 0 && nz <= MAX_Z) {
             z = nz;
             return true;
         }
@@ -254,7 +254,7 @@ public:
     bool down(int8 n = 1)
     {
         const int8 nz = z + n;
-        if(nz >= 0 && nz <= Otc::MAX_Z) {
+        if(nz >= 0 && nz <= MAX_Z) {
             z = nz;
             return true;
         }
@@ -266,7 +266,7 @@ public:
     {
         const int32 nx = x + n, ny = y + n;
         const int8 nz = z - n;
-        if(nx >= 0 && nx <= UINT16_MAX && ny >= 0 && ny <= UINT16_MAX && nz >= 0 && nz <= Otc::MAX_Z) {
+        if(nx >= 0 && nx <= UINT16_MAX && ny >= 0 && ny <= UINT16_MAX && nz >= 0 && nz <= MAX_Z) {
             x = nx; y = ny; z = nz;
             return true;
         }
@@ -278,7 +278,7 @@ public:
     {
         const int32 nx = x - n, ny = y - n;
         const int8 nz = z + n;
-        if(nx >= 0 && nx <= UINT16_MAX && ny >= 0 && ny <= UINT16_MAX && nz >= 0 && nz <= Otc::MAX_Z) {
+        if(nx >= 0 && nx <= UINT16_MAX && ny >= 0 && ny <= UINT16_MAX && nz >= 0 && nz <= MAX_Z) {
             x = nx; y = ny; z = nz;
             return true;
         }

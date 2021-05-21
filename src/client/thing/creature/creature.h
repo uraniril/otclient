@@ -51,7 +51,7 @@ public:
     void setId(uint32 id) override { m_id = id; }
     void setName(const std::string& name);
     void setHealthPercent(uint8 healthPercent);
-    void setDirection(Otc::Direction direction);
+    void setDirection(Otc::Direction_t direction);
     void setOutfit(const Outfit& outfit);
     void setOutfitColor(const Color& color, int duration);
     void setLight(const Light& light) { m_light = light; }
@@ -77,7 +77,7 @@ public:
     uint32 getId() override { return m_id; }
     std::string getName() { return m_name; }
     uint8 getHealthPercent() { return m_healthPercent; }
-    Otc::Direction getDirection() { return m_direction; }
+    Otc::Direction_t getDirection() { return m_direction; }
     Outfit getOutfit() { return m_outfit; }
     Light getLight() override;
     bool hasLight() override { return Thing::hasLight() || getLight().color > 0; }
@@ -89,7 +89,7 @@ public:
     uint8 getType() { return m_type; }
     uint8 getIcon() { return m_icon; }
     bool isPassable() { return m_passable; }
-    int getStepDuration(bool ignoreDiagonal = false, Otc::Direction dir = Otc::InvalidDirection);
+    int getStepDuration(bool ignoreDiagonal = false, Otc::Direction_t dir = Otc::InvalidDirection);
     Point getDrawOffset();
     Point getWalkOffset() { return m_walkOffset; }
     PointF getJumpOffset() { return m_jumpOffset; }
@@ -111,7 +111,7 @@ public:
     void updateShield();
 
     // walk related
-    void turn(Otc::Direction direction);
+    void turn(Otc::Direction_t direction);
     void jump(int height, int duration);
     void allowAppearWalk() { m_allowAppearWalk = true; }
     virtual void walk(const Position& oldPos, const Position& newPos);
@@ -121,6 +121,7 @@ public:
     bool isRemoved() { return m_removed; }
     bool isInvisible() { return m_outfit.getCategory() == ThingCategoryEffect && m_outfit.getAuxId() == 13; }
     bool isDead() { return m_healthPercent <= 0; }
+    bool isFullHealth() { return m_healthPercent == 100; }
     bool canBeSeen() { return !isInvisible() || isPlayer(); }
     bool isCreature() override { return true; }
     bool isParalyzed() const { return m_speed < 10; }
@@ -151,7 +152,7 @@ protected:
 
     uint32 m_id;
     std::string m_name;
-    Otc::Direction m_direction;
+    Otc::Direction_t m_direction;
     Outfit m_outfit;
     Light m_light;
 
@@ -172,14 +173,16 @@ protected:
         m_typeTexture,
         m_iconTexture;
 
-    stdext::boolean<false> m_shieldBlink,
-        m_passable,
-        m_showTimedSquare,
-        m_showStaticSquare,
-        m_forceWalk;
+    bool m_shieldBlink{ false },
+        m_passable{ false },
+        m_showTimedSquare{ false },
+        m_showStaticSquare{ false },
+        m_forceWalk{ false },
+        m_showShieldTexture{ true },
+        m_removed{ true },
+        m_walking{ false },
+        m_allowAppearWalk{ false };
 
-    stdext::boolean<true> m_showShieldTexture;
-    stdext::boolean<true> m_removed;
     Color m_timedSquareColor;
     Color m_staticSquareColor;
     Color m_informationColor;
@@ -196,14 +199,12 @@ protected:
     Timer m_walkTimer;
     Timer m_footTimer;
     TilePtr m_walkingTile;
-    stdext::boolean<false> m_walking;
-    stdext::boolean<false> m_allowAppearWalk;
     ScheduledEventPtr m_walkUpdateEvent;
     ScheduledEventPtr m_walkFinishAnimEvent;
     EventPtr m_disappearEvent;
     Point m_walkOffset;
-    Otc::Direction m_walkTurnDirection;
-    Otc::Direction m_lastStepDirection;
+    Otc::Direction_t m_walkTurnDirection;
+    Otc::Direction_t m_lastStepDirection;
     Position m_lastStepFromPosition;
     Position m_lastStepToPosition;
     Position m_oldPosition;
@@ -227,7 +228,7 @@ private:
         int duration = 0;
         int diagonalDuration = 0;
 
-        int getDuration(Otc::Direction dir) { return Position::isDiagonal(dir) ? diagonalDuration : duration; }
+        int getDuration(Otc::Direction_t dir) { return Position::isDiagonal(dir) ? diagonalDuration : duration; }
     };
 
     StepCache m_stepCache;

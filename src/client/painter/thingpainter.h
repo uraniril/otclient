@@ -32,7 +32,7 @@ public:
     static void drawText(const StaticTextPtr& text, const Point& dest, const Rect& parentRect);
     static void drawText(const AnimatedTextPtr& text, const Point& dest, const Rect& parentRect);
 
-    static void draw(const ItemPtr& item, const Point& dest, float scaleFactor, bool animate, const Highlight& highLight, int frameFlag = Otc::FUpdateThing, LightView* lightView = nullptr);
+    static void draw(const ItemPtr& item, const Point& dest, float scaleFactor, const Highlight& highLight, int frameFlag = Otc::FUpdateThing, LightView* lightView = nullptr);
     static void draw(const EffectPtr& effect, const Point& dest, float scaleFactor, int frameFlag, LightView* lightView);
     static void draw(const MissilePtr& missile, const Point& dest, float scaleFactor, int frameFlag, LightView* lightView);
     static void draw(const ThingTypePtr& thingType, const Point& dest, float scaleFactor, int layer, int xPattern, int yPattern, int zPattern, int animationPhase, bool useBlankTexture, int frameFlags = Otc::FUpdateThing, LightView* lightView = nullptr);

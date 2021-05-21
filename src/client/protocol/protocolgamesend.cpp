@@ -126,12 +126,12 @@ void ProtocolGame::sendPingBack()
     send(msg);
 }
 
-void ProtocolGame::sendAutoWalk(const std::vector<Otc::Direction>& path)
+void ProtocolGame::sendAutoWalk(const std::vector<Otc::Direction_t>& path)
 {
     OutputMessagePtr msg(new OutputMessage);
     msg->addU8(Proto::ClientAutoWalk);
     msg->addU8(path.size());
-    for(Otc::Direction dir : path) {
+    for(Otc::Direction_t dir : path) {
         uint8 byte;
         switch(dir) {
         case Otc::East:
@@ -453,7 +453,7 @@ void ProtocolGame::sendLookCreature(uint32 creatureId)
     send(msg);
 }
 
-void ProtocolGame::sendTalk(Otc::MessageMode mode, int channelId, const std::string& receiver, const std::string& message)
+void ProtocolGame::sendTalk(Otc::MessageMode_t mode, int channelId, const std::string& receiver, const std::string& message)
 {
     if(message.empty())
         return;
@@ -547,7 +547,7 @@ void ProtocolGame::sendCloseNpcChannel()
     send(msg);
 }
 
-void ProtocolGame::sendChangeFightModes(Otc::FightModes fightMode, Otc::ChaseModes chaseMode, bool safeFight, Otc::PVPModes pvpMode)
+void ProtocolGame::sendChangeFightModes(Otc::FightModes_t fightMode, Otc::ChaseModes_t chaseMode, bool safeFight, Otc::PVPModes_t pvpMode)
 {
     OutputMessagePtr msg(new OutputMessage);
     msg->addU8(Proto::ClientChangeFightModes);
@@ -620,8 +620,6 @@ void ProtocolGame::sendShareExperience(bool active)
     OutputMessagePtr msg(new OutputMessage);
     msg->addU8(Proto::ClientShareExperience);
     msg->addU8(active ? 0x01 : 0x00);
-    if(g_game.getClientVersion() < 910)
-        msg->addU8(0);
     send(msg);
 }
 
@@ -678,32 +676,32 @@ void ProtocolGame::sendChangeOutfit(const Outfit& outfit)
     uint8 outfitType = 0;
 
     msg->addU8(outfitType); // Mount Type?
-    msg->addU16(outfit.getId());
-    msg->addU8(outfit.getHead());
-    msg->addU8(outfit.getBody());
-    msg->addU8(outfit.getLegs());
-    msg->addU8(outfit.getFeet());
+    msg->addU16(outfit.getClothes().id);
+    msg->addU8(outfit.getClothes().getHead());
+    msg->addU8(outfit.getClothes().getBody());
+    msg->addU8(outfit.getClothes().getLegs());
+    msg->addU8(outfit.getClothes().getFeet());
     msg->addU8(outfit.getAddons());
 
     // TODO: Need to refactor
     if(outfitType == 0) {
-        msg->addU16(outfit.getMount());
-        msg->addU8(outfit.getHead());
-        msg->addU8(outfit.getBody());
-        msg->addU8(outfit.getLegs());
-        msg->addU8(outfit.getFeet());
-        msg->addU16(0); // lookFamiliarsType
+        msg->addU16(outfit.getMountClothes().id);
+        msg->addU8(outfit.getMountClothes().getHead());
+        msg->addU8(outfit.getMountClothes().getBody());
+        msg->addU8(outfit.getMountClothes().getLegs());
+        msg->addU8(outfit.getMountClothes().getFeet());
+        msg->addU16(outfit.getFamiliarId());
     } else if(outfitType == 1) {
         msg->addU32(0);
     } else if(outfitType == 2) {
         addPosition(msg, Position());
         msg->addU32(0); // spriteId
         msg->addU8(0); // stackPos
-        msg->addU16(outfit.getMount());
-        msg->addU8(outfit.getHead());
-        msg->addU8(outfit.getBody());
-        msg->addU8(outfit.getLegs());
-        msg->addU8(outfit.getFeet());
+        msg->addU16(outfit.getMountClothes().id);
+        msg->addU8(outfit.getMountClothes().getHead());
+        msg->addU8(outfit.getMountClothes().getBody());
+        msg->addU8(outfit.getMountClothes().getLegs());
+        msg->addU8(outfit.getMountClothes().getFeet());
         msg->addU8(0); // Direction
         msg->addU8(0); // podiumVisible
     }
@@ -860,14 +858,8 @@ void ProtocolGame::sendRequestTransactionHistory(int page, int entriesPerPage)
 {
     OutputMessagePtr msg(new OutputMessage);
     msg->addU8(Proto::ClientRequestTransactionHistory);
-    if(g_game.getClientVersion() <= 1096) {
-        msg->addU16(page);
-        msg->addU32(entriesPerPage);
-    } else {
-        msg->addU32(page);
-        msg->addU8(entriesPerPage);
-    }
-
+    msg->addU32(page);
+    msg->addU8(entriesPerPage);
     send(msg);
 }
 

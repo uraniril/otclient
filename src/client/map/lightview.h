@@ -25,7 +25,7 @@
 
 #include <framework/graphics/framebuffer.h>
 #include <framework/graphics/declarations.h>
-#include <framework/graphics/painter.h>
+#include <client/painter/lightviewpainter.h>
 #include <client/declarations.h>
 #include <client/thing/type/thingtype.h>
 
@@ -47,7 +47,7 @@ public:
     LightView(const MapViewPtr& mapView);
 
     void resize();
-    void draw(const Rect& dest, const Rect& src);
+
     void addLightSource(const Point& mainCenter, const Light& light);
 
     void setGlobalLight(const Light& light) { m_globalLight = light; m_globalLightColor = Color::from8bit(m_globalLight.color, m_globalLight.intensity / static_cast<float>(UINT8_MAX)); }
@@ -61,14 +61,6 @@ public:
     bool isDark() const { return m_globalLight.intensity < 250; }
 
 private:
-    static bool orderLightComparator(const LightSource& a, const LightSource& b) { return (a.brightness == b.brightness && a.color < b.color) || (a.brightness < b.brightness); }
-
-    void generateLightTexture(),
-        generateShadeTexture(),
-        drawLights();
-
-    TexturePtr m_lightTexture,
-        m_shadeTexture;
 
     Light m_globalLight;
     Color m_globalLightColor;
@@ -79,7 +71,9 @@ private:
     int8 m_currentFloor;
 
     std::vector<ShadeBlock> m_shades;
-    std::array<std::vector<LightSource>, Otc::MAX_Z + 1> m_lights;
+    std::array<std::vector<LightSource>, MAX_Z + 1> m_lights;
+
+    friend class LightViewPainter;
 };
 
 #endif

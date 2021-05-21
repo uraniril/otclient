@@ -48,9 +48,10 @@ void ThingTypeManager::init()
     m_datLoaded = false;
     m_xmlLoaded = false;
     m_otbLoaded = false;
+    m_itemTypes.resize(1, m_nullItemType);
+
     for(auto& m_thingType : m_thingTypes)
         m_thingType.resize(1, m_nullThingType);
-    m_itemTypes.resize(1, m_nullItemType);
 }
 
 void ThingTypeManager::terminate()

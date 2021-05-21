@@ -83,17 +83,19 @@ private:
 
     int m_maxTextureSize;
     int m_alphaBits;
-    stdext::boolean<false> m_ok;
-    stdext::boolean<true> m_useDrawArrays;
-    stdext::boolean<true> m_useFBO;
-    stdext::boolean<false> m_useHardwareBuffers;
-    stdext::boolean<true> m_useBilinearFiltering;
-    stdext::boolean<true> m_useNonPowerOfTwoTextures;
-    stdext::boolean<true> m_useMipmaps;
-    stdext::boolean<true> m_useHardwareMipmaps;
-    stdext::boolean<true> m_useClampToEdge;
-    stdext::boolean<true> m_shouldUseShaders;
-    stdext::boolean<true> m_cacheBackbuffer;
+
+    bool m_ok{ false },
+        m_useDrawArrays{ true },
+        m_useFBO{ true },
+        m_useHardwareBuffers{ false },
+        m_useBilinearFiltering{ true },
+        m_useNonPowerOfTwoTextures{ true },
+        m_useMipmaps{ true },
+        m_useHardwareMipmaps{ true },
+        m_useClampToEdge{ true },
+        m_shouldUseShaders{ true },
+        m_cacheBackbuffer{ true };
+
     PainterEngine m_prefferedPainterEngine;
     PainterEngine m_selectedPainterEngine;
 };

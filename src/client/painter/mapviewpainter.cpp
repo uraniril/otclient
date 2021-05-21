@@ -23,6 +23,7 @@
 #include <client/painter/mapviewpainter.h>
 #include <client/painter/tilepainter.h>
 #include <client/painter/thingpainter.h>
+#include <client/painter/lightviewpainter.h>
 #include <client/map/map.h>
 #include <client/game.h>
 #include <client/thing/missile.h>
@@ -162,7 +163,7 @@ void MapViewPainter::draw(const MapViewPtr& mapView, const Rect& rect)
     drawCreatureInformation(mapView);
 
     if(mapView->m_drawLights) {
-        mapView->m_lightView->draw(rect, mapView->m_rectCache.srcRect);
+        LightViewPainter::draw(mapView->m_lightView, rect, mapView->m_rectCache.srcRect);
     }
 
     drawText(mapView);

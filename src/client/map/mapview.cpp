@@ -38,8 +38,8 @@
 #include <framework/graphics/framebuffermanager.h>
 #include <framework/graphics/graphics.h>
 #include <framework/graphics/image.h>
-
-#include "framework/stdext/math.h"
+#include <framework/stdext/math.h>
+#include <framework/platform/platformwindow.h>
 
 enum {
     // 3840x2160 => 1080p optimized
@@ -54,17 +54,7 @@ enum {
 MapView::MapView()
 {
     m_viewMode = NEAR_VIEW;
-    m_frameCache.flags = Otc::FUpdateAll;
-    m_lockedFirstVisibleFloor = UINT8_MAX;
-    m_cachedFirstVisibleFloor = Otc::SEA_FLOOR;
-    m_cachedLastVisibleFloor = Otc::SEA_FLOOR;
-    m_minimumAmbientLight = 0;
-    m_fadeOutTime = 0;
-    m_fadeInTime = 0;
-    m_floorMax = 0;
-    m_floorMin = 0;
-
-    m_optimizedSize = Size(g_map.getAwareRange().horizontal(), g_map.getAwareRange().vertical()) * Otc::TILE_PIXELS;
+    m_optimizedSize = Size(g_map.getAwareRange().horizontal(), g_map.getAwareRange().vertical()) * SPRITE_SIZE;
 
     m_frameCache.tile = g_framebuffers.createFrameBuffer();
     m_frameCache.creatureInformation = g_framebuffers.createFrameBuffer(true);
@@ -72,8 +62,6 @@ MapView::MapView()
     m_frameCache.dynamicText = g_framebuffers.createFrameBuffer(true, 50);
 
     m_shader = g_shaders.getDefaultMapShader();
-
-    m_renderScale = 100;
 
     setVisibleDimension(Size(15, 11));
 }
@@ -114,7 +102,7 @@ void MapView::updateVisibleTilesCache()
     uint8 cachedLastVisibleFloor = calcLastVisibleFloor();
 
     assert(cachedFirstVisibleFloor >= 0 && cachedLastVisibleFloor >= 0 &&
-           cachedFirstVisibleFloor <= Otc::MAX_Z && cachedLastVisibleFloor <= Otc::MAX_Z);
+           cachedFirstVisibleFloor <= MAX_Z && cachedLastVisibleFloor <= MAX_Z);
 
     if(cachedLastVisibleFloor < cachedFirstVisibleFloor)
         cachedLastVisibleFloor = cachedFirstVisibleFloor;
@@ -184,7 +172,7 @@ void MapView::updateVisibleTilesCache()
 
 void MapView::updateGeometry(const Size& visibleDimension, const Size& optimizedSize)
 {
-    const uint8 tileSize = Otc::TILE_PIXELS * (static_cast<float>(m_renderScale) / 100);
+    const uint8 tileSize = SPRITE_SIZE * (static_cast<float>(m_renderScale) / 100);
     const Size drawDimension = visibleDimension + Size(3),
         bufferSize = drawDimension * tileSize;
 
@@ -198,7 +186,7 @@ void MapView::updateGeometry(const Size& visibleDimension, const Size& optimized
 
     ViewMode viewMode = m_viewMode;
     if(m_autoViewMode) {
-        if(tileSize >= Otc::TILE_PIXELS && visibleDimension.area() <= NEAR_VIEW_AREA)
+        if(tileSize >= SPRITE_SIZE && visibleDimension.area() <= NEAR_VIEW_AREA)
             viewMode = NEAR_VIEW;
         else if(tileSize >= 16 && visibleDimension.area() <= MID_VIEW_AREA)
             viewMode = MID_VIEW;
@@ -227,7 +215,7 @@ void MapView::updateGeometry(const Size& visibleDimension, const Size& optimized
 
     m_rectDimension = Rect(0, 0, bufferSize);
 
-    m_scaleFactor = m_tileSize / static_cast<float>(Otc::TILE_PIXELS);
+    m_scaleFactor = m_tileSize / static_cast<float>(SPRITE_SIZE);
 
     m_frameCache.tile->resize(bufferSize);
     if(m_drawLights) m_lightView->resize();
@@ -257,9 +245,9 @@ void MapView::onCameraMove(const Point& /*offset*/)
     if(isFollowingCreature()) {
         if(m_followingCreature->isWalking()) {
             m_viewport = m_viewPortDirection[m_followingCreature->getDirection()];
+            m_mustUpdateVisibleCreaturesCache = true;
         } else {
             m_viewport = m_viewPortDirection[Otc::InvalidDirection];
-            m_mustUpdateVisibleCreaturesCache = true;
         }
     }
 }
@@ -297,9 +285,18 @@ void MapView::onMouseMove(const Position& mousePos, const bool /*isVirtualMove*/
         }
 
         if(m_drawHighlightTarget) {
-            if(m_lastHighlightTile = g_map.getTile(mousePos))
-                m_lastHighlightTile->select();
+            if(m_lastHighlightTile = m_shiftPressed ? getTopTile(mousePos) : g_map.getTile(mousePos))
+                m_lastHighlightTile->select(m_shiftPressed);
         }
+    }
+}
+
+void MapView::onKeyRelease(const InputEvent& inputEvent)
+{
+    const bool shiftPressed = inputEvent.keyboardModifiers == Fw::KeyboardShiftModifier;
+    if(shiftPressed != m_shiftPressed) {
+        m_shiftPressed = shiftPressed;
+        onMouseMove(m_mousePosition);
     }
 }
 
@@ -314,7 +311,7 @@ void MapView::updateLight()
 
     const auto cameraPosition = getCameraPosition();
 
-    Light ambientLight = cameraPosition.z > Otc::SEA_FLOOR ? Light() : g_map.getLight();
+    Light ambientLight = cameraPosition.z > SEA_FLOOR ? Light() : g_map.getLight();
     ambientLight.intensity = std::max<uint8>(m_minimumAmbientLight * 255, ambientLight.intensity);
 
     m_lightView->setGlobalLight(ambientLight);
@@ -425,18 +422,18 @@ void MapView::move(int32 x, int32 y)
     m_moveOffset.x += x;
     m_moveOffset.y += y;
 
-    int32_t tmp = m_moveOffset.x / Otc::TILE_PIXELS;
+    int32_t tmp = m_moveOffset.x / SPRITE_SIZE;
     bool requestTilesUpdate = false;
     if(tmp != 0) {
         m_customCameraPosition.x += tmp;
-        m_moveOffset.x %= Otc::TILE_PIXELS;
+        m_moveOffset.x %= SPRITE_SIZE;
         requestTilesUpdate = true;
     }
 
-    tmp = m_moveOffset.y / Otc::TILE_PIXELS;
+    tmp = m_moveOffset.y / SPRITE_SIZE;
     if(tmp != 0) {
         m_customCameraPosition.y += tmp;
-        m_moveOffset.y %= Otc::TILE_PIXELS;
+        m_moveOffset.y %= SPRITE_SIZE;
         requestTilesUpdate = true;
     }
 
@@ -465,7 +462,7 @@ Rect MapView::calcFramebufferSource(const Size& destSize)
 
 uint8 MapView::calcFirstVisibleFloor()
 {
-    uint8 z = Otc::SEA_FLOOR;
+    uint8 z = SEA_FLOOR;
     // return forced first visible floor
     if(m_lockedFirstVisibleFloor != UINT8_MAX) {
         z = m_lockedFirstVisibleFloor;
@@ -482,8 +479,8 @@ uint8 MapView::calcFirstVisibleFloor()
                 uint8 firstFloor = 0;
 
                 // limits to underground floors while under sea level
-                if(cameraPosition.z > Otc::SEA_FLOOR)
-                    firstFloor = std::max<uint8>(cameraPosition.z - Otc::AWARE_UNDEGROUND_FLOOR_RANGE, Otc::UNDERGROUND_FLOOR);
+                if(cameraPosition.z > SEA_FLOOR)
+                    firstFloor = std::max<uint8>(cameraPosition.z - AWARE_UNDEGROUND_FLOOR_RANGE, UNDERGROUND_FLOOR);
 
                 // loop in 3x3 tiles around the camera
                 for(int_fast32_t ix = -1; ix <= 1 && firstFloor < cameraPosition.z; ++ix) {
@@ -521,7 +518,7 @@ uint8 MapView::calcFirstVisibleFloor()
     }
 
     // just ensure the that the floor is in the valid range
-    z = stdext::clamp<int>(z, 0, Otc::MAX_Z);
+    z = stdext::clamp<int>(z, 0, MAX_Z);
     return z;
 }
 
@@ -530,24 +527,42 @@ uint8 MapView::calcLastVisibleFloor()
     if(!m_multifloor)
         return calcFirstVisibleFloor();
 
-    uint8 z = Otc::SEA_FLOOR;
+    uint8 z = SEA_FLOOR;
 
     const Position cameraPosition = getCameraPosition();
     // this could happens if the player is not known yet
     if(cameraPosition.isValid()) {
         // view only underground floors when below sea level
-        if(cameraPosition.z > Otc::SEA_FLOOR)
-            z = cameraPosition.z + Otc::AWARE_UNDEGROUND_FLOOR_RANGE;
+        if(cameraPosition.z > SEA_FLOOR)
+            z = cameraPosition.z + AWARE_UNDEGROUND_FLOOR_RANGE;
         else
-            z = Otc::SEA_FLOOR;
+            z = SEA_FLOOR;
     }
 
     if(m_lockedFirstVisibleFloor != UINT8_MAX)
         z = std::max<int>(m_lockedFirstVisibleFloor, z);
 
     // just ensure the that the floor is in the valid range
-    z = stdext::clamp<int>(z, 0, Otc::MAX_Z);
+    z = stdext::clamp<int>(z, 0, MAX_Z);
     return z;
+}
+
+TilePtr MapView::getTopTile(Position tilePos)
+{
+    // we must check every floor, from top to bottom to check for a clickable tile
+    TilePtr tile;
+    tilePos.coveredUp(tilePos.z - m_floorMin);
+    for(uint8 i = m_floorMin; i <= m_floorMax; ++i) {
+        tile = g_map.getTile(tilePos);
+        if(tile && tile->isClickable())
+            break;
+        tilePos.coveredDown();
+    }
+
+    if(!tile || !tile->isClickable())
+        return nullptr;
+
+    return tile;
 }
 
 Position MapView::getCameraPosition()

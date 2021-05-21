@@ -29,8 +29,6 @@
 
 StaticText::StaticText()
 {
-    m_mode = Otc::MESSAGE_NONE;
-    m_color = Color::white;
     m_cachedText.setFont(g_fonts.getFont("verdana-11px-rounded"));
     m_cachedText.setAlign(Fw::AlignCenter);
 }
@@ -45,7 +43,7 @@ void StaticText::setText(const std::string& text)
     m_cachedText.setText(text);
 }
 
-bool StaticText::addMessage(const std::string& name, Otc::MessageMode mode, const std::string& text)
+bool StaticText::addMessage(const std::string& name, Otc::MessageMode_t mode, const std::string& text)
 {
     //TODO: this could be moved to lua
     // first message
@@ -64,7 +62,7 @@ bool StaticText::addMessage(const std::string& name, Otc::MessageMode mode, cons
         m_updateEvent = nullptr;
     }
 
-    int delay = std::max<int>(Otc::STATIC_DURATION_PER_CHARACTER * text.length(), Otc::MIN_STATIC_TEXT_DURATION);
+    int delay = std::max<int>(STATIC_DURATION_PER_CHARACTER * text.length(), MIN_STATIC_TEXT_DURATION);
     if(isYell())
         delay *= 2;
 

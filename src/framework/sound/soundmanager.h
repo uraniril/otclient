@@ -60,7 +60,7 @@ private:
     std::map<StreamSoundSourcePtr, boost::shared_future<SoundFilePtr>> m_streamFiles;
     std::unordered_map<std::string, SoundBufferPtr> m_buffers;
     std::vector<SoundSourcePtr> m_sources;
-    stdext::boolean<true> m_audioEnabled;
+    bool m_audioEnabled{ true };
     std::unordered_map<int, SoundChannelPtr> m_channels;
 };
 

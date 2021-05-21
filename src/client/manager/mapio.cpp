@@ -246,11 +246,7 @@ void Map::saveOtbm(const std::string& fileName)
         else
             dir = fileName.substr(0, fileName.find_last_of('/'));
 
-        uint32 version = 0;
-        if(g_things.getOtbMajorVersion() < ClientVersion820)
-            version = 1;
-        else
-            version = 2;
+        uint32 version = 2;
 
         /// Usually when a map has empty house/spawn file it means the map is new.
         /// TODO: Ask the user for a map name instead of those ugly uses of substr
@@ -301,7 +297,7 @@ void Map::saveOtbm(const std::string& fileName)
                 int px = -1, py = -1, pz = -1;
                 bool firstNode = true;
 
-                for(uint8_t z = 0; z <= Otc::MAX_Z; ++z) {
+                for(uint8_t z = 0; z <= MAX_Z; ++z) {
                     for(const auto& it : m_tileBlocks[z]) {
                         const TileBlock& block = it.second;
                         for(const TilePtr& tile : block.getTiles()) {
@@ -505,7 +501,7 @@ void Map::saveOtcm(const std::string& fileName)
         fin->addU16(start);
         fin->seek(start);
 
-        for(uint8_t z = 0; z <= Otc::MAX_Z; ++z) {
+        for(uint8_t z = 0; z <= MAX_Z; ++z) {
             for(const auto& it : m_tileBlocks[z]) {
                 const TileBlock& block = it.second;
                 for(const TilePtr& tile : block.getTiles()) {

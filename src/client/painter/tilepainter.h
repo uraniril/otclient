@@ -36,7 +36,7 @@ public:
     static void drawGround(const TilePtr& tile, const Point& dest, float scaleFactor, int frameFlags, LightView* lightView = nullptr);
     static void drawBottom(const TilePtr& tile, const Point& dest, float scaleFactor, int frameFlags, LightView* lightView = nullptr);
     static void drawTop(const TilePtr& tile, const Point& dest, float scaleFactor, int frameFlags, LightView* lightView = nullptr);
-    static void drawThing(const TilePtr& tile, const ThingPtr& thing, const Point& dest, float scaleFactor, bool animate, int frameFlag, LightView* lightView);
+    static void drawThing(const TilePtr& tile, const ThingPtr& thing, const Point& dest, float scaleFactor, int frameFlag, LightView* lightView);
 };
 
 #endif

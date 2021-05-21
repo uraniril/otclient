@@ -332,19 +332,17 @@ void Item::calculatePatterns(int& xPattern, int& yPattern, int& zPattern)
     }
 }
 
-int Item::calculateAnimationPhase(bool animate)
+int Item::calculateAnimationPhase()
 {
     if(!hasAnimationPhases()) return 0;
-
-    if(!animate) return getAnimationPhases() - 1;
 
     if(getAnimator() != nullptr) return getAnimator()->getPhase();
 
     if(m_async) {
-        return (g_clock.millis() % (Otc::ITEM_TICKS_PER_FRAME * getAnimationPhases())) / Otc::ITEM_TICKS_PER_FRAME;
+        return (g_clock.millis() % (ITEM_TICKS_PER_FRAME * getAnimationPhases())) / ITEM_TICKS_PER_FRAME;
     }
 
-    if(g_clock.millis() - m_lastPhase >= Otc::ITEM_TICKS_PER_FRAME) {
+    if(g_clock.millis() - m_lastPhase >= ITEM_TICKS_PER_FRAME) {
         m_phase = (m_phase + 1) % getAnimationPhases();
         m_lastPhase = g_clock.millis();
     }
@@ -355,7 +353,7 @@ int Item::calculateAnimationPhase(bool animate)
 int Item::getExactSize(int layer, int xPattern, int yPattern, int zPattern, int animationPhase)
 {
     calculatePatterns(xPattern, yPattern, zPattern);
-    animationPhase = calculateAnimationPhase(true);
+    animationPhase = calculateAnimationPhase();
     return Thing::getExactSize(layer, xPattern, yPattern, zPattern, animationPhase);
 }
 

@@ -38,25 +38,6 @@ const uint16_t CLIENT_VERSION = 1264;
 
 Game g_game;
 
-Game::Game()
-{
-    m_protocolVersion = 0;
-    m_clientCustomOs = -1;
-    m_clientVersion = 0;
-    m_online = false;
-    m_denyBotCall = false;
-    m_dead = false;
-    m_serverBeat = 50;
-    m_seq = 0;
-    m_ping = -1;
-    m_pingDelay = 1000;
-    m_canReportBugs = false;
-    m_fightMode = Otc::FightBalanced;
-    m_chaseMode = Otc::DontChase;
-    m_pvpMode = Otc::WhiteDove;
-    m_safeFight = true;
-}
-
 void Game::init()
 {
     resetGameStates();
@@ -242,7 +223,7 @@ void Game::processGMActions(const std::vector<uint8>& actions)
     g_lua.callGlobalField("g_game", "onGMActions", actions);
 }
 
-void Game::processPlayerModes(Otc::FightModes fightMode, Otc::ChaseModes chaseMode, bool safeMode, Otc::PVPModes pvpMode)
+void Game::processPlayerModes(Otc::FightModes_t fightMode, Otc::ChaseModes_t chaseMode, bool safeMode, Otc::PVPModes_t pvpMode)
 {
     m_fightMode = fightMode;
     m_chaseMode = chaseMode;
@@ -279,12 +260,12 @@ void Game::processPingBack()
     }, m_pingDelay);
 }
 
-void Game::processTextMessage(Otc::MessageMode mode, const std::string& text)
+void Game::processTextMessage(Otc::MessageMode_t mode, const std::string& text)
 {
     g_lua.callGlobalField("g_game", "onTextMessage", mode, text);
 }
 
-void Game::processTalk(const std::string& name, int level, Otc::MessageMode mode, const std::string& text, int channelId, const Position& pos)
+void Game::processTalk(const std::string& name, int level, Otc::MessageMode_t mode, const std::string& text, int channelId, const Position& pos)
 {
     g_lua.callGlobalField("g_game", "onTalk", name, level, mode, text, channelId, pos);
 }
@@ -351,7 +332,7 @@ void Game::processInventoryChange(int slot, const ItemPtr& item)
     if(item)
         item->setPosition(Position(UINT16_MAX, slot, 0));
 
-    m_localPlayer->setInventoryItem(static_cast<Otc::InventorySlot>(slot), item);
+    m_localPlayer->setInventoryItem(static_cast<Otc::InventorySlot_t>(slot), item);
 }
 
 void Game::processChannelList(const std::vector<std::tuple<uint8, std::string> >& channelList)
@@ -426,19 +407,18 @@ void Game::processRemoveAutomapFlag(const Position& pos, int icon, const std::st
     g_lua.callGlobalField("g_game", "onRemoveAutomapFlag", pos, icon, message);
 }
 
-void Game::processOpenOutfitWindow(const Outfit& currentOutfit, const std::vector<std::tuple<uint16, std::string, uint8> >& outfitList,
-                                   const std::vector<std::tuple<uint16, std::string> >& mountList)
+void Game::processOpenOutfitWindow(const Outfit& currentOutfit, const std::vector<std::tuple<uint16, std::string, uint8>>& outfitList,
+                                   const std::vector<std::tuple<uint16, std::string>>& mountList,
+                                   const std::vector<std::tuple<uint16, std::string>>& familiarList)
 {
     Outfit outfit = currentOutfit;
-    outfit.setMount(0);
+    outfit.getMountClothes().id = 0;
 
     Outfit mountOutfit;
-    mountOutfit.setId(0);
+    mountOutfit.setClothes(currentOutfit.getMountClothes());
 
-    const int mount = currentOutfit.getMount();
-    if(mount > 0) {
-        mountOutfit.setId(mount);
-    }
+    Outfit familiarOutfit;
+    familiarOutfit.getClothes().id = currentOutfit.getFamiliarId();
 
     // create virtual creature outfit
     auto virtualOutfitCreature = CreaturePtr(new Creature);
@@ -450,7 +430,12 @@ void Game::processOpenOutfitWindow(const Outfit& currentOutfit, const std::vecto
     virtualMountCreature->setDirection(Otc::South);
     virtualMountCreature->setOutfit(mountOutfit);
 
-    g_lua.callGlobalField("g_game", "onOpenOutfitWindow", virtualOutfitCreature, outfitList, virtualMountCreature, mountList);
+    // creature virtual mount outfit
+    auto virtualFamiliarCreature = CreaturePtr(new Creature);
+    virtualFamiliarCreature->setDirection(Otc::South);
+    virtualFamiliarCreature->setOutfit(familiarOutfit);
+
+    g_lua.callGlobalField("g_game", "onOpenOutfitWindow", virtualOutfitCreature, outfitList, virtualMountCreature, mountList, virtualFamiliarCreature, familiarList);
 }
 
 void Game::processOpenNpcTrade(const std::vector<std::tuple<ItemPtr, std::string, int, int, int> >& items)
@@ -516,7 +501,7 @@ void Game::processAttackCancel(uint seq)
         cancelAttack();
 }
 
-void Game::processWalkCancel(Otc::Direction direction)
+void Game::processWalkCancel(Otc::Direction_t direction)
 {
     m_localPlayer->cancelWalk(direction);
 }
@@ -567,7 +552,7 @@ void Game::safeLogout()
     m_protocolGame->sendLogout();
 }
 
-bool Game::walk(const Otc::Direction direction)
+bool Game::walk(const Otc::Direction_t direction)
 {
     if(!canPerformGameAction())
         return false;
@@ -653,7 +638,7 @@ bool Game::walk(const Otc::Direction direction)
     return true;
 }
 
-void Game::autoWalk(std::vector<Otc::Direction> dirs)
+void Game::autoWalk(std::vector<Otc::Direction_t> dirs)
 {
     if(!canPerformGameAction())
         return;
@@ -672,7 +657,7 @@ void Game::autoWalk(std::vector<Otc::Direction> dirs)
         cancelFollow();
 
     const auto it = dirs.begin();
-    const Otc::Direction direction = *it;
+    const Otc::Direction_t direction = *it;
     if(!m_localPlayer->canWalk(direction))
         return;
 
@@ -688,7 +673,7 @@ void Game::autoWalk(std::vector<Otc::Direction> dirs)
     m_protocolGame->sendAutoWalk(dirs);
 }
 
-void Game::forceWalk(Otc::Direction direction)
+void Game::forceWalk(Otc::Direction_t direction)
 {
     if(!canPerformGameAction())
         return;
@@ -725,7 +710,7 @@ void Game::forceWalk(Otc::Direction direction)
     g_lua.callGlobalField("g_game", "onForceWalk", direction);
 }
 
-void Game::turn(Otc::Direction direction)
+void Game::turn(Otc::Direction_t direction)
 {
     if(!canPerformGameAction())
         return;
@@ -971,14 +956,14 @@ void Game::talk(const std::string& message)
     talkChannel(Otc::MESSAGE_SAY, 0, message);
 }
 
-void Game::talkChannel(Otc::MessageMode mode, int channelId, const std::string& message)
+void Game::talkChannel(Otc::MessageMode_t mode, int channelId, const std::string& message)
 {
     if(!canPerformGameAction() || message.empty())
         return;
     m_protocolGame->sendTalk(mode, channelId, "", message);
 }
 
-void Game::talkPrivate(Otc::MessageMode mode, const std::string& receiver, const std::string& message)
+void Game::talkPrivate(Otc::MessageMode_t mode, const std::string& receiver, const std::string& message)
 {
     if(!canPerformGameAction() || receiver.empty() || message.empty())
         return;
@@ -1132,7 +1117,7 @@ void Game::editVip(int playerId, const std::string& description, int iconId, boo
     m_protocolGame->sendEditVip(playerId, description, iconId, notifyLogin);
 }
 
-void Game::setChaseMode(Otc::ChaseModes chaseMode)
+void Game::setChaseMode(Otc::ChaseModes_t chaseMode)
 {
     if(!canPerformGameAction())
         return;
@@ -1143,7 +1128,7 @@ void Game::setChaseMode(Otc::ChaseModes chaseMode)
     g_lua.callGlobalField("g_game", "onChaseModeChange", chaseMode);
 }
 
-void Game::setFightMode(Otc::FightModes fightMode)
+void Game::setFightMode(Otc::FightModes_t fightMode)
 {
     if(!canPerformGameAction())
         return;
@@ -1165,7 +1150,7 @@ void Game::setSafeFight(bool on)
     g_lua.callGlobalField("g_game", "onSafeFightChange", on);
 }
 
-void Game::setPVPMode(Otc::PVPModes pvpMode)
+void Game::setPVPMode(Otc::PVPModes_t pvpMode)
 {
     if(!canPerformGameAction())
         return;

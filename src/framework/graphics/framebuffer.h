@@ -71,11 +71,10 @@ private:
     Size m_oldViewportSize;
     uint m_fbo;
     uint m_prevBoundFbo;
-    stdext::boolean<true> m_forceUpdate;
-    stdext::boolean<true> m_backuping;
-    stdext::boolean<true> m_smooth;
-
-    stdext::boolean<false> m_useAlphaWriting;
+    bool m_forceUpdate{ true },
+        m_backuping{ true },
+        m_smooth{ true },
+        m_useAlphaWriting{ false };
 
     static uint boundFbo;
 

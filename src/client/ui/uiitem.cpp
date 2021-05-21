@@ -49,15 +49,15 @@ void UIItem::drawSelf(Fw::DrawPane drawPane)
         const Rect drawRect = getPaddingRect();
         Point dest = drawRect.bottomRight() + Point(1);
 
-        const int exactSize = std::max<int>(32, m_item->getExactSize());
+        const int exactSize = std::max<int>(SPRITE_SIZE, m_item->getExactSize());
         if(exactSize == 0)
             return;
 
         const float scaleFactor = std::min<float>(drawRect.width() / static_cast<float>(exactSize), drawRect.height() / static_cast<float>(exactSize));
-        dest += (m_item->getDisplacement() - Point(Otc::TILE_PIXELS)) * scaleFactor;
+        dest += (m_item->getDisplacement() - Point(SPRITE_SIZE)) * scaleFactor;
 
         g_painter->setColor(m_color);
-        ThingPainter::draw(m_item, dest, scaleFactor, true, Highlight());
+        ThingPainter::draw(m_item, dest, scaleFactor, HIGHLIGHT_NONE);
 
         if(m_font && (m_item->isStackable() || m_item->isChargeable()) && m_item->getCountOrSubType() > 1) {
             const std::string count = stdext::to_string(m_item->getCountOrSubType());

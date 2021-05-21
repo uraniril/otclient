@@ -33,13 +33,11 @@ class LocalPlayer : public Player
     };
 
 public:
-    LocalPlayer();
-
     void unlockWalk() { m_walkLockExpiration = 0; }
     void lockWalk(int millis = 250);
     void stopAutoWalk();
     bool autoWalk(const Position& destination);
-    bool canWalk(Otc::Direction direction);
+    bool canWalk(Otc::Direction_t direction);
 
     void setIcons(int icons);
     void setSkill(Otc::skills_t skill, uint8 level, uint8 levelPercent);
@@ -56,7 +54,7 @@ public:
     void setStamina(double stamina);
     void setKnown(bool known) { m_known = known; }
     void setPendingGame(bool pending) { m_pending = pending; }
-    void setInventoryItem(Otc::InventorySlot inventory, const ItemPtr& item);
+    void setInventoryItem(Otc::InventorySlot_t inventory, const ItemPtr& item);
     void setVocation(int vocation);
     void setPremium(bool premium, uint32 premiumExpiration);
     void setRegenerationTime(double regenerationTime);
@@ -92,7 +90,7 @@ public:
     double getRegenerationTime() { return m_regenerationTime; }
     double getOfflineTrainingTime() { return m_offlineTrainingTime; }
     std::vector<uint8> getSpells() { return m_spells; }
-    ItemPtr getInventoryItem(const Otc::InventorySlot inventory) { return m_inventoryItems[inventory]; }
+    ItemPtr getInventoryItem(const Otc::InventorySlot_t inventory) { return m_inventoryItems[inventory]; }
     int getBlessings() { return m_blessings; }
 
     bool hasSight(const Position& pos);
@@ -111,8 +109,8 @@ public:
 
 protected:
     void walk(const Position& oldPos, const Position& newPos) override;
-    void preWalk(Otc::Direction direction);
-    void cancelWalk(Otc::Direction direction = Otc::InvalidDirection);
+    void preWalk(Otc::Direction_t direction);
+    void cancelWalk(Otc::Direction_t direction = Otc::InvalidDirection);
     void stopWalk() override;
     void updateWalk() override;
 
@@ -138,14 +136,14 @@ private:
 
     ticks_t m_walkLockExpiration;
 
-    stdext::boolean<false> m_preWalking,
-        m_serverWalking,
-        m_knownCompletePath,
-        m_premium,
-        m_known,
-        m_pending,
-        m_openPreyWindow,
-        m_magicShield;
+    bool m_preWalking{ false },
+        m_serverWalking{ false },
+        m_knownCompletePath{ false },
+        m_premium{ false },
+        m_known{ false },
+        m_pending{ false },
+        m_openPreyWindow{ false },
+        m_magicShield{ false };
 
     uint32_t m_premiumExpiration;
 
@@ -154,26 +152,26 @@ private:
     std::array<Skill, Otc::SKILL_LAST + 1> m_skills;
     std::vector<uint8> m_spells;
 
-    int m_icons,
-        m_vocation,
-        m_blessings;
+    int m_icons{ 0 },
+        m_vocation{ 0 },
+        m_blessings{ Otc::BlessingNone };
 
-    double m_health;
-    double m_maxHealth;
-    double m_freeCapacity;
-    double m_totalCapacity;
-    double m_experience;
-    double m_level;
-    double m_levelPercent;
-    double m_mana;
-    double m_maxMana;
-    double m_magicLevel;
-    double m_magicLevelPercent;
-    double m_baseMagicLevel;
-    double m_soul;
-    double m_stamina;
-    double m_regenerationTime;
-    double m_offlineTrainingTime;
+    double m_health{ -1 };
+    double m_maxHealth{ -1 };
+    double m_freeCapacity{ -1 };
+    double m_totalCapacity{ -1 };
+    double m_experience{ -1 };
+    double m_level{ -1 };
+    double m_levelPercent{ -1 };
+    double m_mana{ -1 };
+    double m_maxMana{ -1 };
+    double m_magicLevel{ -1 };
+    double m_magicLevelPercent{ -1 };
+    double m_baseMagicLevel{ -1 };
+    double m_soul{ -1 };
+    double m_stamina{ -1 };
+    double m_regenerationTime{ -1 };
+    double m_offlineTrainingTime{ -1 };
 };
 
 #endif

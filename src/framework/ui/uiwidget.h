@@ -63,14 +63,14 @@ protected:
     std::string m_id;
     Rect m_rect;
     Point m_virtualOffset;
-    stdext::boolean<true> m_enabled;
-    stdext::boolean<true> m_visible;
-    stdext::boolean<true> m_focusable;
-    stdext::boolean<false> m_fixedSize;
-    stdext::boolean<false> m_phantom;
-    stdext::boolean<false> m_draggable;
-    stdext::boolean<false> m_destroyed;
-    stdext::boolean<false> m_clipping;
+    bool m_enabled{ true },
+        m_visible{ true },
+        m_focusable{ true },
+        m_fixedSize{ false },
+        m_phantom{ false },
+        m_draggable{ false },
+        m_destroyed{ false },
+        m_clipping{ false };
     UILayoutPtr m_layout;
     UIWidgetPtr m_parent;
     UIWidgetList m_children;
@@ -158,8 +158,8 @@ public:
     UIWidgetPtr backwardsGetWidgetById(const std::string& id);
 
 private:
-    stdext::boolean<false> m_updateEventScheduled;
-    stdext::boolean<false> m_loadingStyle;
+    bool m_updateEventScheduled{ false },
+        m_loadingStyle{ false };
 
     // state managment
 protected:
@@ -173,8 +173,8 @@ private:
     void updateChildrenIndexStates();
     void updateStyle();
 
-    stdext::boolean<false> m_updateStyleScheduled;
-    stdext::boolean<true> m_firstOnStyle;
+    bool m_updateStyleScheduled{ false };
+    bool m_firstOnStyle{ true };
     OTMLNodePtr m_stateStyle;
     int m_states;
 
@@ -402,8 +402,8 @@ private:
 
     CoordsBuffer m_imageCoordsBuffer;
     Rect m_imageCachedScreenCoords;
-    stdext::boolean<true> m_imageMustRecache;
-    stdext::boolean<false> m_imageBordered;
+    bool m_imageMustRecache{ true },
+        m_imageBordered{ false };
 
 protected:
     void drawImage(const Rect& screenCoords);
@@ -413,10 +413,10 @@ protected:
     Rect m_imageRect;
     Color m_imageColor;
     Point m_iconOffset;
-    stdext::boolean<false> m_imageFixedRatio;
-    stdext::boolean<false> m_imageRepeated;
-    stdext::boolean<false> m_imageSmooth;
-    stdext::boolean<false> m_imageAutoResize;
+    bool m_imageFixedRatio{ false },
+        m_imageRepeated{ false },
+        m_imageSmooth{ false },
+        m_imageAutoResize{ false };
     EdgeGroup<int> m_imageBorder;
 
 public:
@@ -464,7 +464,7 @@ private:
     void initText();
     void parseTextStyle(const OTMLNodePtr& styleNode);
 
-    stdext::boolean<true> m_textMustRecache;
+    bool m_textMustRecache{ true };
     CoordsBuffer m_textCoordsBuffer;
     Rect m_textCachedScreenCoords;
 
@@ -479,10 +479,10 @@ protected:
     std::string m_drawText;
     Fw::AlignmentFlag m_textAlign;
     Point m_textOffset;
-    stdext::boolean<false> m_textWrap;
-    stdext::boolean<false> m_textVerticalAutoResize;
-    stdext::boolean<false> m_textHorizontalAutoResize;
-    stdext::boolean<false> m_textOnlyUpperCase;
+    bool m_textWrap{ false },
+        m_textVerticalAutoResize{ false },
+        m_textHorizontalAutoResize{ false },
+        m_textOnlyUpperCase{ false };
     BitmapFontPtr m_font;
 
 public:

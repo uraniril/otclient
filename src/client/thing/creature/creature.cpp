@@ -50,26 +50,32 @@ double Creature::speedC = 0;
 Creature::Creature() : Thing()
 {
     m_id = 0;
-    m_healthPercent = 101;
     m_speed = 200;
-    m_direction = Otc::South;
-    m_walkAnimationPhase = 0;
+    m_healthPercent = 101;
+
+    m_footStep = 0;
+
     m_walkedPixels = 0;
     m_totalWalkedPixels = 0;
+    m_walkAnimationPhase = 0;
+
+    m_direction = Otc::South;
     m_walkTurnDirection = Otc::InvalidDirection;
+    m_lastStepDirection = Otc::InvalidDirection;
+
+    m_icon = Otc::NpcIconNone;
+    m_type = Proto::CREATURE_TYPE_UNKNOW;
     m_skull = Otc::SkullNone;
     m_shield = Otc::ShieldNone;
     m_emblem = Otc::EmblemNone;
-    m_type = Proto::CREATURE_TYPE_UNKNOW;
-    m_icon = Otc::NpcIconNone;
-    m_lastStepDirection = Otc::InvalidDirection;
+
+    m_outfitColor = Color::white;
+
     m_nameCache.setFont(g_fonts.getFont("verdana-11px-rounded"));
     m_nameCache.setAlign(Fw::AlignTopCenter);
-    m_footStep = 0;
-    m_outfitColor = Color::white;
 }
 
-void Creature::turn(Otc::Direction direction)
+void Creature::turn(Otc::Direction_t direction)
 {
     // schedules to set the new direction when walk ends
     if(m_walking) {
@@ -264,14 +270,14 @@ void Creature::updateWalkOffset(int totalPixelsWalked)
 {
     m_walkOffset = Point();
     if(m_direction == Otc::North || m_direction == Otc::NorthEast || m_direction == Otc::NorthWest)
-        m_walkOffset.y = Otc::TILE_PIXELS - totalPixelsWalked;
+        m_walkOffset.y = SPRITE_SIZE - totalPixelsWalked;
     else if(m_direction == Otc::South || m_direction == Otc::SouthEast || m_direction == Otc::SouthWest)
-        m_walkOffset.y = totalPixelsWalked - Otc::TILE_PIXELS;
+        m_walkOffset.y = totalPixelsWalked - SPRITE_SIZE;
 
     if(m_direction == Otc::East || m_direction == Otc::NorthEast || m_direction == Otc::SouthEast)
-        m_walkOffset.x = totalPixelsWalked - Otc::TILE_PIXELS;
+        m_walkOffset.x = totalPixelsWalked - SPRITE_SIZE;
     else if(m_direction == Otc::West || m_direction == Otc::NorthWest || m_direction == Otc::SouthWest)
-        m_walkOffset.x = Otc::TILE_PIXELS - totalPixelsWalked;
+        m_walkOffset.x = SPRITE_SIZE - totalPixelsWalked;
 }
 
 void Creature::updateWalkingTile()
@@ -279,13 +285,13 @@ void Creature::updateWalkingTile()
     // determine new walking tile
     TilePtr newWalkingTile;
 
-    const Rect virtualCreatureRect(Otc::TILE_PIXELS + (m_walkOffset.x - getDisplacementX()),
-                                   Otc::TILE_PIXELS + (m_walkOffset.y - getDisplacementY()),
-                                   Otc::TILE_PIXELS, Otc::TILE_PIXELS);
+    const Rect virtualCreatureRect(SPRITE_SIZE + (m_walkOffset.x - getDisplacementX()),
+                                   SPRITE_SIZE + (m_walkOffset.y - getDisplacementY()),
+                                   SPRITE_SIZE, SPRITE_SIZE);
 
     for(int xi = -1; xi <= 1 && !newWalkingTile; ++xi) {
         for(int yi = -1; yi <= 1 && !newWalkingTile; ++yi) {
-            Rect virtualTileRect((xi + 1) * Otc::TILE_PIXELS, (yi + 1) * Otc::TILE_PIXELS, Otc::TILE_PIXELS, Otc::TILE_PIXELS);
+            Rect virtualTileRect((xi + 1) * SPRITE_SIZE, (yi + 1) * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE);
 
             // only render creatures where bottom right is inside tile rect
             if(virtualTileRect.contains(virtualCreatureRect.bottomRight())) {
@@ -327,7 +333,7 @@ void Creature::nextWalkUpdate()
     m_walkUpdateEvent = g_dispatcher.scheduleEvent([self] {
         self->m_walkUpdateEvent = nullptr;
         self->nextWalkUpdate();
-    }, std::max<int>(m_stepCache.duration / Otc::TILE_PIXELS, 16));
+    }, std::max<int>(m_stepCache.duration / SPRITE_SIZE, 16));
 }
 
 void Creature::updateWalk()
@@ -340,8 +346,8 @@ void Creature::updateWalk()
         return;
     }
 
-    const float walkTicksPerPixel = static_cast<float>(stepDuration) / Otc::TILE_PIXELS;
-    const int totalPixelsWalked = std::min<int>(m_walkTimer.ticksElapsed() / walkTicksPerPixel, Otc::TILE_PIXELS);
+    const float walkTicksPerPixel = static_cast<float>(stepDuration) / SPRITE_SIZE;
+    const int totalPixelsWalked = std::min<int>(m_walkTimer.ticksElapsed() / walkTicksPerPixel, SPRITE_SIZE);
 
     // needed for paralyze effect
     m_walkedPixels = std::max<int>(m_walkedPixels, totalPixelsWalked);
@@ -415,7 +421,7 @@ void Creature::setHealthPercent(uint8 healthPercent)
     if(isDead()) onDeath();
 }
 
-void Creature::setDirection(Otc::Direction direction)
+void Creature::setDirection(Otc::Direction_t direction)
 {
     assert(direction != Otc::InvalidDirection);
     m_direction = direction;
@@ -431,7 +437,7 @@ void Creature::setOutfit(const Outfit& outfit)
         m_outfit.setAuxId(outfit.getAuxId());
         m_outfit.setCategory(outfit.getCategory());
     } else {
-        if(outfit.getId() > 0 && !g_things.isValidDatId(outfit.getId(), ThingCategoryCreature))
+        if(outfit.getClothes().id > 0 && !g_things.isValidDatId(outfit.getClothes().id, ThingCategoryCreature))
             return;
 
         m_outfit = outfit;
@@ -448,7 +454,7 @@ void Creature::setOutfit(const Outfit& outfit)
         else
             m_drawCache.exactSize = g_things.rawGetThingType(m_outfit.getAuxId(), m_outfit.getCategory())->getExactSize();
 
-        m_drawCache.frameSizeNotResized = std::max<int>(m_drawCache.exactSize * 0.75f, 2 * Otc::TILE_PIXELS * 0.75f);
+        m_drawCache.frameSizeNotResized = std::max<int>(m_drawCache.exactSize * 0.75f, 2 * SPRITE_SIZE * 0.75f);
     }
 }
 
@@ -620,7 +626,7 @@ Point Creature::getDrawOffset()
     return drawOffset;
 }
 
-int Creature::getStepDuration(bool ignoreDiagonal, Otc::Direction dir)
+int Creature::getStepDuration(bool ignoreDiagonal, Otc::Direction_t dir)
 {
     if(isParalyzed())
         return 0;
@@ -751,15 +757,15 @@ int Creature::getExactSize(int layer, int xPattern, int yPattern, int zPattern, 
 
 const ThingTypePtr& Creature::getThingType()
 {
-    return g_things.getThingType(m_outfit.getId(), ThingCategoryCreature);
+    return g_things.getThingType(m_outfit.getClothes().id, ThingCategoryCreature);
 }
 
 ThingType* Creature::rawGetThingType()
 {
-    return g_things.rawGetThingType(m_outfit.getId(), ThingCategoryCreature);
+    return g_things.rawGetThingType(m_outfit.getClothes().id, ThingCategoryCreature);
 }
 
 ThingType* Creature::rawGetMountThingType()
 {
-    return g_things.rawGetThingType(m_outfit.getMount(), ThingCategoryCreature);
+    return g_things.rawGetThingType(m_outfit.getMountClothes().id, ThingCategoryCreature);
 }

@@ -60,9 +60,9 @@ private:
     int m_cellSpacing;
     int m_numColumns;
     int m_numLines;
-    stdext::boolean<false> m_autoSpacing;
-    stdext::boolean<false> m_fitChildren;
-    stdext::boolean<false> m_flow;
+    bool m_autoSpacing{ false },
+        m_fitChildren{ false },
+        m_flow{ false };
 };
 
 #endif

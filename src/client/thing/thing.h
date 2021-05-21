@@ -30,14 +30,15 @@
 #include <client/manager/thingtypemanager.h>
 
 struct Highlight {
-    int fadeLevel;
+    uint8 fadeLevel;
     Color rgbColor = Color::alpha;
     ThingPtr thing;
     ScheduledEventPtr listeningEvent;
-    stdext::boolean<false> enabled;
-    stdext::boolean<false> update;
-    stdext::boolean<false> invertedColorSelection;
+    bool enabled{ false },
+        invertedColorSelection{ false };
 };
+
+static const struct Highlight HIGHLIGHT_NONE = {};
 
 // @bindclass
 #pragma pack(push,1) // disable memory alignment
@@ -155,7 +156,7 @@ protected:
     uint16 m_datId{ 0 };
 
 private:
-    stdext::boolean<true> m_canDraw;
+    bool m_canDraw{ true };
 };
 #pragma pack(pop)
 

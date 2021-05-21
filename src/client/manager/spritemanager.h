@@ -23,6 +23,7 @@
 #ifndef SPRITEMANAGER_H
 #define SPRITEMANAGER_H
 
+#include <client/config.h>
 #include <framework/core/declarations.h>
 #include <framework/graphics/declarations.h>
 
@@ -30,13 +31,10 @@
 class SpriteManager
 {
     enum {
-        SPRITE_SIZE = 32,
         SPRITE_DATA_SIZE = SPRITE_SIZE * SPRITE_SIZE * 4
     };
 
 public:
-    SpriteManager();
-
     void terminate();
 
     bool loadSpr(std::string file);
@@ -51,10 +49,10 @@ public:
     bool isLoaded() { return m_loaded; }
 
 private:
-    stdext::boolean<false> m_loaded;
+    bool m_loaded{ false };
     uint32 m_signature;
-    int m_spritesCount;
-    int m_spritesOffset;
+    int m_spritesCount{ 0 };
+    int m_spritesOffset{ 0 };
     FileStreamPtr m_spritesFile;
 };
 

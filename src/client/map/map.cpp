@@ -30,6 +30,9 @@
 #include <client/thing/text/statictext.h>
 #include <client/map/tile.h>
 
+#include <client/painter/lightviewpainter.h>
+
+#include <framework/graphics/graphics.h>
 #include <framework/core/application.h>
 #include <framework/core/eventdispatcher.h>
 
@@ -38,12 +41,15 @@ TilePtr Map::m_nulltile;
 
 void Map::init()
 {
+    g_lightViewPaint.init();
+
     resetAwareRange();
     m_animationFlags |= Animation_Show;
 }
 
 void Map::terminate()
 {
+    g_lightViewPaint.terminate();
     clean();
 }
 
@@ -69,6 +75,13 @@ void Map::resetAwareRange()
     setAwareRange(range);
 }
 
+void Map::notificateKeyRelease(const InputEvent& inputEvent)
+{
+    for(const MapViewPtr& mapView : m_mapViews) {
+        mapView->onKeyRelease(inputEvent);
+    }
+}
+
 void Map::notificateCameraMove(const Point& offset)
 {
     for(const MapViewPtr& mapView : m_mapViews) {
@@ -92,7 +105,7 @@ void Map::clean()
 {
     cleanDynamicThings();
 
-    for(int_fast8_t i = -1; ++i <= Otc::MAX_Z;)
+    for(int_fast8_t i = -1; ++i <= MAX_Z;)
         m_tileBlocks[i].clear();
 
     m_waypoints.clear();
@@ -111,7 +124,7 @@ void Map::cleanDynamicThings()
     }
     m_knownCreatures.clear();
 
-    for(int_fast8_t i = -1; ++i <= Otc::MAX_Z;)
+    for(int_fast8_t i = -1; ++i <= MAX_Z;)
         m_floorMissiles[i].clear();
 
     cleanTexts();
@@ -167,8 +180,8 @@ void Map::addThing(const ThingPtr& thing, const Position& pos, int16 stackPos)
             if(prevAnimatedText) {
                 Point offset = prevAnimatedText->getOffset();
                 const float t = prevAnimatedText->getTimer().ticksElapsed();
-                if(t < Otc::ANIMATED_TEXT_DURATION / 4.0) { // didnt move 12 pixels
-                    const int32 y = 12 - 48 * t / static_cast<float>(Otc::ANIMATED_TEXT_DURATION);
+                if(t < ANIMATED_TEXT_DURATION / 4.0) { // didnt move 12 pixels
+                    const int32 y = 12 - 48 * t / static_cast<float>(ANIMATED_TEXT_DURATION);
                     offset += Point(0, y);
                 }
                 offset.y = std::min<int32>(offset.y, 12);
@@ -349,11 +362,11 @@ const TilePtr& Map::getTile(const Position& pos)
 const TileList Map::getTiles(const int8 floor/* = -1*/)
 {
     TileList tiles;
-    if(floor > Otc::MAX_Z) return tiles;
+    if(floor > MAX_Z) return tiles;
 
     if(floor < 0) {
         // Search all floors
-        for(int_fast8_t z = -1; ++z <= Otc::MAX_Z;) {
+        for(int_fast8_t z = -1; ++z <= MAX_Z;) {
             for(const auto& pair : m_tileBlocks[z]) {
                 const TileBlock& block = pair.second;
                 for(const TilePtr& tile : block.getTiles()) {
@@ -476,7 +489,7 @@ std::map<Position, ItemPtr> Map::findItemsById(uint16 clientId, uint32 max)
 {
     std::map<Position, ItemPtr> ret;
     uint32 count = 0;
-    for(uint8_t z = 0; z <= Otc::MAX_Z; ++z) {
+    for(uint8_t z = 0; z <= MAX_Z; ++z) {
         for(const auto& pair : m_tileBlocks[z]) {
             const TileBlock& block = pair.second;
             for(const TilePtr& tile : block.getTiles()) {
@@ -540,7 +553,7 @@ void Map::removeUnawareThings()
 
     if(!g_game.getFeature(Otc::GameKeepUnawareTiles)) {
         // remove tiles that we are not aware anymore
-        for(int_fast8_t z = -1; ++z <= Otc::MAX_Z;) {
+        for(int_fast8_t z = -1; ++z <= MAX_Z;) {
             std::unordered_map<uint, TileBlock>& tileBlocks = m_tileBlocks[z];
             for(auto it = tileBlocks.begin(); it != tileBlocks.end();) {
                 TileBlock& block = (*it).second;
@@ -626,7 +639,7 @@ std::vector<CreaturePtr> Map::getSpectatorsInRange(const Position& centerPos, bo
 std::vector<CreaturePtr> Map::getSpectatorsInRangeEx(const Position& centerPos, bool multiFloor, int32 minXRange, int32 maxXRange, int32 minYRange, int32 maxYRange)
 {
     std::vector<CreaturePtr> creatures;
-    const uint8 maxZRange = multiFloor ? Otc::MAX_Z : 0;
+    const uint8 maxZRange = multiFloor ? MAX_Z : 0;
 
     //TODO: optimize
     //TODO: get creatures from other floors corretly
@@ -748,21 +761,21 @@ void Map::setAwareRange(const AwareRange& range)
 
 uint8 Map::getFirstAwareFloor()
 {
-    if(m_centralPosition.z > Otc::SEA_FLOOR)
-        return m_centralPosition.z - Otc::AWARE_UNDEGROUND_FLOOR_RANGE;
+    if(m_centralPosition.z > SEA_FLOOR)
+        return m_centralPosition.z - AWARE_UNDEGROUND_FLOOR_RANGE;
 
     return 0;
 }
 
 uint8 Map::getLastAwareFloor()
 {
-    if(m_centralPosition.z > Otc::SEA_FLOOR)
-        return std::min<uint8>(m_centralPosition.z + Otc::AWARE_UNDEGROUND_FLOOR_RANGE, Otc::MAX_Z);
+    if(m_centralPosition.z > SEA_FLOOR)
+        return std::min<uint8>(m_centralPosition.z + AWARE_UNDEGROUND_FLOOR_RANGE, MAX_Z);
 
-    return Otc::SEA_FLOOR;
+    return SEA_FLOOR;
 }
 
-std::tuple<std::vector<Otc::Direction>, Otc::PathFindResult> Map::findPath(const Position& startPos, const Position& goalPos, uint16 maxComplexity, uint32 flags)
+std::tuple<std::vector<Otc::Direction_t>, Otc::PathFindResult_t> Map::findPath(const Position& startPos, const Position& goalPos, uint16 maxComplexity, uint32 flags)
 {
     // pathfinding using A* search algorithm
     // as described in http://en.wikipedia.org/wiki/A*_search_algorithm
@@ -775,7 +788,7 @@ std::tuple<std::vector<Otc::Direction>, Otc::PathFindResult> Map::findPath(const
         float totalCost;
         Position pos;
         Node* prev;
-        Otc::Direction dir;
+        Otc::Direction_t dir;
 
         struct Compare {
             bool operator() (const Pair& a, const Pair& b) const
@@ -785,9 +798,9 @@ std::tuple<std::vector<Otc::Direction>, Otc::PathFindResult> Map::findPath(const
         };
     };
 
-    std::tuple<std::vector<Otc::Direction>, Otc::PathFindResult> ret;
-    std::vector<Otc::Direction>& dirs = std::get<0>(ret);
-    Otc::PathFindResult& result = std::get<1>(ret);
+    std::tuple<std::vector<Otc::Direction_t>, Otc::PathFindResult_t> ret;
+    std::vector<Otc::Direction_t>& dirs = std::get<0>(ret);
+    Otc::PathFindResult_t& result = std::get<1>(ret);
 
     result = Otc::PathFindResultNoWay;
 
@@ -886,7 +899,7 @@ std::tuple<std::vector<Otc::Direction>, Otc::PathFindResult> Map::findPath(const
                     }
                 }
 
-                const Otc::Direction walkDir = currentNode->pos.getDirectionFromPosition(neighborPos);
+                const Otc::Direction_t walkDir = currentNode->pos.getDirectionFromPosition(neighborPos);
                 if(walkDir >= Otc::NorthEast)
                     walkFactor += 3.0f;
                 else

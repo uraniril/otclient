@@ -57,7 +57,7 @@ public:
 
 private:
     uint32 m_signature;
-    stdext::boolean<false> m_loaded;
+    bool m_loaded{ false };
     ThingTypeList m_things[LastCategory];
     static ThingType m_emptyThingType;
 };

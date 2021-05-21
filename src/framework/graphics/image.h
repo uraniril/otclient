@@ -61,7 +61,7 @@ private:
     std::vector<uint8> m_pixels;
     Size m_size;
     int m_bpp;
-    stdext::boolean<false> m_transparentPixel;
+    bool m_transparentPixel{ false };
 };
 
 #endif

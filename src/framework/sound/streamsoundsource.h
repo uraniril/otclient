@@ -58,10 +58,10 @@ private:
     SoundFilePtr m_soundFile;
     std::array<SoundBufferPtr, STREAM_FRAGMENTS> m_buffers;
     DownMix m_downMix;
-    stdext::boolean<false> m_looping;
-    stdext::boolean<false> m_playing;
-    stdext::boolean<false> m_eof;
-    stdext::boolean<false> m_waitingFile;
+    bool m_looping{ false },
+        m_playing{ false },
+        m_eof{ false },
+        m_waitingFile{ false };
 };
 
 #endif

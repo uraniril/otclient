@@ -129,7 +129,6 @@ struct Light {
 class ThingType : public LuaObject
 {
 public:
-    ThingType();
 
     void unserialize(uint16 clientId, ThingCategory category, const FileStreamPtr& fin);
     void unserializeOtml(const OTMLNodePtr& node);
@@ -213,7 +212,7 @@ public:
     bool isTopEffect() { return m_attribs.has(ThingAttrTopEffect); }
     bool hasAction() { return m_attribs.has(ThingAttrDefaultAction); }
     bool isOpaque() { return (isFullGround() || (hasTexture() && getTexture(0)->isOpaque())); }
-    bool isTall(const bool useRealSize = false) { return useRealSize ? getRealSize() > Otc::TILE_PIXELS : getHeight() > 1; }
+    bool isTall(const bool useRealSize = false) { return useRealSize ? getRealSize() > SPRITE_SIZE : getHeight() > 1; }
 
     std::vector<int> getSprites() { return m_spritesIndex; }
 
@@ -234,25 +233,25 @@ private:
     uint getSpriteIndex(int w, int h, int l, int x, int y, int z, int a);
     uint getTextureIndex(int l, int x, int y, int z);
 
-    ThingCategory m_category;
-    uint16 m_id;
-    bool m_null;
+    ThingCategory m_category{ ThingInvalidCategory };
+    uint16 m_id{ 0 };
+    bool m_null{ true };
     stdext::dynamic_storage<uint8> m_attribs;
 
     Size m_size;
     Point m_displacement;
 
-    AnimatorPtr m_animator,
+    AnimatorPtr m_animator{ nullptr },
         m_idleAnimator;
 
-    int m_animationPhases;
-    int m_exactSize;
-    int m_realSize;
-    int m_numPatternX, m_numPatternY, m_numPatternZ;
-    int m_layers;
-    int m_elevation;
-    int m_exactHeight;
-    float m_opacity;
+    int m_animationPhases{ 0 };
+    int m_exactSize{ 0 };
+    int m_realSize{ 0 };
+    int m_numPatternX{ 0 }, m_numPatternY{ 0 }, m_numPatternZ{ 0 };
+    int m_layers{ 0 };
+    int m_elevation{ 0 };
+    int m_exactHeight{ -1 };
+    float m_opacity{ 1.f };
 
     std::string m_customImage;
 

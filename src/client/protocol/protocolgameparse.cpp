@@ -87,6 +87,9 @@ void ProtocolGame::parseMessage(const InputMessagePtr& msg)
             case Proto::GameServerDeath:
                 parseDeath(msg);
                 break;
+            case Proto::GameServerOpenStash:
+                parseOpenStash(msg);
+                break;
             case Proto::GameServerSpecialContainersAvailable:
                 parseSpecialContainersAvailable(msg);
                 break;
@@ -570,8 +573,9 @@ void ProtocolGame::parseStore(const InputMessagePtr& msg)
 
         msg->getU8(); // highlightState
 
-        std::vector<std::string> icons;
         const uint8 iconCount = msg->getU8();
+        std::vector<std::string> icons;
+        icons.reserve(iconCount);
         for(uint_fast8_t j = 0; j < iconCount; ++j) {
             icons.push_back(msg->getString());
         }
@@ -660,9 +664,9 @@ void ProtocolGame::parseStoreOffers(const InputMessagePtr& msg)
             msg->getString(); // disabledReason
         }
 
-        std::vector<std::string> icons;
-
         const uint8 iconCount = msg->getU8();
+        std::vector<std::string> icons;
+        icons.reserve(iconCount);
         for(uint_fast8_t j = 0; j < iconCount; ++j)
             icons.push_back(msg->getString());
 
@@ -724,9 +728,9 @@ void ProtocolGame::parseRefreshBestiaryTracker(const InputMessagePtr& msg)
 
 void ProtocolGame::parseGMActions(const InputMessagePtr& msg)
 {
-    std::vector<uint8> actions;
-
     const uint8 numViolationReasons = 20;
+    std::vector<uint8> actions;
+    actions.reserve(numViolationReasons);
     for(uint_fast8_t i = 0; i < numViolationReasons; ++i)
         actions.push_back(msg->getU8());
 
@@ -786,6 +790,18 @@ void ProtocolGame::parseDeath(const InputMessagePtr& msg)
         deathRedemption = msg->getU8();
 
     g_game.processDeath(deathType, penality, deathRedemption);
+}
+
+void ProtocolGame::parseOpenStash(const InputMessagePtr& msg)
+{
+    const uint16 size = msg->getU16();
+    for(uint_fast8_t i = 0; i < size; ++i)
+    {
+        msg->getU16(); // id
+        msg->getU32(); // count
+    }
+
+    msg->getU16(); // Stash Count
 }
 
 void ProtocolGame::parseSpecialContainersAvailable(const InputMessagePtr& msg)
@@ -965,9 +981,10 @@ void ProtocolGame::parseOpenContainer(const InputMessagePtr& msg)
         firstIndex = msg->getU16(),
         itemCount = msg->getU8();
 
-    std::vector<ItemPtr> items(itemCount);
+    std::vector<ItemPtr> items;
+    items.reserve(itemCount);
     for(uint_fast8_t i = 0; i < itemCount; ++i)
-        items[i] = getItem(msg);
+        items.push_back(getItem(msg));
 
     g_game.processOpenContainer(containerId, containerItem, name, capacity, hasParent, items, isUnlocked, hasPages, containerSize, firstIndex);
 }
@@ -1023,11 +1040,11 @@ void ProtocolGame::parseRemoveInventoryItem(const InputMessagePtr& msg)
 
 void ProtocolGame::parseOpenNpcTrade(const InputMessagePtr& msg)
 {
-    std::vector<std::tuple<ItemPtr, std::string, int, int, int>> items;
-
     msg->getString(); // npcName
 
     const uint16 listCount = msg->getU16();
+    std::vector<std::tuple<ItemPtr, std::string, int, int, int>> items;
+    items.reserve(listCount);
     for(uint_fast16_t i = 0; i < listCount; ++i)
     {
         const auto& item = Item::create(msg->getU16());
@@ -1046,11 +1063,11 @@ void ProtocolGame::parseOpenNpcTrade(const InputMessagePtr& msg)
 
 void ProtocolGame::parsePlayerGoods(const InputMessagePtr& msg)
 {
-    std::vector<std::tuple<ItemPtr, uint16>> goods;
-
     const uint64 money = msg->getU64();
 
     const uint8 size = msg->getU8();
+    std::vector<std::tuple<ItemPtr, uint16>> goods;
+    goods.reserve(size);
     for(uint_fast8_t i = 0; i < size; ++i)
     {
         const uint16 itemId = msg->getU16();
@@ -1077,9 +1094,10 @@ void ProtocolGame::parseOwnTrade(const InputMessagePtr& msg)
     const std::string name = g_game.formatCreatureName(msg->getString());
     const uint8 count = msg->getU8();
 
-    std::vector<ItemPtr> items(count);
+    std::vector<ItemPtr> items;
+    items.reserve(count);
     for(uint_fast8_t i = 0; i < count; ++i)
-        items[i] = getItem(msg);
+        items.push_back(getItem(msg));
 
     g_game.processOwnTrade(name, items);
 }
@@ -1089,9 +1107,10 @@ void ProtocolGame::parseCounterTrade(const InputMessagePtr& msg)
     const std::string name = g_game.formatCreatureName(msg->getString());
     const uint8 count = msg->getU8();
 
-    std::vector<ItemPtr> items(count);
+    std::vector<ItemPtr> items;
+    items.reserve(count);
     for(uint_fast8_t i = 0; i < count; ++i)
-        items[i] = getItem(msg);
+        items.push_back(getItem(msg));
 
     g_game.processCounterTrade(name, items);
 }
@@ -1386,11 +1405,10 @@ void ProtocolGame::parsePremiumTrigger(const InputMessagePtr& msg)
 {
     const uint8 triggerCount = msg->getU8();
 
-    std::vector<uint8> triggers(triggerCount);
+    std::vector<uint8> triggers;
+    triggers.reserve(triggerCount);
     for(uint_fast8_t i = 0; i < triggerCount; ++i)
-    {
         triggers.push_back(msg->getU8());
-    }
 }
 
 void ProtocolGame::parsePlayerInfo(const InputMessagePtr& msg)
@@ -1403,7 +1421,8 @@ void ProtocolGame::parsePlayerInfo(const InputMessagePtr& msg)
     m_localPlayer->setOpenPreyWindow(msg->getU8());
 
     const uint16 spellCount = msg->getU16();
-    std::vector<uint8> spells(spellCount);
+    std::vector<uint8> spells;
+    spells.reserve(spellCount);
     for(uint_fast16_t i = 0; i < spellCount; ++i)
         spells.push_back(msg->getU8()); // spell id
 
@@ -1503,7 +1522,7 @@ void ProtocolGame::parsePlayerModes(const InputMessagePtr& msg)
     const bool safeMode = msg->getU8();
     const uint8 pvpMode = msg->getU8();
 
-    g_game.processPlayerModes(static_cast<Otc::FightModes>(fightMode), static_cast<Otc::ChaseModes>(chaseMode), safeMode, static_cast<Otc::PVPModes>(pvpMode));
+    g_game.processPlayerModes(static_cast<Otc::FightModes_t>(fightMode), static_cast<Otc::ChaseModes_t>(chaseMode), safeMode, static_cast<Otc::PVPModes_t>(pvpMode));
 }
 
 void ProtocolGame::parseSpellCooldown(const InputMessagePtr& msg)
@@ -1540,7 +1559,7 @@ void ProtocolGame::parseTalk(const InputMessagePtr& msg)
 
     const uint16 level = msg->getU16();
 
-    const auto messageType = static_cast<Otc::MessageMode>(msg->getU8());
+    const auto messageType = static_cast<Otc::MessageMode_t>(msg->getU8());
 
     uint16 channelId = 0;
     Position pos;
@@ -1583,7 +1602,8 @@ void ProtocolGame::parseChannelList(const InputMessagePtr& msg)
 {
     const uint8 count = msg->getU8();
 
-    std::vector<std::tuple<uint8, std::string>> channelList(count);
+    std::vector<std::tuple<uint8, std::string>> channelList;
+    channelList.reserve(count);
     for(uint_fast8_t i = 0; i < count; ++i)
     {
         uint16 id = msg->getU16();
@@ -1661,7 +1681,7 @@ void ProtocolGame::parseRuleViolationLock(const InputMessagePtr& /*msg*/)
 
 void ProtocolGame::parseTextMessage(const InputMessagePtr& msg)
 {
-    const auto type = static_cast <Otc::MessageMode> (msg->getU8());
+    const auto type = static_cast <Otc::MessageMode_t> (msg->getU8());
 
     switch(type) {
     case Otc::MESSAGE_DAMAGE_DEALT:
@@ -1719,7 +1739,7 @@ void ProtocolGame::parseTextMessage(const InputMessagePtr& msg)
 
 void ProtocolGame::parseCancelWalk(const InputMessagePtr& msg)
 {
-    const auto direction = static_cast<Otc::Direction>(msg->getU8());
+    const auto direction = static_cast<Otc::Direction_t>(msg->getU8());
 
     g_game.processWalkCancel(direction);
 }
@@ -1741,11 +1761,11 @@ void ProtocolGame::parseFloorChangeUp(const InputMessagePtr& msg)
     --pos.z;
 
     int skip = 0;
-    if(pos.z == Otc::SEA_FLOOR)
-        for(int_fast8_t i = Otc::SEA_FLOOR - Otc::AWARE_UNDEGROUND_FLOOR_RANGE; i >= 0; --i)
+    if(pos.z == SEA_FLOOR)
+        for(int_fast8_t i = SEA_FLOOR - AWARE_UNDEGROUND_FLOOR_RANGE; i >= 0; --i)
             skip = setFloorDescription(msg, pos.x - range.left, pos.y - range.top, i, range.horizontal(), range.vertical(), 8 - i, skip);
-    else if(pos.z > Otc::SEA_FLOOR)
-        skip = setFloorDescription(msg, pos.x - range.left, pos.y - range.top, pos.z - Otc::AWARE_UNDEGROUND_FLOOR_RANGE, range.horizontal(), range.vertical(), 3, skip);
+    else if(pos.z > SEA_FLOOR)
+        skip = setFloorDescription(msg, pos.x - range.left, pos.y - range.top, pos.z - AWARE_UNDEGROUND_FLOOR_RANGE, range.horizontal(), range.vertical(), 3, skip);
 
     pos.x++;
     pos.y++;
@@ -1763,13 +1783,13 @@ void ProtocolGame::parseFloorChangeDown(const InputMessagePtr& msg)
     pos.z++;
 
     int skip = 0;
-    if(pos.z == Otc::UNDERGROUND_FLOOR)
+    if(pos.z == UNDERGROUND_FLOOR)
     {
         int_fast8_t j, i;
-        for(i = pos.z, j = -1; i <= pos.z + Otc::AWARE_UNDEGROUND_FLOOR_RANGE; ++i, --j)
+        for(i = pos.z, j = -1; i <= pos.z + AWARE_UNDEGROUND_FLOOR_RANGE; ++i, --j)
             skip = setFloorDescription(msg, pos.x - range.left, pos.y - range.top, i, range.horizontal(), range.vertical(), j, skip);
-    } else if(pos.z > Otc::UNDERGROUND_FLOOR && pos.z < Otc::MAX_Z - 1)
-        skip = setFloorDescription(msg, pos.x - range.left, pos.y - range.top, pos.z + Otc::AWARE_UNDEGROUND_FLOOR_RANGE, range.horizontal(), range.vertical(), -3, skip);
+    } else if(pos.z > UNDERGROUND_FLOOR && pos.z < MAX_Z - 1)
+        skip = setFloorDescription(msg, pos.x - range.left, pos.y - range.top, pos.z + AWARE_UNDEGROUND_FLOOR_RANGE, range.horizontal(), range.vertical(), -3, skip);
 
     --pos.x;
     --pos.y;
@@ -1789,56 +1809,57 @@ void ProtocolGame::parseLootContainers(const InputMessagePtr& msg)
 
 void ProtocolGame::parseOpenOutfitWindow(const InputMessagePtr& msg)
 {
-    const Outfit& currentOutfit = getOutfit(msg);
+    Outfit currentOutfit = getOutfit(msg, true, true);
+    currentOutfit.setFamiliarId(msg->getU16());
 
-    msg->getU8(); // lookMountHead
-    msg->getU8(); // lookMountBody
-    msg->getU8(); // lookMountLegs
-    msg->getU8(); // lookMountFeet
-    msg->getU16(); // lookFamiliarsType
-
-    const uint16_t outfitCount = msg->getU16();
-    std::vector<std::tuple<uint16, std::string, uint8>> outfitList(outfitCount);
-    for(uint_fast16_t i = 0; i < outfitCount; ++i)
+    uint16_t listSize = msg->getU16();
+    std::vector<std::tuple<uint16, std::string, uint8>> outfitList;
+    outfitList.reserve(listSize);
+    for(uint_fast16_t i = 0; i < listSize; ++i)
     {
-        const uint16 outfitId = msg->getU16();
-        const  std::string outfitName = msg->getString();
-        const uint8 outfitAddons = msg->getU8();
+        const uint16 id = msg->getU16();
+        const std::string name = msg->getString();
+        const uint8 addons = msg->getU8();
 
         // TODO: identify extra null byte usage 12.x
         msg->getU8();
 
-        outfitList.emplace_back(outfitId, outfitName, outfitAddons);
+        outfitList.emplace_back(id, name, addons);
     }
 
-    const uint16 mountCount = msg->getU16();
-    std::vector<std::tuple<uint16, std::string>> mountList(mountCount);
-    for(uint_fast16_t i = 0; i < mountCount; ++i)
+    listSize = msg->getU16();
+    std::vector<std::tuple<uint16, std::string>> mountList;
+    mountList.reserve(listSize);
+    for(uint_fast16_t i = 0; i < listSize; ++i)
     {
-        const uint16 mountId = msg->getU16();              // mount type
-        const std::string mountName = msg->getString(); // mount name
+        const uint16 id = msg->getU16();
+        const std::string name = msg->getString();
 
         // TODO: identify extra null byte usage 12.x
         msg->getU8();
 
-        mountList.emplace_back(mountId, mountName);
+        mountList.emplace_back(id, name);
     }
 
-    const uint16 familiarsCount = msg->getU16();
-    for(uint_fast16_t i = 0; i < familiarsCount; ++i)
+    listSize = msg->getU16();
+    std::vector<std::tuple<uint16, std::string>> familiarList;
+    familiarList.reserve(listSize);
+    for(uint_fast16_t i = 0; i < listSize; ++i)
     {
-        msg->getU16(); //lookType
-        msg->getString(); // name
+        const uint16 id = msg->getU16();
+        const std::string name = msg->getString();
 
-       // TODO: identify extra null byte usage 12.x
+        // TODO: identify extra null byte usage 12.x
         msg->getU8();
+
+        familiarList.emplace_back(id, name);
     }
 
     // TODO: identify extra null byte usage 12.x
     msg->getU8();
     msg->getU8();
 
-    g_game.processOpenOutfitWindow(currentOutfit, outfitList, mountList);
+    g_game.processOpenOutfitWindow(currentOutfit, outfitList, mountList, familiarList);
 }
 
 void ProtocolGame::parseVipAdd(const InputMessagePtr& msg)
@@ -1891,7 +1912,8 @@ void ProtocolGame::parseAutomapFlag(const InputMessagePtr& msg)
 void ProtocolGame::parseQuestLog(const InputMessagePtr& msg)
 {
     const uint16 questsCount = msg->getU16();
-    std::vector<std::tuple<uint16, std::string, bool>> questList(questsCount);
+    std::vector<std::tuple<uint16, std::string, bool>> questList;
+    questList.reserve(questsCount);
     for(uint_fast16_t i = 0; i < questsCount; ++i)
     {
         const uint16 id = msg->getU16();
@@ -1909,7 +1931,8 @@ void ProtocolGame::parseQuestLine(const InputMessagePtr& msg)
     const uint16 questId = msg->getU16();
     const uint8 missionCount = msg->getU8();
 
-    std::vector<std::tuple<std::string, std::string>> questMissions(missionCount);
+    std::vector<std::tuple<std::string, std::string>> questMissions;
+    questMissions.reserve(missionCount);
     for(uint_fast8_t i = 0; i < missionCount; ++i)
     {
         msg->getU16(); // repeated quest ID
@@ -1934,7 +1957,8 @@ void ProtocolGame::parseChannelEvent(const InputMessagePtr& msg)
 void ProtocolGame::parseItemInfo(const InputMessagePtr& msg)
 {
     const uint8 size = msg->getU8();
-    std::vector<std::tuple<ItemPtr, std::string>> list(size);
+    std::vector<std::tuple<ItemPtr, std::string>> list;
+    list.reserve(size);
     for(uint_fast8_t i = 0; i < size; ++i)
     {
         const auto& item(new Item);
@@ -1966,7 +1990,8 @@ void ProtocolGame::parseModalDialog(const InputMessagePtr& msg)
         message = msg->getString();
 
     const uint8 sizeButtons = msg->getU8();
-    std::vector<std::tuple<int, std::string>> buttonList(sizeButtons);
+    std::vector<std::tuple<int, std::string>> buttonList;
+    buttonList.reserve(sizeButtons);
     for(uint_fast8_t i = 0; i < sizeButtons; ++i)
     {
         std::string value = msg->getString();
@@ -1975,7 +2000,8 @@ void ProtocolGame::parseModalDialog(const InputMessagePtr& msg)
     }
 
     const uint8 sizeChoices = msg->getU8();
-    std::vector<std::tuple<int, std::string>> choiceList(sizeChoices);
+    std::vector<std::tuple<int, std::string>> choiceList;
+    choiceList.reserve(sizeChoices);
     for(uint_fast8_t i = 0; i < sizeChoices; ++i)
     {
         const std::string value = msg->getString();
@@ -2065,12 +2091,12 @@ void ProtocolGame::setMapDescription(const InputMessagePtr& msg, int x, int y, i
 {
     int startz, endz, zstep;
 
-    if(z > Otc::SEA_FLOOR) {
-        startz = z - Otc::AWARE_UNDEGROUND_FLOOR_RANGE;
-        endz = std::min<int>(z + Otc::AWARE_UNDEGROUND_FLOOR_RANGE, Otc::MAX_Z);
+    if(z > SEA_FLOOR) {
+        startz = z - AWARE_UNDEGROUND_FLOOR_RANGE;
+        endz = std::min<int>(z + AWARE_UNDEGROUND_FLOOR_RANGE, MAX_Z);
         zstep = 1;
     } else {
-        startz = Otc::SEA_FLOOR;
+        startz = SEA_FLOOR;
         endz = 0;
         zstep = -1;
     }
@@ -2106,7 +2132,7 @@ int ProtocolGame::setTileDescription(const InputMessagePtr& msg, const Position&
     if(msg->peekU16() >= 0xff00)
         return msg->getU16() & 0xff;
 
-    for(uint_fast8_t stackPos = 0; stackPos < 256; ++stackPos)
+    for(uint_fast8_t stackPos = 0; stackPos <= UINT8_MAX; ++stackPos)
     {
         if(msg->peekU16() >= 0xff00)
             return msg->getU16() & 0xff;
@@ -2120,7 +2146,7 @@ int ProtocolGame::setTileDescription(const InputMessagePtr& msg, const Position&
 
     return 0;
 }
-Outfit ProtocolGame::getOutfit(const InputMessagePtr& msg, const bool addMount)
+Outfit ProtocolGame::getOutfit(const InputMessagePtr& msg, const bool addMount, const bool forceMountData)
 {
     Outfit outfit;
     uint16_t lookType = msg->getU16();
@@ -2139,11 +2165,11 @@ Outfit ProtocolGame::getOutfit(const InputMessagePtr& msg, const bool addMount)
             lookType = 0;
         }
 
-        outfit.setId(lookType);
-        outfit.setHead(head);
-        outfit.setBody(body);
-        outfit.setLegs(legs);
-        outfit.setFeet(feet);
+        outfit.getClothes().id = lookType;
+        outfit.getClothes().setHead(head);
+        outfit.getClothes().setBody(body);
+        outfit.getClothes().setLegs(legs);
+        outfit.getClothes().setFeet(feet);
         outfit.setAddons(addons);
     } else
     {
@@ -2165,8 +2191,15 @@ Outfit ProtocolGame::getOutfit(const InputMessagePtr& msg, const bool addMount)
         }
     }
 
-    if(addMount)
-        outfit.setMount(msg->getU16());
+    if(addMount) {
+        outfit.getMountClothes().id = msg->getU16();
+        if(outfit.hasMount() || forceMountData) {
+            outfit.getMountClothes().setHead(msg->getU8());
+            outfit.getMountClothes().setBody(msg->getU8());
+            outfit.getMountClothes().setLegs(msg->getU8());
+            outfit.getMountClothes().setFeet(msg->getU8());
+        }
+    }
 
     return outfit;
 }
@@ -2277,15 +2310,9 @@ CreaturePtr ProtocolGame::getCreature(const InputMessagePtr& msg, uint16 type)
         }
 
         const uint8 healthPercent = msg->getU8();
-        const auto direction = static_cast<Otc::Direction>(msg->getU8());
+        const auto direction = static_cast<Otc::Direction_t>(msg->getU8());
 
         const Outfit& outfit = getOutfit(msg);
-        if(outfit.hasMount()) {
-            msg->getU8(); // lookMountHead
-            msg->getU8(); // lookMountBody
-            msg->getU8(); // lookMountLegs
-            msg->getU8(); // lookMountFeet
-        }
 
         Light light;
         light.intensity = msg->getU8();
@@ -2350,7 +2377,7 @@ CreaturePtr ProtocolGame::getCreature(const InputMessagePtr& msg, uint16 type)
             g_logger.traceError("invalid creature");
         }
 
-        const auto direction = static_cast<Otc::Direction>(msg->getU8());
+        const auto direction = static_cast<Otc::Direction_t>(msg->getU8());
         const bool unpass = msg->getU8();
         if(creature) {
             creature->turn(direction);

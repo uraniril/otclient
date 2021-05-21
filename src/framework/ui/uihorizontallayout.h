@@ -42,7 +42,7 @@ protected:
     bool internalUpdate() override;
 
     Fw::AlignmentFlag m_alignChidren;
-    stdext::boolean<false> m_alignRight;
+    bool m_alignRight{ false };
 };
 
 #endif

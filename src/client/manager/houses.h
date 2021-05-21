@@ -41,7 +41,7 @@ enum HouseAttr : uint8
 class House : public LuaObject
 {
 public:
-    House();
+    House() = default;
     House(uint32 hId, const std::string& name = "", const Position& pos = Position());
     ~House() override { m_tiles.clear(); }
 
@@ -79,7 +79,7 @@ private:
     TileMap m_tiles;
     ItemVector m_doors;
     uint32 m_lastDoorId;
-    stdext::boolean<false> m_isGuildHall;
+    bool m_isGuildHall{ false };
 
     friend class HouseManager;
 };

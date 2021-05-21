@@ -27,38 +27,12 @@
 #include <client/map/map.h>
 #include <client/map/tile.h>
 
-LocalPlayer::LocalPlayer()
-{
-    m_icons = 0;
-    m_vocation = 0;
-    m_blessings = Otc::BlessingNone;
-    m_walkLockExpiration = 0;
-
-    m_health = -1;
-    m_maxHealth = -1;
-    m_freeCapacity = -1;
-    m_experience = -1;
-    m_level = -1;
-    m_levelPercent = -1;
-    m_mana = -1;
-    m_maxMana = -1;
-    m_magicLevel = -1;
-    m_magicLevelPercent = -1;
-    m_baseMagicLevel = -1;
-    m_soul = -1;
-    m_stamina = -1;
-    m_baseSpeed = -1;
-    m_regenerationTime = -1;
-    m_offlineTrainingTime = -1;
-    m_totalCapacity = -1;
-}
-
 void LocalPlayer::lockWalk(int millis)
 {
     m_walkLockExpiration = std::max<int>(m_walkLockExpiration, g_clock.millis() + millis);
 }
 
-bool LocalPlayer::canWalk(Otc::Direction)
+bool LocalPlayer::canWalk(Otc::Direction_t)
 {
     // paralyzed
     if(isParalyzed())
@@ -103,7 +77,7 @@ void LocalPlayer::walk(const Position& oldPos, const Position& newPos)
     }
 }
 
-void LocalPlayer::preWalk(Otc::Direction direction)
+void LocalPlayer::preWalk(Otc::Direction_t direction)
 {
     const Position newPos = m_position.translatedToDirection(direction);
 
@@ -122,7 +96,7 @@ void LocalPlayer::preWalk(Otc::Direction direction)
     Creature::walk(m_position, newPos);
 }
 
-void LocalPlayer::cancelWalk(Otc::Direction direction)
+void LocalPlayer::cancelWalk(Otc::Direction_t direction)
 {
     // only cancel client side walks
     if(m_walking && m_preWalking)
@@ -165,8 +139,8 @@ bool LocalPlayer::autoWalk(const Position& destination)
         tryKnownPath = true;
     }
 
-    std::tuple<std::vector<Otc::Direction>, Otc::PathFindResult> result;
-    std::vector<Otc::Direction> limitedPath;
+    std::tuple<std::vector<Otc::Direction_t>, Otc::PathFindResult_t> result;
+    std::vector<Otc::Direction_t> limitedPath;
 
     if(destination == m_position)
         return true;
@@ -453,7 +427,7 @@ void LocalPlayer::setStamina(double stamina)
     callLuaField("onStaminaChange", stamina, oldStamina);
 }
 
-void LocalPlayer::setInventoryItem(Otc::InventorySlot inventory, const ItemPtr& item)
+void LocalPlayer::setInventoryItem(Otc::InventorySlot_t inventory, const ItemPtr& item)
 {
     if(inventory >= Otc::LastInventorySlot) {
         g_logger.traceError("invalid slot");

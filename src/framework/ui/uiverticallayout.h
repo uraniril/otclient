@@ -43,7 +43,7 @@ public:
 protected:
     bool internalUpdate() override;
 
-    stdext::boolean<false> m_alignBottom;
+    bool m_alignBottom{ false };
 };
 
 #endif

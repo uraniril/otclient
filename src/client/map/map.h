@@ -138,6 +138,7 @@ public:
     void removeMapView(const MapViewPtr& mapView);
     void notificateTileUpdate(const Position& pos);
     void notificateCameraMove(const Point& offset);
+    void notificateKeyRelease(const InputEvent& inputEvent);
 
     bool loadOtcm(const std::string& fileName);
     void saveOtcm(const std::string& fileName);
@@ -233,7 +234,7 @@ public:
     std::vector<AnimatedTextPtr> getAnimatedTexts() { return m_animatedTexts; }
     std::vector<StaticTextPtr> getStaticTexts() { return m_staticTexts; }
 
-    std::tuple<std::vector<Otc::Direction>, Otc::PathFindResult> findPath(const Position& start, const Position& goal, uint16 maxComplexity, uint32 flags = 0);
+    std::tuple<std::vector<Otc::Direction_t>, Otc::PathFindResult_t> findPath(const Position& start, const Position& goal, uint16 maxComplexity, uint32 flags = 0);
 
     void setFloatingEffect(bool enable) { m_floatingEffect = enable; }
     bool isDrawingFloatingEffects() { return m_floatingEffect; }
@@ -243,13 +244,13 @@ private:
 
     uint16 getBlockIndex(const Position& pos) { return ((pos.y / BLOCK_SIZE) * (65536 / BLOCK_SIZE)) + (pos.x / BLOCK_SIZE); }
 
-    std::array<std::vector<MissilePtr>, Otc::MAX_Z + 1> m_floorMissiles;
+    std::array<std::vector<MissilePtr>, MAX_Z + 1> m_floorMissiles;
 
     std::vector<AnimatedTextPtr> m_animatedTexts;
     std::vector<StaticTextPtr> m_staticTexts;
     std::vector<MapViewPtr> m_mapViews;
 
-    std::unordered_map<uint, TileBlock> m_tileBlocks[Otc::MAX_Z + 1];
+    std::unordered_map<uint, TileBlock> m_tileBlocks[MAX_Z + 1];
     std::unordered_map<uint32, CreaturePtr> m_knownCreatures;
     std::unordered_map<Position, std::string, Position::Hasher> m_waypoints;
 
@@ -269,7 +270,7 @@ private:
     AwareRange m_awareRange;
     static TilePtr m_nulltile;
 
-    stdext::boolean<true> m_floatingEffect;
+    bool m_floatingEffect{ true };
 };
 
 extern Map g_map;

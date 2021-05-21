@@ -20,10 +20,10 @@
  * THE SOFTWARE.
  */
 
-#include "framework/stdext/math.h"
 #ifdef WIN32
-
+#include <client/map/map.h>
 #include "win32window.h"
+#include "framework/stdext/math.h"
 #include <framework/graphics/image.h>
 #include <framework/core/application.h>
 #include <framework/core/resourcemanager.h>
@@ -571,7 +571,7 @@ Fw::Key WIN32Window::retranslateVirtualKey(WPARAM wParam, LPARAM lParam)
 #define IsKeyDown(a) (GetKeyState(a) & 0x80)
 
 LRESULT WIN32Window::windowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
+{    
     m_inputEvent.keyboardModifiers = 0;
     if(IsKeyDown(VK_CONTROL))
         m_inputEvent.keyboardModifiers |= Fw::KeyboardCtrlModifier;
@@ -580,6 +580,7 @@ LRESULT WIN32Window::windowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
     if(IsKeyDown(VK_MENU))
         m_inputEvent.keyboardModifiers |= Fw::KeyboardAltModifier;
 
+    bool notificateMapKeyEvent = false;
     switch(uMsg)
     {
     case WM_SETCURSOR:
@@ -619,16 +620,19 @@ LRESULT WIN32Window::windowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
     }
     case WM_KEYDOWN:
     {
+        notificateMapKeyEvent = true;
         processKeyDown(retranslateVirtualKey(wParam, lParam));
         break;
     }
     case WM_KEYUP:
     {
+        notificateMapKeyEvent = true;
         processKeyUp(retranslateVirtualKey(wParam, lParam));
         break;
     }
     case WM_SYSKEYUP:
     {
+        notificateMapKeyEvent = true;
         processKeyUp(retranslateVirtualKey(wParam, lParam));
         break;
     }
@@ -637,6 +641,7 @@ LRESULT WIN32Window::windowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
         if(wParam == VK_F4 && m_inputEvent.keyboardModifiers & Fw::KeyboardAltModifier)
             return DefWindowProc(hWnd, uMsg, wParam, lParam);
 
+        notificateMapKeyEvent = true;
         processKeyDown(retranslateVirtualKey(wParam, lParam));
         break;
     }
@@ -779,6 +784,10 @@ LRESULT WIN32Window::windowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
     }
     default:
         return DefWindowProc(hWnd, uMsg, wParam, lParam);
+    }
+
+    if(m_inputEvent.keyboardModifiers || notificateMapKeyEvent) {
+        g_map.notificateKeyRelease(m_inputEvent);
     }
 
     return 0;

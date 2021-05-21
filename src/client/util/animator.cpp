@@ -28,20 +28,6 @@
 
 #include "framework/stdext/math.h"
 
-Animator::Animator()
-{
-    m_animationPhases = 0;
-    m_startPhase = 0;
-    m_loopCount = 0;
-    m_async = false;
-    m_currentDuration = 0;
-    m_currentDirection = AnimDirForward;
-    m_currentLoop = 0;
-    m_lastPhaseTicks = 0;
-    m_isComplete = false;
-    m_phase = 0;
-}
-
 void Animator::unserialize(int animationPhases, const FileStreamPtr& fin)
 {
     m_animationPhases = animationPhases;

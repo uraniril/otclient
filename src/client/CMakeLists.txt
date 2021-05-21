@@ -34,6 +34,7 @@ set(client_SOURCES ${client_SOURCES}
     ${CMAKE_CURRENT_LIST_DIR}/painter/mapviewpainter.cpp
     ${CMAKE_CURRENT_LIST_DIR}/painter/tilepainter.cpp
     ${CMAKE_CURRENT_LIST_DIR}/painter/thingpainter.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/painter/lightviewpainter.cpp
     ${CMAKE_CURRENT_LIST_DIR}/thing/creature/player.cpp
     ${CMAKE_CURRENT_LIST_DIR}/protocol/protocolgame.cpp
     ${CMAKE_CURRENT_LIST_DIR}/protocol/protocolgameparse.cpp

@@ -68,8 +68,8 @@ public:
 private:
     TexturePtr m_texture;
     std::array<MinimapTile, MMBLOCK_SIZE* MMBLOCK_SIZE> m_tiles;
-    stdext::boolean<true> m_mustUpdate;
-    stdext::boolean<false> m_wasSeen;
+    bool m_mustUpdate{ true };
+    bool m_wasSeen{ false };
 };
 
 #pragma pack(pop)
@@ -110,7 +110,7 @@ private:
                         (index / (65536 / MMBLOCK_SIZE)) * MMBLOCK_SIZE, z);
     }
     uint getBlockIndex(const Position& pos) { return ((pos.y / MMBLOCK_SIZE) * (65536 / MMBLOCK_SIZE)) + (pos.x / MMBLOCK_SIZE); }
-    std::unordered_map<uint, MinimapBlock> m_tileBlocks[Otc::MAX_Z + 1];
+    std::unordered_map<uint, MinimapBlock> m_tileBlocks[MAX_Z + 1];
 };
 
 extern Minimap g_minimap;

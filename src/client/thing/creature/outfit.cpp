@@ -22,14 +22,6 @@
 
 #include <client/thing/creature/outfit.h>
 
-Outfit::Outfit()
-{
-    m_category = ThingCategoryCreature;
-    m_id = 128;
-    m_auxId = 0;
-    resetClothes();
-}
-
 Color Outfit::getColor(int color)
 {
     if(color >= HSI_H_STEPS * HSI_SI_VALUES)
@@ -113,13 +105,4 @@ Color Outfit::getColor(int color)
         blue = red - (loc3 - green) * (6 * loc1 - 5);
     }
     return Color(static_cast<int>(red * 255), static_cast<int>(green * 255), static_cast<int>(blue * 255));
-}
-
-void Outfit::resetClothes()
-{
-    setHead(0);
-    setBody(0);
-    setLegs(0);
-    setFeet(0);
-    setMount(0);
 }

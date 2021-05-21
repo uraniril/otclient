@@ -63,12 +63,12 @@ protected:
     void onStyleApply(const std::string& styleName, const OTMLNodePtr& styleNode) override;
 
 private:
-    Rect m_mapArea;
     Position m_cameraPosition;
-    float m_scale;
-    int m_zoom;
-    int m_minZoom;
-    int m_maxZoom;
+
+    float m_scale{ 1.f };
+    int m_zoom{ 0 };
+    int m_minZoom{ -5 };
+    int m_maxZoom{ 5 };
 };
 
 #endif
