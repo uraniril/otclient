@@ -369,8 +369,8 @@ void MapView::optimizeForSize(const Size& visibleSize)
 
 void MapView::setAntiAliasingMode(const AntialiasingMode mode)
 {
-    /*m_frameCache.tile->cleanTexture();
-    m_frameCache.tile->setSmooth(mode != ANTIALIASING_DISABLED);*/
+    //g_drawPool.getFrameBuffer(DRAWTYPE_MAP)->cleanTexture();
+    //g_drawPool.getFrameBuffer(DRAWTYPE_MAP)->setSmooth(mode != ANTIALIASING_DISABLED);
     m_renderScale = mode == ANTIALIASING_SMOOTH_RETRO ? 200 : 100;
     updateGeometry(m_visibleDimension, m_optimizedSize);
 }

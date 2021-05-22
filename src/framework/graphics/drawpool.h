@@ -37,25 +37,27 @@ class DrawPool
 {
 public:
     DrawPool();
+    void terminate();
 
-    void addTexturedRect(const Rect& dest, const TexturePtr& texture) { addTexturedRect(dest, texture, Rect(Point(), texture->getSize())); }
-    void addTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src);
-    void addFilledRect(const Rect& dest);
+    void addTexturedRect(const Rect& dest, const TexturePtr& texture) { add(dest, texture, Rect(Point(), texture->getSize())); }
+    void addTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src) { add(dest, texture, src); }
+    void addFilledRect(const Rect& dest) { add(dest, nullptr, Rect()); }
+    void add(const Rect& dest, const TexturePtr& texture, const Rect& src);
+
     void draw();
     void setColorClear(const DrawType type, const Color color) { m_framebuffers[type].frame->setColorClear(color); }
     bool drawUp(DrawType type, Size size) { drawUp(type, size, Rect(), Rect()); }
     bool drawUp(DrawType type, Size size, const Rect& dest, const Rect& src);
     void update();
+    FrameBufferPtr getFrameBuffer(const DrawType type) { return m_framebuffers[type].frame; }
 
 private:
-
     struct DrawObject {
-        Rect dest;
-        Rect src;
         TexturePtr texture;
         Painter::PainterState state;
+        std::vector<std::pair<Rect, Rect>> rects;
 
-        bool isEqual(const DrawObject& o)
+        bool operator==(const DrawObject& o)
         {
             return o.state.isEqual(state) && o.texture == texture;
         }
@@ -64,7 +66,6 @@ private:
     struct FrameBufferData {
         Rect dest;
         Rect src;
-        Size size;
         FrameBufferPtr frame;
     };
 

@@ -36,18 +36,34 @@ DrawPool::DrawPool()
     }
 
     m_framebuffers[DRAWTYPE_LIGHT].frame->setCompositeMode(Painter::CompositionMode_Light);
+
+    m_coordsBuffer.enableHardwareCaching();
 }
 
-void DrawPool::addTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src)
+void DrawPool::terminate()
 {
-    if(m_currentDrawType == -1) return;
-    m_drawObjects[m_currentDrawType].push_back(DrawObject{ dest, src, texture, g_painter->getCurrentState() });
+    for(int_fast8_t i = -1; ++i < m_framebuffers.size();) {
+        m_framebuffers[i].frame = nullptr;
+    }
 }
 
-void DrawPool::addFilledRect(const Rect& dest)
+void DrawPool::add(const Rect& dest, const TexturePtr& texture, const Rect& src)
 {
     if(m_currentDrawType == -1) return;
-    m_drawObjects[m_currentDrawType].push_back(DrawObject{ dest, Rect(), nullptr, g_painter->getCurrentState() });
+
+    auto& list = m_drawObjects[m_currentDrawType];
+
+    auto drawObject = DrawObject{ texture, g_painter->getCurrentState() };
+    if(!list.empty()) {
+        auto& prevDrawObject = list[list.size() - 1];
+        if(prevDrawObject == drawObject) {
+            prevDrawObject.rects.emplace_back(dest, src);
+            return;
+        }
+    }
+
+    drawObject.rects.emplace_back(dest, src);
+    list.push_back(drawObject);
 }
 
 bool DrawPool::drawUp(DrawType type, Size size, const Rect& dest, const Rect& src)
@@ -76,7 +92,7 @@ void DrawPool::update()
 
 void DrawPool::draw()
 {
-    DrawObject lastObject;
+    g_painter->saveAndResetState();
     for(uint8 type = DRAWTYPE_MAP; type < DRAWTYPE_LAST; ++type) {
         const auto& buffer = m_framebuffers[type];
         if(!buffer.frame->isValid()) continue;
@@ -84,36 +100,29 @@ void DrawPool::draw()
         auto& objects = m_drawObjects[type];
         const size_t objSize = objects.size();
         if(objSize > 0) {
-            g_painter->saveAndResetState();
             buffer.frame->bind();
-            for(uint_fast32_t i = 0;; ++i) {
-                const bool last = i == objSize;
-                const auto& obj = last ? m_nullDrawObject : objects[i];
-                if(last || i > 0 && !lastObject.isEqual(obj)) {
-                    g_painter->executeState(lastObject.state);
 
-                    m_coordsBuffer.enableHardwareCaching(HardwareBuffer::StaticDraw);
-                    if(lastObject.texture == nullptr && lastObject.src.isNull()) {
-                        g_painter->drawFillCoords(m_coordsBuffer);
+            for(const auto& obj : objects) {
+                g_painter->executeState(obj.state);
+                for(const auto& rect : obj.rects) {
+                    if(rect.second.isNull()) {
+                        m_coordsBuffer.addRect(rect.first);
                     } else {
-                        g_painter->drawTextureCoords(m_coordsBuffer, lastObject.texture);
+                        m_coordsBuffer.addRect(rect.first, rect.second);
                     }
-
-                    m_coordsBuffer.clear();
-
-                    if(last) break;
                 }
 
-                lastObject = obj;
-
-                if(obj.src.isNull()) {
-                    m_coordsBuffer.addRect(obj.dest);
+                if(obj.texture == nullptr) {
+                    g_painter->drawFillCoords(m_coordsBuffer);
                 } else {
-                    m_coordsBuffer.addRect(obj.dest, obj.src);
+                    g_painter->drawTextureCoords(m_coordsBuffer, obj.texture);
                 }
+
+                m_coordsBuffer.clear();
             }
+
             buffer.frame->release();
-            g_painter->restoreSavedState();
+
             objects.clear();
         }
 
@@ -125,4 +134,5 @@ void DrawPool::draw()
             //glEnable(GL_BLEND);
         }
     }
+    g_painter->restoreSavedState();
 }
