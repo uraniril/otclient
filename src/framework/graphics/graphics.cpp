@@ -37,6 +37,7 @@
 
 #include <framework/graphics/graphics.h>
 #include <framework/graphics/texture.h>
+#include <framework/graphics/drawpool.h>
 #include "texturemanager.h"
 #include "framebuffermanager.h"
 #include <framework/platform/platformwindow.h>
@@ -112,6 +113,7 @@ void Graphics::init()
 void Graphics::terminate()
 {
     g_fonts.terminate();
+    g_drawPool.terminate();
     g_framebuffers.terminate();
     g_textures.terminate();
 
@@ -200,7 +202,7 @@ bool Graphics::selectPainterEngine(PainterEngine painterEngine)
         }
         fallbackPainter = g_painterDX9;
         fallbackPainterEngine = Painter_DirectX9;
-    }
+}
 #endif
 
 #ifdef PAINTER_OGL2
