@@ -57,6 +57,5 @@ void LightView::setShade(const Point& point)
 
 void LightView::resize()
 {
-    m_lightbuffer->resize(m_mapView->m_frameCache.tile->getSize());
     m_shades.resize(m_mapView->m_drawDimension.area());
 }

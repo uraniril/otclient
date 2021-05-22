@@ -160,7 +160,7 @@ protected:
 
 private:
     struct FrameCache {
-        FrameBufferPtr tile, staticText, dynamicText, creatureInformation;
+        FrameBufferPtr staticText, dynamicText, creatureInformation;
 
         uint32_t flags = Otc::FUpdateAll;
     };

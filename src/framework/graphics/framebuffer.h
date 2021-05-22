@@ -85,8 +85,8 @@ private:
     Timer m_lastRenderedTime;
     uint16_t m_minTimeUpdate;
 
-    Color m_colorClear;
-    Painter::CompositionMode m_compositeMode;
+    Color m_colorClear = { Color::black };
+    Painter::CompositionMode m_compositeMode{ Painter::CompositionMode_Normal };
 };
 
 #endif

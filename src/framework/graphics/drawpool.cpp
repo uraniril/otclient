@@ -53,16 +53,25 @@ void DrawPool::addFilledRect(const Rect& dest)
 bool DrawPool::drawUp(DrawType type, Size size, const Rect& dest, const Rect& src)
 {
     auto& dataBuffer = m_framebuffers[type];
+    m_drawObjects[type].clear();
+    m_currentDrawType = -1;
+
     bool canUpdate = dataBuffer.frame->canUpdate();
     if(canUpdate) {
         dataBuffer.frame->resize(size);
         dataBuffer.dest = dest;
         dataBuffer.src = src;
         m_currentDrawType = type;
-        m_coordsBuffer.clear();
     }
 
     return canUpdate;
+}
+
+void DrawPool::update()
+{
+    for(const auto& buffer : m_framebuffers) {
+        if(buffer.frame->isValid()) buffer.frame->update();
+    }
 }
 
 void DrawPool::draw()
@@ -72,43 +81,40 @@ void DrawPool::draw()
         const auto& buffer = m_framebuffers[type];
         if(!buffer.frame->isValid()) continue;
 
-        if(buffer.frame->canUpdate()) {
-            auto& objects = m_drawObjects[type];
-            const size_t objSize = objects.size();
+        auto& objects = m_drawObjects[type];
+        const size_t objSize = objects.size();
+        if(objSize > 0) {
+            g_painter->saveAndResetState();
+            buffer.frame->bind();
+            for(uint_fast32_t i = 0;; ++i) {
+                const bool last = i == objSize;
+                const auto& obj = last ? m_nullDrawObject : objects[i];
+                if(last || i > 0 && !lastObject.isEqual(obj)) {
+                    g_painter->executeState(lastObject.state);
 
-            if(objSize > 0) {
-                buffer.frame->bind();
-
-                for(uint_fast32_t i = 0;; ++i) {
-                    const bool last = i == objSize;
-                    const auto& obj = last ? m_nullDrawObject : objects[i];
-                    if(last || i > 0 && !lastObject.isEqual(obj)) {
-                        g_painter->saveAndResetState();
-                        g_painter->executeState(lastObject.state);
-
-                        if(lastObject.texture == nullptr && lastObject.src.isNull()) {
-                            g_painter->drawFillCoords(m_coordsBuffer);
-                        } else {
-                            g_painter->drawTextureCoords(m_coordsBuffer, lastObject.texture);
-                        }
-
-                        g_painter->restoreSavedState();
-                        m_coordsBuffer.clear();
-
-                        if(last) break;
-                    }
-
-                    lastObject = obj;
-
-                    if(obj.src.isNull()) {
-                        m_coordsBuffer.addRect(obj.dest);
+                    m_coordsBuffer.enableHardwareCaching(HardwareBuffer::StaticDraw);
+                    if(lastObject.texture == nullptr && lastObject.src.isNull()) {
+                        g_painter->drawFillCoords(m_coordsBuffer);
                     } else {
-                        m_coordsBuffer.addRect(obj.dest, obj.src);
+                        g_painter->drawTextureCoords(m_coordsBuffer, lastObject.texture);
                     }
+
+                    m_coordsBuffer.clear();
+
+                    if(last) break;
                 }
-                buffer.frame->release();
-                objects.clear();
+
+                lastObject = obj;
+
+                if(obj.src.isNull()) {
+                    m_coordsBuffer.addRect(obj.dest);
+                } else {
+                    m_coordsBuffer.addRect(obj.dest, obj.src);
+                }
             }
+            buffer.frame->release();
+            g_painter->restoreSavedState();
+            objects.clear();
         }
 
         if(buffer.dest.isNull())

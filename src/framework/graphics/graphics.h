@@ -87,7 +87,7 @@ private:
     bool m_ok{ false },
         m_useDrawArrays{ true },
         m_useFBO{ true },
-        m_useHardwareBuffers{ false },
+        m_useHardwareBuffers{ true },
         m_useBilinearFiltering{ true },
         m_useNonPowerOfTwoTextures{ true },
         m_useMipmaps{ true },

@@ -38,6 +38,7 @@
 #include <framework/graphics/framebuffermanager.h>
 #include <framework/graphics/graphics.h>
 #include <framework/graphics/image.h>
+#include <framework/graphics/drawpool.h>
 #include <framework/stdext/math.h>
 #include <framework/platform/platformwindow.h>
 
@@ -56,7 +57,6 @@ MapView::MapView()
     m_viewMode = NEAR_VIEW;
     m_optimizedSize = Size(g_map.getAwareRange().horizontal(), g_map.getAwareRange().vertical()) * SPRITE_SIZE;
 
-    m_frameCache.tile = g_framebuffers.createFrameBuffer();
     m_frameCache.creatureInformation = g_framebuffers.createFrameBuffer(true);
     m_frameCache.staticText = g_framebuffers.createFrameBuffer(true, 0);
     m_frameCache.dynamicText = g_framebuffers.createFrameBuffer(true, 50);
@@ -217,7 +217,6 @@ void MapView::updateGeometry(const Size& visibleDimension, const Size& optimized
 
     m_scaleFactor = m_tileSize / static_cast<float>(SPRITE_SIZE);
 
-    m_frameCache.tile->resize(bufferSize);
     if(m_drawLights) m_lightView->resize();
 
     for(const auto& frame : { m_frameCache.creatureInformation, m_frameCache.staticText, m_frameCache.dynamicText })
@@ -237,10 +236,12 @@ void MapView::onCameraMove(const Point& /*offset*/)
 {
     m_rectCache.rect = Rect();
 
-    for(const auto& frame : { m_frameCache.tile, m_frameCache.staticText, m_frameCache.dynamicText })
+    g_drawPool.update();
+
+    for(const auto& frame : { m_frameCache.staticText, m_frameCache.dynamicText })
         frame->update();
 
-    if(m_drawLights) m_lightView->update();
+    //if(m_drawLights) m_lightView->update();
 
     if(isFollowingCreature()) {
         if(m_followingCreature->isWalking()) {
@@ -315,7 +316,7 @@ void MapView::updateLight()
     ambientLight.intensity = std::max<uint8>(m_minimumAmbientLight * 255, ambientLight.intensity);
 
     m_lightView->setGlobalLight(ambientLight);
-    m_lightView->update();
+    //m_lightView->update();
 }
 
 void MapView::lockFirstVisibleFloor(uint8 firstVisibleFloor)
@@ -368,8 +369,8 @@ void MapView::optimizeForSize(const Size& visibleSize)
 
 void MapView::setAntiAliasingMode(const AntialiasingMode mode)
 {
-    m_frameCache.tile->cleanTexture();
-    m_frameCache.tile->setSmooth(mode != ANTIALIASING_DISABLED);
+    /*m_frameCache.tile->cleanTexture();
+    m_frameCache.tile->setSmooth(mode != ANTIALIASING_DISABLED);*/
     m_renderScale = mode == ANTIALIASING_SMOOTH_RETRO ? 200 : 100;
     updateGeometry(m_visibleDimension, m_optimizedSize);
 }

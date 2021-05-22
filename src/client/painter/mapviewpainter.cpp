@@ -49,12 +49,8 @@ void MapViewPainter::draw(const MapViewPtr& mapView, const Rect& rect)
     }
 
     const Position cameraPosition = mapView->getCameraPosition();
-    const auto redrawThing = g_drawPool.drawUp(DRAWTYPE_MAP, mapView->m_rectDimension.size(), mapView->m_rectCache.rect, mapView->m_rectCache.srcRect);
 
-    if(redrawThing) {
-        mapView->m_frameCache.flags |= Otc::FUpdateLight;
-        mapView->m_frameCache.flags |= Otc::FUpdateThing;
-
+    if(g_drawPool.drawUp(DRAWTYPE_MAP, mapView->m_rectDimension.size(), mapView->m_rectCache.rect, mapView->m_rectCache.srcRect)) {
         const auto& lightView = mapView->m_drawLights ? mapView->m_lightView.get() : nullptr;
         for(int_fast8_t z = mapView->m_floorMax; z >= mapView->m_floorMin; --z) {
             if(lightView) {
@@ -87,33 +83,41 @@ void MapViewPainter::draw(const MapViewPtr& mapView, const Rect& rect)
             mapView->onFloorDrawingStart(z);
 
             if(lightView) lightView->setFloor(z);
+
             for(const auto& tile : mapView->m_cachedVisibleTiles[z]) {
-                if((!redrawThing && !tile->hasLight()) || !canRenderTile(mapView, tile, mapView->m_viewport, lightView)) continue;
+                if(!canRenderTile(mapView, tile, mapView->m_viewport, lightView)) continue;
 
                 TilePainter::drawStart(tile, mapView);
-                TilePainter::draw(tile, mapView->transformPositionTo2D(tile->getPosition(), cameraPosition), mapView->m_scaleFactor, mapView->m_frameCache.flags, lightView);
+                TilePainter::drawGround(tile, mapView->transformPositionTo2D(tile->getPosition(), cameraPosition), mapView->m_scaleFactor, Otc::FUpdateAll, lightView);
+                TilePainter::drawEnd(tile, mapView);
+            }
+
+            for(const auto& tile : mapView->m_cachedVisibleTiles[z]) {
+                if(!canRenderTile(mapView, tile, mapView->m_viewport, lightView)) continue;
+
+                TilePainter::drawStart(tile, mapView);
+                TilePainter::drawBottom(tile, mapView->transformPositionTo2D(tile->getPosition(), cameraPosition), mapView->m_scaleFactor, Otc::FUpdateAll, lightView);
+                TilePainter::drawTop(tile, mapView->transformPositionTo2D(tile->getPosition(), cameraPosition), mapView->m_scaleFactor, Otc::FUpdateAll, lightView);
                 TilePainter::drawEnd(tile, mapView);
             }
 
             for(const MissilePtr& missile : g_map.getFloorMissiles(z)) {
-                ThingPainter::draw(missile, mapView->transformPositionTo2D(missile->getPosition(), cameraPosition), mapView->m_scaleFactor, mapView->m_frameCache.flags, lightView);
+                ThingPainter::draw(missile, mapView->transformPositionTo2D(missile->getPosition(), cameraPosition), mapView->m_scaleFactor, Otc::FUpdateAll, lightView);
             }
 
             mapView->onFloorDrawingEnd(z);
         }
 
-        if(redrawThing) {
-            if(mapView->m_crosshairTexture && mapView->m_mousePosition.isValid()) {
-                const Point& point = mapView->transformPositionTo2D(mapView->m_mousePosition, cameraPosition);
-                if(mapView->m_crosshairEffect && mapView->m_crosshairEffect->getId() > 0) {
-                    ThingPainter::draw(mapView->m_crosshairEffect, point, mapView->m_scaleFactor, Otc::FUpdateThing, nullptr);
-                    g_painter->setOpacity(.65);
-                }
-
-                const auto crosshairRect = Rect(point, mapView->m_tileSize, mapView->m_tileSize);
-                g_drawPool.addTexturedRect(crosshairRect, mapView->m_crosshairTexture);
-                g_painter->resetOpacity();
+        if(mapView->m_crosshairTexture && mapView->m_mousePosition.isValid()) {
+            const Point& point = mapView->transformPositionTo2D(mapView->m_mousePosition, cameraPosition);
+            if(mapView->m_crosshairEffect && mapView->m_crosshairEffect->getId() > 0) {
+                ThingPainter::draw(mapView->m_crosshairEffect, point, mapView->m_scaleFactor, Otc::FUpdateThing, nullptr);
+                g_painter->setOpacity(.65);
             }
+
+            const auto crosshairRect = Rect(point, mapView->m_tileSize, mapView->m_tileSize);
+            g_drawPool.addTexturedRect(crosshairRect, mapView->m_crosshairTexture);
+            g_painter->resetOpacity();
         }
     }
 
@@ -144,10 +148,8 @@ void MapViewPainter::draw(const MapViewPtr& mapView, const Rect& rect)
     g_painter->setOpacity(fadeOpacity);*/
 
     // this could happen if the player position is not known yet
-    if(!cameraPosition.isValid())
-        return;
-
-    drawCreatureInformation(mapView);
+    //if(!cameraPosition.isValid())
+        //return;
 
     if(mapView->m_drawLights && g_drawPool.drawUp(DRAWTYPE_LIGHT, mapView->m_rectDimension.size(), mapView->m_rectCache.rect, mapView->m_rectCache.srcRect)) {
         LightViewPainter::draw(mapView->m_lightView);
@@ -155,9 +157,9 @@ void MapViewPainter::draw(const MapViewPtr& mapView, const Rect& rect)
 
     g_drawPool.draw();
 
-    drawText(mapView);
+    drawCreatureInformation(mapView);
 
-    mapView->m_frameCache.flags = 0;
+    drawText(mapView);
 }
 
 void MapViewPainter::drawCreatureInformation(const MapViewPtr& mapView)
