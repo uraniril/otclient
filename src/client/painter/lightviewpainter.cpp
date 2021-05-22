@@ -28,6 +28,8 @@
 #include <framework/graphics/graphics.h>
 #include <framework/graphics/declarations.h>
 
+#include <framework/graphics/drawpool.h>
+
 LightViewPainter g_lightViewPaint;
 
 void LightViewPainter::init()
@@ -42,8 +44,13 @@ void LightViewPainter::terminate()
     m_lightTexture = nullptr;
 }
 
-void LightViewPainter::drawLights(const LightViewPtr& lightView)
+void LightViewPainter::draw(const LightViewPtr& lightView)
 {
+    // draw light, only if there is darkness
+    if(!lightView->isDark()) return;
+
+    g_drawPool.setColorClear(DRAWTYPE_LIGHT, lightView->m_globalLightColor);
+
     const auto& mapView = lightView->m_mapView;
     const auto& shadeBase = std::make_pair<Point, Size>(Point(mapView->getTileSize() / 4.8), Size(mapView->getTileSize() * 1.4));
     for(int_fast8_t z = mapView->getFloorMax(); z >= mapView->getFloorMin(); --z) {
@@ -53,7 +60,7 @@ void LightViewPainter::drawLights(const LightViewPtr& lightView)
                 if(shade.floor != z) continue;
                 shade.floor = -1;
 
-                g_painter->drawTexturedRect(Rect(shade.pos - shadeBase.first, shadeBase.second), g_lightViewPaint.m_shadeTexture);
+                g_drawPool.addTexturedRect(Rect(shade.pos - shadeBase.first, shadeBase.second), g_lightViewPaint.m_shadeTexture);
             }
         }
 
@@ -61,27 +68,10 @@ void LightViewPainter::drawLights(const LightViewPtr& lightView)
         std::sort(lights.begin(), lights.end(), orderLightComparator);
         for(LightSource& light : lights) {
             g_painter->setColor(Color::from8bit(light.color, light.brightness));
-            g_painter->drawTexturedRect(Rect(light.pos - Point(light.radius), Size(light.radius * 2)), g_lightViewPaint.m_lightTexture);
+            g_drawPool.addTexturedRect(Rect(light.pos - Point(light.radius), Size(light.radius * 2)), g_lightViewPaint.m_lightTexture);
         }
         lights.clear();
     }
-}
-
-void LightViewPainter::draw(const LightViewPtr& lightView, const Rect& dest, const Rect& src)
-{
-    // draw light, only if there is darkness
-    if(!lightView->isDark()) return;
-
-    if(lightView->m_lightbuffer->canUpdate()) {
-        lightView->m_lightbuffer->bind(false);
-        lightView->m_lightbuffer->clear(lightView->m_globalLightColor);
-        drawLights(lightView);
-        lightView->m_lightbuffer->release();
-    }
-
-    g_painter->setCompositionMode(Painter::CompositionMode_Light);
-    lightView->m_lightbuffer->draw(dest, src);
-    g_painter->resetCompositionMode();
 }
 
 bool LightViewPainter::orderLightComparator(const LightSource& a, const LightSource& b)

@@ -28,21 +28,6 @@
 class PainterOGL : public Painter
 {
 public:
-    struct PainterState {
-        Size resolution;
-        Matrix3 transformMatrix;
-        Matrix3 projectionMatrix;
-        Matrix3 textureMatrix;
-        Color color;
-        float opacity;
-        CompositionMode compositionMode;
-        BlendEquation blendEquation;
-        Rect clipRect;
-        Texture* texture;
-        PainterShaderProgram* shaderProgram;
-        bool alphaWriting;
-    };
-
     PainterOGL();
     ~PainterOGL() override = default;
 
@@ -54,6 +39,8 @@ public:
     void saveState() override;
     void saveAndResetState() override;
     void restoreSavedState() override;
+    PainterState getCurrentState() override;
+    void executeState(const PainterState& state) override;
 
     void clear(const Color& color) override;
     void clearRect(const Color& color, const Rect& rect);

@@ -30,7 +30,6 @@ class FrameBufferManager
 public:
     void init();
     void terminate();
-    void clear();
 
     FrameBufferPtr createFrameBuffer(bool useAlphaWriting = false, uint16_t minTimeUpdate = MIN_TIME_UPDATE);
     const FrameBufferPtr& getTemporaryFrameBuffer() { return m_temporaryFramebuffer; }

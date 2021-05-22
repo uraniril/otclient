@@ -51,7 +51,7 @@ public:
 
     void drawCoords(CoordsBuffer& coordsBuffer, DrawMode drawMode = Triangles) override;
     void drawFillCoords(CoordsBuffer& coordsBuffer) override;
-    void drawTextureCoords(CoordsBuffer& coordsBuffer, const TexturePtr& texture) override;
+    void drawTextureCoords(CoordsBuffer& coordsBuffer, const TexturePtr& texture, DrawMode drawMode = Triangles) override;
     void drawTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src) override;
     void drawUpsideDownTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src) override;
     void drawRepeatedTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src) override;

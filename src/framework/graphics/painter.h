@@ -51,6 +51,37 @@ public:
         TriangleStrip = GL_TRIANGLE_STRIP
     };
 
+    struct PainterState {
+        Size resolution;
+        Matrix3 transformMatrix;
+        Matrix3 projectionMatrix;
+        Matrix3 textureMatrix;
+        Color color;
+        float opacity;
+        CompositionMode compositionMode;
+        BlendEquation blendEquation;
+        Rect clipRect;
+        Texture* texture;
+        PainterShaderProgram* shaderProgram;
+        bool alphaWriting;
+
+        bool isEqual(const PainterState& s2) const
+        {
+            return resolution == s2.resolution &&
+                transformMatrix == s2.transformMatrix &&
+                projectionMatrix == s2.projectionMatrix &&
+                textureMatrix == s2.textureMatrix &&
+                color == s2.color &&
+                opacity == s2.opacity &&
+                compositionMode == s2.compositionMode &&
+                blendEquation == s2.blendEquation &&
+                clipRect == s2.clipRect &&
+                texture == s2.texture &&
+                shaderProgram == s2.shaderProgram &&
+                alphaWriting == s2.alphaWriting;
+        }
+    };
+
     Painter();
     virtual ~Painter() = default;
 
@@ -60,12 +91,14 @@ public:
     virtual void saveState() = 0;
     virtual void saveAndResetState() = 0;
     virtual void restoreSavedState() = 0;
+    virtual PainterState getCurrentState() = 0;
+    virtual void executeState(const PainterState& state) = 0;
 
     virtual void clear(const Color& color) = 0;
 
     virtual void drawCoords(CoordsBuffer& coordsBuffer, DrawMode drawMode = Triangles) = 0;
     virtual void drawFillCoords(CoordsBuffer& coordsBuffer) = 0;
-    virtual void drawTextureCoords(CoordsBuffer& coordsBuffer, const TexturePtr& texture) = 0;
+    virtual void drawTextureCoords(CoordsBuffer& coordsBuffer, const TexturePtr& texture, DrawMode drawMode = Triangles) = 0;
     virtual void drawTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src) = 0;
     void drawTexturedRect(const Rect& dest, const TexturePtr& texture) { drawTexturedRect(dest, texture, Rect(Point(), texture->getSize())); }
     virtual void drawUpsideDownTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src) = 0;
