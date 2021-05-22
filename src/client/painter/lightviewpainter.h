@@ -31,15 +31,13 @@ struct LightSource;
 class LightViewPainter
 {
 public:
-    static void draw(const LightViewPtr& lightView, const Rect& dest, const Rect& src);
+    static void draw(const LightViewPtr& lightView);
 
     void init();
     void terminate();
 
 private:
     static bool orderLightComparator(const LightSource& a, const LightSource& b);
-
-    static void drawLights(const LightViewPtr& lightView);
 
     void generateLightTexture(), generateShadeTexture();
 

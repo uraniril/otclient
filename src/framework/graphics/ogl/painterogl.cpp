@@ -64,19 +64,40 @@ void PainterOGL::refreshState()
 void PainterOGL::saveState()
 {
     assert(m_oldStateIndex < 10);
-    m_olderStates[m_oldStateIndex].resolution = m_resolution;
-    m_olderStates[m_oldStateIndex].transformMatrix = m_transformMatrix;
-    m_olderStates[m_oldStateIndex].projectionMatrix = m_projectionMatrix;
-    m_olderStates[m_oldStateIndex].textureMatrix = m_textureMatrix;
-    m_olderStates[m_oldStateIndex].color = m_color;
-    m_olderStates[m_oldStateIndex].opacity = m_opacity;
-    m_olderStates[m_oldStateIndex].compositionMode = m_compositionMode;
-    m_olderStates[m_oldStateIndex].blendEquation = m_blendEquation;
-    m_olderStates[m_oldStateIndex].clipRect = m_clipRect;
-    m_olderStates[m_oldStateIndex].shaderProgram = m_shaderProgram;
-    m_olderStates[m_oldStateIndex].texture = m_texture;
-    m_olderStates[m_oldStateIndex].alphaWriting = m_alphaWriting;
+    m_olderStates[m_oldStateIndex] = getCurrentState();
     m_oldStateIndex++;
+}
+
+PainterOGL::PainterState PainterOGL::getCurrentState()
+{
+    PainterOGL::PainterState state;
+    state.resolution = m_resolution;
+    state.transformMatrix = m_transformMatrix;
+    state.projectionMatrix = m_projectionMatrix;
+    state.textureMatrix = m_textureMatrix;
+    state.color = m_color;
+    state.opacity = m_opacity;
+    state.compositionMode = m_compositionMode;
+    state.blendEquation = m_blendEquation;
+    state.clipRect = m_clipRect;
+    state.shaderProgram = m_shaderProgram;
+    state.texture = m_texture;
+    state.alphaWriting = m_alphaWriting;
+
+    return state;
+}
+void PainterOGL::executeState(const PainterState& state)
+{
+    setTextureMatrix(state.textureMatrix);
+    setColor(state.color);
+    setOpacity(state.opacity);
+    setCompositionMode(state.compositionMode);
+    setBlendEquation(state.blendEquation);
+    setClipRect(state.clipRect);
+    setShaderProgram(state.shaderProgram);
+    setTexture(state.texture);
+    setAlphaWriting(state.alphaWriting);
+    setTransformMatrix(state.transformMatrix);
 }
 
 void PainterOGL::saveAndResetState()
@@ -88,18 +109,12 @@ void PainterOGL::saveAndResetState()
 void PainterOGL::restoreSavedState()
 {
     m_oldStateIndex--;
-    setResolution(m_olderStates[m_oldStateIndex].resolution);
-    setTransformMatrix(m_olderStates[m_oldStateIndex].transformMatrix);
-    setProjectionMatrix(m_olderStates[m_oldStateIndex].projectionMatrix);
-    setTextureMatrix(m_olderStates[m_oldStateIndex].textureMatrix);
-    setColor(m_olderStates[m_oldStateIndex].color);
-    setOpacity(m_olderStates[m_oldStateIndex].opacity);
-    setCompositionMode(m_olderStates[m_oldStateIndex].compositionMode);
-    setBlendEquation(m_olderStates[m_oldStateIndex].blendEquation);
-    setClipRect(m_olderStates[m_oldStateIndex].clipRect);
-    setShaderProgram(m_olderStates[m_oldStateIndex].shaderProgram);
-    setTexture(m_olderStates[m_oldStateIndex].texture);
-    setAlphaWriting(m_olderStates[m_oldStateIndex].alphaWriting);
+    const auto& state = m_olderStates[m_oldStateIndex];
+
+    setResolution(state.resolution);
+    setTransformMatrix(state.transformMatrix);
+    setTextureMatrix(state.textureMatrix);
+    executeState(state);
 }
 
 void PainterOGL::clear(const Color& color)
@@ -172,6 +187,9 @@ void PainterOGL::setAlphaWriting(bool enable)
 
 void PainterOGL::setResolution(const Size& resolution)
 {
+    if(resolution == m_resolution)
+        return;
+
     // The projection matrix converts from Painter's coordinate system to GL's coordinate system
     //    * GL's viewport is 2x2, Painter's is width x height
     //    * GL has +y -> -y going from bottom -> top, Painter is the other way round

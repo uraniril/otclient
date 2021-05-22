@@ -141,13 +141,13 @@ void PainterOGL1::drawFillCoords(CoordsBuffer& coordsBuffer)
     drawCoords(coordsBuffer);
 }
 
-void PainterOGL1::drawTextureCoords(CoordsBuffer& coordsBuffer, const TexturePtr& texture)
+void PainterOGL1::drawTextureCoords(CoordsBuffer& coordsBuffer, const TexturePtr& texture, DrawMode drawMode)
 {
     if(texture->isEmpty())
         return;
 
     setTexture(texture.get());
-    drawCoords(coordsBuffer);
+    drawCoords(coordsBuffer, drawMode);
 }
 
 void PainterOGL1::drawTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src)

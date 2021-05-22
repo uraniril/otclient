@@ -103,7 +103,7 @@ void FrameBuffer::bind(const bool autoClear)
     g_painter->setResolution(m_texture->getSize());
 
     if(autoClear) {
-        clear();
+        clear(m_colorClear);
     }
 }
 
@@ -119,17 +119,24 @@ void FrameBuffer::release()
 void FrameBuffer::draw()
 {
     Rect rect(0, 0, getSize());
+
+    g_painter->setCompositionMode(m_compositeMode);
     g_painter->drawTexturedRect(rect, m_texture, rect);
+    g_painter->resetCompositionMode();
 }
 
 void FrameBuffer::draw(const Rect& dest, const Rect& src)
 {
+    g_painter->setCompositionMode(m_compositeMode);
     g_painter->drawTexturedRect(dest, m_texture, src);
+    g_painter->resetCompositionMode();
 }
 
 void FrameBuffer::draw(const Rect& dest)
 {
+    g_painter->setCompositionMode(m_compositeMode);
     g_painter->drawTexturedRect(dest, m_texture, Rect(0, 0, getSize()));
+    g_painter->resetCompositionMode();
 }
 
 void FrameBuffer::internalBind()

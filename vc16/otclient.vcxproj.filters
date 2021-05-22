@@ -606,6 +606,9 @@
     <ClCompile Include="..\src\client\painter\lightviewpainter.cpp">
       <Filter>Source Files\client\painter</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\framework\graphics\drawpool.cpp">
+      <Filter>Source Files\framework\graphics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\framework\const.h">
@@ -1138,6 +1141,9 @@
     </ClInclude>
     <ClInclude Include="..\src\client\painter\lightviewpainter.h">
       <Filter>Header Files\client\painter</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\framework\graphics\drawpool.h">
+      <Filter>Header Files\framework\graphics</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

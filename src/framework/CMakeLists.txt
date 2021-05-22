@@ -287,6 +287,7 @@ if(FRAMEWORK_GRAPHICS)
         ${CMAKE_CURRENT_LIST_DIR}/graphics/fontmanager.cpp
         ${CMAKE_CURRENT_LIST_DIR}/graphics/framebuffer.cpp
         ${CMAKE_CURRENT_LIST_DIR}/graphics/framebuffermanager.cpp
+	${CMAKE_CURRENT_LIST_DIR}/graphics/drawpool.cpp
         ${CMAKE_CURRENT_LIST_DIR}/graphics/graphics.cpp
         ${CMAKE_CURRENT_LIST_DIR}/graphics/hardwarebuffer.cpp
         ${CMAKE_CURRENT_LIST_DIR}/graphics/image.cpp

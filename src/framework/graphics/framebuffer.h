@@ -25,6 +25,7 @@
 
 #include "declarations.h"
 #include "texture.h"
+#include "painter.h"
 #include <framework/core/scheduledevent.h>
 #include <framework/core/timer.h>
 #include <client/const.h>
@@ -60,6 +61,9 @@ public:
     bool canUpdate();
     void update();
     void cleanTexture() { m_texture = nullptr; }
+    bool isValid() { return m_texture != nullptr; }
+    void setColorClear(const Color color) { m_colorClear = color; }
+    void setCompositeMode(const Painter::CompositionMode mode) { m_compositeMode = mode; }
 
 private:
     void internalCreate();
@@ -80,6 +84,9 @@ private:
 
     Timer m_lastRenderedTime;
     uint16_t m_minTimeUpdate;
+
+    Color m_colorClear;
+    Painter::CompositionMode m_compositeMode;
 };
 
 #endif

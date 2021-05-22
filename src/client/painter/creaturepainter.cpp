@@ -27,6 +27,7 @@
 #include <framework/core/declarations.h>
 #include <framework/graphics/framebuffermanager.h>
 #include <framework/graphics/graphics.h>
+#include <framework/graphics/drawpool.h>
 
 #include "framework/stdext/math.h"
 

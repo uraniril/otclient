@@ -32,16 +32,13 @@
 #include <framework/core/declarations.h>
 #include <framework/graphics/framebuffermanager.h>
 #include <framework/graphics/graphics.h>
+#include <framework/graphics/drawpool.h>
 
 void MapViewPainter::draw(const MapViewPtr& mapView, const Rect& rect)
 {
     // update visible tiles cache when needed
     if(mapView->m_mustUpdateVisibleTilesCache)
         mapView->updateVisibleTilesCache();
-
-    const Position cameraPosition = mapView->getCameraPosition();
-    const auto redrawThing = mapView->m_frameCache.tile->canUpdate();
-    const auto redrawLight = mapView->m_drawLights && mapView->m_lightView->canUpdate();
 
     if(mapView->m_rectCache.rect != rect) {
         mapView->m_rectCache.rect = rect;
@@ -51,15 +48,14 @@ void MapViewPainter::draw(const MapViewPtr& mapView, const Rect& rect)
         mapView->m_rectCache.verticalStretchFactor = rect.height() / static_cast<float>(mapView->m_rectCache.srcRect.height());
     }
 
-    if(redrawThing || redrawLight) {
-        if(redrawLight) mapView->m_frameCache.flags |= Otc::FUpdateLight;
+    const Position cameraPosition = mapView->getCameraPosition();
+    const auto redrawThing = g_drawPool.drawUp(DRAWTYPE_MAP, mapView->m_rectDimension.size(), mapView->m_rectCache.rect, mapView->m_rectCache.srcRect);
 
-        if(redrawThing) {
-            mapView->m_frameCache.tile->bind();
-            mapView->m_frameCache.flags |= Otc::FUpdateThing;
-        }
+    if(redrawThing) {
+        mapView->m_frameCache.flags |= Otc::FUpdateLight;
+        mapView->m_frameCache.flags |= Otc::FUpdateThing;
 
-        const auto& lightView = redrawLight ? mapView->m_lightView.get() : nullptr;
+        const auto& lightView = mapView->m_drawLights ? mapView->m_lightView.get() : nullptr;
         for(int_fast8_t z = mapView->m_floorMax; z >= mapView->m_floorMin; --z) {
             if(lightView) {
                 const int8 nextFloor = z - 1;
@@ -92,9 +88,7 @@ void MapViewPainter::draw(const MapViewPtr& mapView, const Rect& rect)
 
             if(lightView) lightView->setFloor(z);
             for(const auto& tile : mapView->m_cachedVisibleTiles[z]) {
-                const auto hasLight = redrawLight && tile->hasLight();
-
-                if((!redrawThing && !hasLight) || !canRenderTile(mapView, tile, mapView->m_viewport, lightView)) continue;
+                if((!redrawThing && !tile->hasLight()) || !canRenderTile(mapView, tile, mapView->m_viewport, lightView)) continue;
 
                 TilePainter::drawStart(tile, mapView);
                 TilePainter::draw(tile, mapView->transformPositionTo2D(tile->getPosition(), cameraPosition), mapView->m_scaleFactor, mapView->m_frameCache.flags, lightView);
@@ -117,15 +111,13 @@ void MapViewPainter::draw(const MapViewPtr& mapView, const Rect& rect)
                 }
 
                 const auto crosshairRect = Rect(point, mapView->m_tileSize, mapView->m_tileSize);
-                g_painter->drawTexturedRect(crosshairRect, mapView->m_crosshairTexture);
+                g_drawPool.addTexturedRect(crosshairRect, mapView->m_crosshairTexture);
                 g_painter->resetOpacity();
             }
-
-            mapView->m_frameCache.tile->release();
         }
     }
 
-    float fadeOpacity = 1.0f;
+    /*float fadeOpacity = 1.0f;
     if(!mapView->m_shaderSwitchDone && mapView->m_fadeOutTime > 0) {
         fadeOpacity = 1.0f - (mapView->m_fadeTimer.timeElapsed() / mapView->m_fadeOutTime);
         if(fadeOpacity < 0.0f) {
@@ -149,12 +141,7 @@ void MapViewPainter::draw(const MapViewPtr& mapView, const Rect& rect)
         g_painter->setShaderProgram(mapView->m_shader);
     }
 
-    g_painter->setOpacity(fadeOpacity);
-    glDisable(GL_BLEND);
-    mapView->m_frameCache.tile->draw(rect, mapView->m_rectCache.srcRect);
-    g_painter->resetShaderProgram();
-    g_painter->resetOpacity();
-    glEnable(GL_BLEND);
+    g_painter->setOpacity(fadeOpacity);*/
 
     // this could happen if the player position is not known yet
     if(!cameraPosition.isValid())
@@ -162,9 +149,11 @@ void MapViewPainter::draw(const MapViewPtr& mapView, const Rect& rect)
 
     drawCreatureInformation(mapView);
 
-    if(mapView->m_drawLights) {
-        LightViewPainter::draw(mapView->m_lightView, rect, mapView->m_rectCache.srcRect);
+    if(mapView->m_drawLights && g_drawPool.drawUp(DRAWTYPE_LIGHT, mapView->m_rectDimension.size(), mapView->m_rectCache.rect, mapView->m_rectCache.srcRect)) {
+        LightViewPainter::draw(mapView->m_lightView);
     }
+
+    g_drawPool.draw();
 
     drawText(mapView);
 

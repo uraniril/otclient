@@ -127,14 +127,14 @@ void PainterOGL2::drawFillCoords(CoordsBuffer& coordsBuffer)
     drawCoords(coordsBuffer);
 }
 
-void PainterOGL2::drawTextureCoords(CoordsBuffer& coordsBuffer, const TexturePtr& texture)
+void PainterOGL2::drawTextureCoords(CoordsBuffer& coordsBuffer, const TexturePtr& texture, DrawMode drawMode)
 {
     if(texture && texture->isEmpty())
         return;
 
     setDrawProgram(m_shaderProgram ? m_shaderProgram : m_drawTexturedProgram.get());
     setTexture(texture);
-    drawCoords(coordsBuffer);
+    drawCoords(coordsBuffer, drawMode);
 }
 
 void PainterOGL2::drawTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src)
