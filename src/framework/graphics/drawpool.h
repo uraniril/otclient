@@ -45,6 +45,7 @@ public:
     void setColorClear(const DrawType type, const Color color) { m_framebuffers[type].frame->setColorClear(color); }
     bool drawUp(DrawType type, Size size) { drawUp(type, size, Rect(), Rect()); }
     bool drawUp(DrawType type, Size size, const Rect& dest, const Rect& src);
+    void update();
 
 private:
 

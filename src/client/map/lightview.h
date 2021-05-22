@@ -55,9 +55,6 @@ public:
     void setShade(const Point& point);
 
     const Light& getGlobalLight() const { return m_globalLight; }
-
-    bool canUpdate() const { return isDark() && m_lightbuffer->canUpdate(); }
-    void update() const { if(isDark()) m_lightbuffer->update(); }
     bool isDark() const { return m_globalLight.intensity < 250; }
 
 private:

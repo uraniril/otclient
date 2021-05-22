@@ -27,7 +27,7 @@
 #include <client/map/map.h>
 
 LightView::LightView(const MapViewPtr& mapView) :
-    m_mapView(mapView), m_lightbuffer(g_framebuffers.createFrameBuffer())
+    m_mapView(mapView)
 {
     resize();
 }
@@ -57,6 +57,5 @@ void LightView::setShade(const Point& point)
 
 void LightView::resize()
 {
-    m_lightbuffer->resize(m_mapView->m_frameCache.tile->getSize());
     m_shades.resize(m_mapView->m_drawDimension.area());
 }
