@@ -37,13 +37,20 @@ enum DrawType {
 class DrawPool
 {
 public:
+
     DrawPool();
     void terminate();
 
-    void addTexturedRect(const Rect& dest, const TexturePtr& texture) { add(dest, texture, Rect(Point(), texture->getSize())); }
-    void addTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src) { add(dest, texture, src); }
-    void addFilledRect(const Rect& dest) { add(dest, nullptr, Rect()); }
-    void add(const Rect& dest, const TexturePtr& texture, const Rect& src);
+    void addFillCoords(const CoordsBuffer& coordsBuffer);
+    void addTextureCoords(const CoordsBuffer& coordsBuffer, const TexturePtr& texture, Painter::DrawMode drawMode = Painter::Triangles);
+
+    void addTexturedRect(const Rect& dest, const TexturePtr& texture);
+    void addTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src);
+    void addUpsideDownTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src);
+    void addRepeatedTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src);
+    void addFilledRect(const Rect& dest);
+    void addFilledTriangle(const Point& a, const Point& b, const Point& c);
+    void addBoundingRect(const Rect& dest, int innerLineWidth = 1);
 
     void draw();
     void setColorClear(const DrawType type, const Color color) { m_drawingData[type].frame->setColorClear(color); }
@@ -54,11 +61,31 @@ public:
     FrameBufferPtr getFrameBuffer(const DrawType type) { return m_drawingData[type].frame; }
 
 private:
+    enum DrawMethodType {
+        DRAW_FILL_COORDS,
+        DRAW_TEXTURE_COORDS,
+        DRAW_TEXTURED_RECT,
+        DRAW_UPSIDEDOWN_TEXTURED_RECT,
+        DRAW_REPEATED_TEXTURED_RECT,
+        DRAW_FILLED_RECT,
+        DRAW_FILLED_TRIANGLE,
+        DRAW_BOUNDING_RECT
+    };
+
+    struct DrawMethod {
+        DrawMethodType type;
+        std::pair<Rect, Rect> rects;
+        std::tuple<Point, Point, Point> points;
+        uint8 innerLineWidth;
+    };
+
     struct DrawObject {
+        size_t id{ 0 };
+
         TexturePtr texture;
+
         Painter::PainterState state;
-        std::vector<std::pair<Rect, Rect>> rects;
-        std::vector<size_t> hashs;
+        std::vector<DrawMethod> methods;
 
         bool operator==(const DrawObject& o)
         {
@@ -74,9 +101,9 @@ private:
         std::vector<DrawObject> objects;
     };
 
-    static size_t generateHash(const Rect& dest, const TexturePtr& texture, const Rect& src);
+    static size_t generateHash(const TexturePtr& texture, const DrawMethod& method);
 
-    void saveState(DrawObject obj);
+    void add(const TexturePtr& texture, const DrawMethod& method);
 
     CoordsBuffer m_coordsBuffer;
 
