@@ -26,6 +26,7 @@
 #include <framework/graphics/declarations.h>
 #include <framework/graphics/graphics.h>
 #include <framework/graphics/framebuffer.h>
+#include <unordered_set>
 
 enum DrawType {
     DRAWTYPE_MAP,
@@ -45,17 +46,19 @@ public:
     void add(const Rect& dest, const TexturePtr& texture, const Rect& src);
 
     void draw();
-    void setColorClear(const DrawType type, const Color color) { m_framebuffers[type].frame->setColorClear(color); }
+    void setColorClear(const DrawType type, const Color color) { m_drawingData[type].frame->setColorClear(color); }
     bool drawUp(DrawType type, Size size) { drawUp(type, size, Rect(), Rect()); }
     bool drawUp(DrawType type, Size size, const Rect& dest, const Rect& src);
     void update();
-    FrameBufferPtr getFrameBuffer(const DrawType type) { return m_framebuffers[type].frame; }
+
+    FrameBufferPtr getFrameBuffer(const DrawType type) { return m_drawingData[type].frame; }
 
 private:
     struct DrawObject {
         TexturePtr texture;
         Painter::PainterState state;
         std::vector<std::pair<Rect, Rect>> rects;
+        std::vector<size_t> hashs;
 
         bool operator==(const DrawObject& o)
         {
@@ -63,20 +66,25 @@ private:
         }
     };
 
-    struct FrameBufferData {
+    struct DrawingData {
         Rect dest;
         Rect src;
+        bool redraw{ false };
         FrameBufferPtr frame;
+        std::vector<DrawObject> objects;
     };
+
+    static size_t generateHash(const Rect& dest, const TexturePtr& texture, const Rect& src);
 
     void saveState(DrawObject obj);
 
     CoordsBuffer m_coordsBuffer;
 
-    std::array<FrameBufferData, DRAWTYPE_LAST> m_framebuffers;
-    std::array<std::vector<DrawObject>, DRAWTYPE_LAST> m_drawObjects;
+    std::array<DrawingData, DRAWTYPE_LAST> m_drawingData;
 
     int8_t m_currentDrawType{ -1 };
+
+    std::unordered_set<size_t> m_hashs;
 
     const DrawObject m_nullDrawObject;
 };
