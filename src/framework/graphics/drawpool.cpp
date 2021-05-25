@@ -45,7 +45,7 @@ DrawPool::DrawPool()
 void DrawPool::terminate()
 {
     for(auto& data : m_drawingData) {
-        data.frame = nullptr;
+        data.destroy();
     }
 }
 
@@ -56,22 +56,20 @@ void DrawPool::add(const TexturePtr& texture, const DrawMethod& method)
     auto& drawingData = m_drawingData[m_currentDrawType];
     auto& list = drawingData.objects;
 
-    auto drawObject = DrawObject{ generateHash(texture, method), texture, g_painter->getCurrentState() };
-
-    if(!drawingData.redraw && !m_hashs.count(drawObject.id)) {
+    const size_t id = generateHash(texture, method);
+    if(!drawingData.redraw && !drawingData.hashs.count(id)) {
         drawingData.redraw = true;
     } else {
         if(!list.empty()) {
             auto& prevDrawObject = list.back();
-            if(prevDrawObject.id == drawObject.id) {
+            if(prevDrawObject.id == id) {
                 prevDrawObject.methods.push_back(method);
                 return;
             }
         }
     }
 
-    drawObject.methods.push_back(method);
-    list.push_back(drawObject);
+    list.push_back(DrawObject{ id, texture, g_painter->getCurrentState(), {method} });
 }
 
 bool DrawPool::drawUp(DrawType type, Size size, const Rect& dest, const Rect& src)
@@ -103,11 +101,11 @@ void DrawPool::draw()
     g_painter->saveAndResetState();
     for(uint8 type = DRAWTYPE_MAP; type < DRAWTYPE_LAST; ++type) {
         auto& drawingData = m_drawingData[type];
-        if(!drawingData.frame->isValid()) continue;
+        if(!drawingData.frame->isValid() || !drawingData.frame->isDrawable()) continue;
 
         if(drawingData.redraw) {
             drawingData.redraw = false;
-            m_hashs.clear();
+            drawingData.hashs.clear();
 
             auto& objects = drawingData.objects;
             if(!objects.empty()) {
@@ -141,7 +139,7 @@ void DrawPool::draw()
                     }
 
                     m_coordsBuffer.clear();
-                    m_hashs.insert(obj.id);
+                    drawingData.hashs.insert(obj.id);
                 }
                 drawingData.frame->release();
 
@@ -152,9 +150,7 @@ void DrawPool::draw()
         if(drawingData.dest.isNull())
             drawingData.frame->draw();
         else {
-            //glDisable(GL_BLEND);
             drawingData.frame->draw(drawingData.dest, drawingData.src);
-            //glEnable(GL_BLEND);
         }
     }
     g_painter->restoreSavedState();

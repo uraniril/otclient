@@ -80,6 +80,8 @@ private:
     };
 
     struct DrawObject {
+        ~DrawObject() { texture = nullptr; methods.clear(); methods.clear(); }
+
         size_t id{ 0 };
 
         TexturePtr texture;
@@ -99,6 +101,9 @@ private:
         bool redraw{ false };
         FrameBufferPtr frame;
         std::vector<DrawObject> objects;
+        std::unordered_set<size_t> hashs;
+
+        void destroy() { frame = nullptr; objects.clear(); hashs.clear(); }
     };
 
     static size_t generateHash(const TexturePtr& texture, const DrawMethod& method);
@@ -110,8 +115,6 @@ private:
     std::array<DrawingData, DRAWTYPE_LAST> m_drawingData;
 
     int8_t m_currentDrawType{ -1 };
-
-    std::unordered_set<size_t> m_hashs;
 
     const DrawObject m_nullDrawObject;
 };
