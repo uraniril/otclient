@@ -36,6 +36,7 @@ DrawPool::DrawPool()
         m_drawingData[i].frame = g_framebuffers.createFrameBuffer();
     }
 
+    m_drawingData[DRAWTYPE_MAP].frame->disableBlend();
     m_drawingData[DRAWTYPE_LIGHT].frame->setCompositeMode(Painter::CompositionMode_Light);
 
     m_coordsBuffer.enableHardwareCaching();
@@ -151,9 +152,9 @@ void DrawPool::draw()
         if(drawingData.dest.isNull())
             drawingData.frame->draw();
         else {
-            glDisable(GL_BLEND);
+            //glDisable(GL_BLEND);
             drawingData.frame->draw(drawingData.dest, drawingData.src);
-            glEnable(GL_BLEND);
+            //glEnable(GL_BLEND);
         }
     }
     g_painter->restoreSavedState();
