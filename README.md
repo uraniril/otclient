@@ -1,4 +1,4 @@
-# OTServ Brasil - OTClient
+# OpenTibiaBR - OTClient
 
 [![Discord Channel](https://img.shields.io/discord/528117503952551936.svg?style=flat-square&logo=discord)](https://discord.gg/3NxYnyV)
 [![GitHub issues](https://img.shields.io/github/issues/opentibiabr/otclient)](https://github.com/opentibiabr/otclient/issues)
@@ -14,8 +14,9 @@
 
 ## Builds
 
-[![Build Status](https://travis-ci.com/opentibiabr/otclient.svg?branch=develop)](http://travis-ci.com/opentibiabr/otclient)
-[![Build Status](https://github.com/opentibiabr/otclient/actions/workflows/build-vcpkg.yml/badge.svg)](https://github.com/opentibiabr/otclient/actions/workflows/build-vcpkg.yml)
+[![Build Status](https://github.com/opentibiabr/otclient/actions/workflows/build-macos.yml/badge.svg)](https://github.com/opentibiabr/otclient/actions/workflows/build-macos.yml)
+[![Build Status](https://github.com/opentibiabr/otclient/actions/workflows/build-ubuntu.yml/badge.svg)](https://github.com/opentibiabr/otclient/actions/workflows/build-ubuntu.yml)
+[![Build Status](https://github.com/opentibiabr/otclient/actions/workflows/build-windows.yml/badge.svg)](https://github.com/opentibiabr/otclient/actions/workflows/build-windows.yml)
 
 ### What is otclient?
 
@@ -28,8 +29,10 @@ Otclient is written in C++17 and heavily scripted in lua.
 
 ### Where do I download?
 
-Compiled for macOS, Ubuntu and Windows can be found here:
-* [Actions](https://github.com/opentibiabr/otclient/actions/workflows/build-vcpkg.yml)
+Compiled for MacOS, Ubuntu and Windows can be found here:
+* [MacOS](https://github.com/opentibiabr/otclient/actions/workflows/build-macos.yml)
+* [Ubuntu](https://github.com/opentibiabr/otclient/actions/workflows/build-ubuntu.yml)
+* [Windows](https://github.com/opentibiabr/otclient/actions/workflows/build-windows.yml)
 
 Compatible Dat and Spr with [otservbr-global](https://github.com/opentibiabr/otservbr-global) and [canary](https://github.com/opentibiabr/canary):
 * [Client 10](https://github.com/opentibiabr/tools/blob/master/Tibia%20Client%2010.zip)
@@ -73,7 +76,7 @@ xhost -
 
 ### Need help?
 
-Try to ask questions in our [discord](https://discord.gg/3NxYnyV) 
+Try to ask questions in our [discord](https://discord.gg/3NxYnyV)
 
 ### Bugs
 
