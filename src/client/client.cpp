@@ -44,6 +44,8 @@ void Client::init(std::vector<std::string>& /*args*/)
     g_shaders.init();
     g_things.init();
 
+    g_graphics.parseOption("-hardware-buffers");
+
     //TODO: restore options
 /*
     if(g_graphics.parseOption(arg))

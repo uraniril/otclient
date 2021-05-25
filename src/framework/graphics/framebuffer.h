@@ -64,6 +64,7 @@ public:
     bool isValid() { return m_texture != nullptr; }
     void setColorClear(const Color color) { m_colorClear = color; }
     void setCompositeMode(const Painter::CompositionMode mode) { m_compositeMode = mode; }
+    void disableBlend() { m_disableBlend = true; }
 
 private:
     void internalCreate();
@@ -78,7 +79,8 @@ private:
     bool m_forceUpdate{ true },
         m_backuping{ true },
         m_smooth{ true },
-        m_useAlphaWriting{ false };
+        m_useAlphaWriting{ false },
+        m_disableBlend{ false };
 
     static uint boundFbo;
 

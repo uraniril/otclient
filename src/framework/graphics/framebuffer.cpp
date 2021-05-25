@@ -102,9 +102,7 @@ void FrameBuffer::bind(const bool autoClear)
     g_painter->setResolution(m_texture->getSize());
     g_painter->setAlphaWriting(m_useAlphaWriting);
 
-    if(autoClear) {
-        clear(m_colorClear);
-    }
+    if(autoClear) clear(m_colorClear);
 }
 
 void FrameBuffer::release()
@@ -121,23 +119,29 @@ void FrameBuffer::draw()
 {
     Rect rect(0, 0, getSize());
 
+    if(m_disableBlend) glDisable(GL_BLEND);
     g_painter->setCompositionMode(m_compositeMode);
     g_painter->drawTexturedRect(rect, m_texture, rect);
     g_painter->resetCompositionMode();
+    if(m_disableBlend) glEnable(GL_BLEND);
 }
 
 void FrameBuffer::draw(const Rect& dest, const Rect& src)
 {
+    if(m_disableBlend) glDisable(GL_BLEND);
     g_painter->setCompositionMode(m_compositeMode);
     g_painter->drawTexturedRect(dest, m_texture, src);
     g_painter->resetCompositionMode();
+    if(m_disableBlend) glEnable(GL_BLEND);
 }
 
 void FrameBuffer::draw(const Rect& dest)
 {
+    if(m_disableBlend) glDisable(GL_BLEND);
     g_painter->setCompositionMode(m_compositeMode);
     g_painter->drawTexturedRect(dest, m_texture, Rect(0, 0, getSize()));
     g_painter->resetCompositionMode();
+    if(m_disableBlend) glEnable(GL_BLEND);
 }
 
 void FrameBuffer::internalBind()
