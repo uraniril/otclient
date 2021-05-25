@@ -60,7 +60,6 @@ FrameBuffer::~FrameBuffer()
 void FrameBuffer::clear(const Color color)
 {
     if(m_useAlphaWriting) {
-        g_painter->setAlphaWriting(true);
         g_painter->clear(Color::alpha);
     } else {
         g_painter->setColor(color);
@@ -101,6 +100,7 @@ void FrameBuffer::bind(const bool autoClear)
     g_painter->saveAndResetState();
     internalBind();
     g_painter->setResolution(m_texture->getSize());
+    g_painter->setAlphaWriting(m_useAlphaWriting);
 
     if(autoClear) {
         clear(m_colorClear);
@@ -111,6 +111,7 @@ void FrameBuffer::release()
 {
     internalRelease();
     g_painter->restoreSavedState();
+    g_painter->setAlphaWriting(false);
 
     m_forceUpdate = false;
     m_lastRenderedTime.restart();

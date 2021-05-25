@@ -143,7 +143,10 @@ void ThingPainter::draw(const MissilePtr& missile, const Point& dest, float scal
         yPattern = 1;
     }
 
-    const float fraction = missile->m_animationTimer.ticksElapsed() / missile->m_duration;
+    const uint8 p = 1;
+    float fraction = missile->m_animationTimer.ticksElapsed() / missile->m_duration;
+    fraction = floor((fraction * pow(10, p) + 0.5)) / pow(10, p);
+
     draw(missile->rawGetThingType(), dest + missile->m_delta * fraction * scaleFactor, scaleFactor, 0, xPattern, yPattern, 0, 0, false, frameFlag, lightView);
 }
 

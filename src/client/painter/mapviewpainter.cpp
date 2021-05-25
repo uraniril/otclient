@@ -41,11 +41,11 @@ void MapViewPainter::draw(const MapViewPtr& mapView, const Rect& rect)
         mapView->updateVisibleTilesCache();
 
     //if(mapView->m_rectCache.rect != rect) {
-        mapView->m_rectCache.rect = rect;
-        mapView->m_rectCache.srcRect = mapView->calcFramebufferSource(rect.size());
-        mapView->m_rectCache.drawOffset = mapView->m_rectCache.srcRect.topLeft();
-        mapView->m_rectCache.horizontalStretchFactor = rect.width() / static_cast<float>(mapView->m_rectCache.srcRect.width());
-        mapView->m_rectCache.verticalStretchFactor = rect.height() / static_cast<float>(mapView->m_rectCache.srcRect.height());
+    mapView->m_rectCache.rect = rect;
+    mapView->m_rectCache.srcRect = mapView->calcFramebufferSource(rect.size());
+    mapView->m_rectCache.drawOffset = mapView->m_rectCache.srcRect.topLeft();
+    mapView->m_rectCache.horizontalStretchFactor = rect.width() / static_cast<float>(mapView->m_rectCache.srcRect.width());
+    mapView->m_rectCache.verticalStretchFactor = rect.height() / static_cast<float>(mapView->m_rectCache.srcRect.height());
     //}
 
     const Position cameraPosition = mapView->getCameraPosition();
