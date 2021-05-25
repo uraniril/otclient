@@ -47,10 +47,11 @@ void LightViewPainter::terminate()
 void LightViewPainter::draw(const LightViewPtr& lightView)
 {
     // draw light, only if there is darkness
+
+    g_drawPool.getFrameBuffer(DRAWTYPE_LIGHT)->setDrawable(lightView->isDark());
     if(!lightView->isDark()) return;
 
     g_drawPool.setColorClear(DRAWTYPE_LIGHT, lightView->m_globalLightColor);
-
     const auto& mapView = lightView->m_mapView;
     const auto& shadeBase = std::make_pair<Point, Size>(Point(mapView->getTileSize() / 4.8), Size(mapView->getTileSize() * 1.4));
     for(int_fast8_t z = mapView->getFloorMax(); z >= mapView->getFloorMin(); --z) {
