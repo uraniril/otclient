@@ -23,6 +23,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
       - name: Install Linux Dependencies
         run: >
@@ -41,7 +43,7 @@ jobs:
             ccache-${{ runner.os}}-
 
       - name: Sonar cache
-        uses: actions/cache@v2.1.5
+        uses: actions/cache@v2
         with:
           path: /home/runner/.cfamily
           key: sonar-${{ runner.os}}-${{ matrix.buildtype }}-${{ hashFiles('**/src') }}
