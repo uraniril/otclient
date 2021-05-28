@@ -42,12 +42,11 @@ Compatible Dat and Spr with [otservbr-global](https://github.com/opentibiabr/ots
 ### Compiling
 
 In short, if you need to compile OTClient, follow these tutorials:
-* [Compiling on Windows](https://github.com/edubart/otclient/wiki/Compiling-on-Windows)
-* [Compiling on Linux](https://github.com/edubart/otclient/wiki/Compiling-on-Linux)
-* [Compiling on OS X](https://github.com/edubart/otclient/wiki/Compiling-on-Mac-OS-X)
+* [Compiling on Ubuntu/Debian](https://github.com/opentibiabr/otclient/wiki/Compiling-on-Ubuntu-or-Debian-GNU-Linux)
+* [Compiling on Windows](https://github.com/opentibiabr/otclient/wiki/Compiling-on-Windows-(vcpkg))
 
 Forum OTServBR:
-* [Compiling on Windows](https://forums.otserv.com.br/index.php?/forums/topic/169297-windowsvc2019-compilando-sources-otclient-vcpkg/)
+* [Compiling on Windows](https://forums.otserv.com.br/index.php?/forums/topic/170028-windowsvc2019-compilando-sources-opentibiabr-otclient-vcpkg/)
 
 ### Build and run with Docker
 
