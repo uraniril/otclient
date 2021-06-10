@@ -265,11 +265,11 @@ void LocalPlayer::onPositionChange(const Position& newPos, const Position& oldPo
     }
 }
 
-void LocalPlayer::setIcons(int icons)
+void LocalPlayer::setIcons(uint32_t icons)
 {
     if(m_icons == icons) return;
 
-    const int oldIcons = m_icons;
+    const uint32_t oldIcons = m_icons;
     m_icons = icons;
 
     callLuaField("onIconsChange", icons, oldIcons);
@@ -442,11 +442,11 @@ void LocalPlayer::setInventoryItem(Otc::InventorySlot_t inventory, const ItemPtr
     callLuaField("onInventoryChange", inventory, item, oldItem);
 }
 
-void LocalPlayer::setVocation(int vocation)
+void LocalPlayer::setVocation(uint8_t vocation)
 {
     if(m_vocation == vocation) return;
 
-    const int oldVocation = m_vocation;
+    const uint8_t oldVocation = m_vocation;
     m_vocation = vocation;
 
     callLuaField("onVocationChange", vocation, oldVocation);
@@ -492,11 +492,11 @@ void LocalPlayer::setSpells(const std::vector<uint8>& spells)
     callLuaField("onSpellsChange", spells, oldSpells);
 }
 
-void LocalPlayer::setBlessings(int blessings)
+void LocalPlayer::setBlessings(uint16_t blessings)
 {
     if(blessings == m_blessings) return;
 
-    const int oldBlessings = m_blessings;
+    const uint16_t oldBlessings = m_blessings;
     m_blessings = blessings;
 
     callLuaField("onBlessingsChange", blessings, oldBlessings);
