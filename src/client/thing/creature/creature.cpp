@@ -341,11 +341,6 @@ void Creature::updateWalk()
     int stepDuration = getStepDuration(true);
     stepDuration += (20 - stepDuration * .05);
 
-    if(m_walking && m_walkTimer.ticksElapsed() >= stepDuration) {
-        terminateWalk();
-        return;
-    }
-
     const float walkTicksPerPixel = static_cast<float>(stepDuration) / SPRITE_SIZE;
     const int totalPixelsWalked = std::min<int>(m_walkTimer.ticksElapsed() / walkTicksPerPixel, SPRITE_SIZE);
 
@@ -358,6 +353,11 @@ void Creature::updateWalk()
     updateWalkAnimation();
     updateWalkOffset(m_walkedPixels);
     updateWalkingTile();
+
+    if(m_walking && m_walkTimer.ticksElapsed() >= stepDuration) {
+        terminateWalk();
+    }
+
 }
 
 void Creature::terminateWalk()

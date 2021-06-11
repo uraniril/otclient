@@ -64,8 +64,9 @@ void LocalPlayer::walk(const Position& oldPos, const Position& newPos)
         if(newPos == m_lastPrewalkDestination) {
             updateWalk();
             // was to another direction, replace the walk
-        } else
+        } else {
             Creature::walk(oldPos, newPos);
+				}
     }
     // no prewalk was going on, this must be an server side automated walk
     else {
@@ -227,9 +228,7 @@ void LocalPlayer::updateWalkOffset(int totalPixelsWalked)
 
 void LocalPlayer::terminateWalk()
 {
-    Creature::terminateWalk();
-
-    m_preWalking = false;
+    m_walkAnimationPhase = 0;
 
     if(m_serverWalking) {
         if(m_serverWalkEndEvent)
@@ -377,7 +376,7 @@ void LocalPlayer::setMana(double mana, double maxMana)
         return;
 
     const double oldMana = m_mana;
-    double oldMaxMana;
+    double oldMaxMana = m_maxMana;
     m_mana = mana;
     m_maxMana = maxMana;
 

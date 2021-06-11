@@ -43,11 +43,19 @@ include(LoggingHelper)
 # *****************************************************************************
 # Options
 # *****************************************************************************
+
+# Build
+option(OPTIONS_ENABLE_CCACHE "Enable ccache" ON)
+option(OPTIONS_ENABLE_IPO "Check and Enable interprocedural optimization (IPO/LTO)" ON)
+option(OPTIONS_ENABLE_PCH "Use precompiled header (speed up compile)" OFF)
+
+# Client
 option(FRAMEWORK_SOUND "Use SOUND " OFF)
 option(FRAMEWORK_GRAPHICS "Use GRAPHICS " ON)
 option(FRAMEWORK_XML "Use XML " ON)
 option(FRAMEWORK_NET "Use NET " ON)
 option(FRAMEWORK_SQL "Use SQL" OFF)
+
 
 # *****************************************************************************
 # Options Code
@@ -82,15 +90,23 @@ else()
 endif()
 
 
+# === PCH ===
+if(OPTIONS_ENABLE_PCH)
+    include(cotire)
+    cotire(${PROJECT_NAME})
+    message(STATUS "Use precompiled header: ON")
+else()
+    message(STATUS "Use precompiled header: OFF")
+endif()
+
+
 include(src/framework/CMakeLists.txt)
 include(src/client/CMakeLists.txt)
 
 # functions map for reading backtraces
 if(NOT APPLE)
-    set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -fPIC -no-pie -Wl,-Map=${PROJECT_NAME}.map")
+    set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -Wl,-Map=${PROJECT_NAME}.map")
 endif()
-
-option(USE_PCH "Use precompiled header (speed up compile)" OFF)
 
 set(executable_SOURCES
     src/main.cpp
@@ -127,14 +143,6 @@ target_link_libraries(${PROJECT_NAME} ${framework_LIBRARIES})
 
 if(APPLE AND USE_STATIC_LIBS)
     target_link_libraries(${PROJECT_NAME} "-framework Foundation" "-framework IOKit")
-endif()
-
-if(USE_PCH)
-    include(cotire)
-    cotire(${PROJECT_NAME})
-    message(STATUS "Use precompiled header: ON")
-else()
-    message(STATUS "Use precompiled header: OFF")
 endif()
 
 # installation

@@ -129,6 +129,7 @@ struct Light {
 class ThingType : public LuaObject
 {
 public:
+		ThingType();
 
     void unserialize(uint16 clientId, ThingCategory category, const FileStreamPtr& fin);
     void unserializeOtml(const OTMLNodePtr& node);

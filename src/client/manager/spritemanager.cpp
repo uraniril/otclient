@@ -28,6 +28,12 @@
 
 SpriteManager g_sprites;
 
+SpriteManager::SpriteManager()
+{
+    m_spritesCount = 0;
+    m_signature = 0;
+}
+
 void SpriteManager::terminate()
 {
     unload();

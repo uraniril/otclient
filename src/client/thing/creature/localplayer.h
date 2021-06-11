@@ -90,7 +90,7 @@ public:
     double getStamina() { return m_stamina; }
     double getRegenerationTime() { return m_regenerationTime; }
     double getOfflineTrainingTime() { return m_offlineTrainingTime; }
-    std::vector<uint8> getSpells() { return m_spells; }
+    const std::vector<uint8>& getSpells() { return m_spells; }
     ItemPtr getInventoryItem(const Otc::InventorySlot_t inventory) { return m_inventoryItems[inventory]; }
 
     bool hasSight(const Position& pos);

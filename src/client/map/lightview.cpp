@@ -27,7 +27,7 @@
 #include <client/map/map.h>
 
 LightView::LightView(const MapViewPtr& mapView) :
-    m_mapView(mapView), m_lightbuffer(g_framebuffers.createFrameBuffer())
+    m_lightbuffer(g_framebuffers.createFrameBuffer()), m_mapView(mapView)
 {
     resize();
 }

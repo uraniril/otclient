@@ -35,6 +35,8 @@ class SpriteManager
     };
 
 public:
+		SpriteManager();
+
     void terminate();
 
     bool loadSpr(std::string file);

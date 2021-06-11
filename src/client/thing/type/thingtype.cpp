@@ -34,6 +34,21 @@
 #include <framework/graphics/texturemanager.h>
 #include <framework/otml/otml.h>
 
+ThingType::ThingType()
+{
+    m_category = ThingInvalidCategory;
+    m_id = 0;
+    m_null = true;
+    m_exactSize = 0;
+    m_realSize = 0;
+    m_animator = nullptr;
+    m_numPatternX = m_numPatternY = m_numPatternZ = 0;
+    m_animationPhases = 0;
+    m_layers = 0;
+    m_elevation = 0;
+    m_opacity = 1.0f;
+}
+
 void ThingType::serialize(const FileStreamPtr& fin)
 {
     for(int i = 0; i < ThingLastAttr; ++i) {
