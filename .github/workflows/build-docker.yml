@@ -58,6 +58,8 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           tags: ghcr.io/${{ github.repository }}:${{ steps.gitversion.outputs.semVer }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
 
       - name: Build and push
         id: docker_build
@@ -66,7 +68,17 @@ jobs:
         with:
           push: true
           tags: ghcr.io/${{ github.repository }}:${{ steps.gitversion.outputs.semVer }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
 
       - name: Image digest
         if: ${{ github.event_name == 'push' }}
         run: echo ${{ steps.docker_build.outputs.digest }}
+
+      # Temp fix
+      # https://github.com/docker/build-push-action/issues/252
+      # https://github.com/moby/buildkit/issues/1896
+      - name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
