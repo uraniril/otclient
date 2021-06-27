@@ -173,37 +173,36 @@ void DrawPool::draw()
 void DrawPool::updateHash(const TexturePtr& texture, const DrawMethod& method)
 {
 	const auto& currentState = g_painter->getCurrentState();
-	const auto hashInt = std::hash<size_t>();
 	auto& drawingData = m_drawingData[m_currentDrawType];
 
 	if(texture)
-		boost::hash_combine(drawingData.currentHashcode, hashInt(texture->getId()));
+		boost::hash_combine(drawingData.currentHashcode, HASH_INT(texture->getId()));
 
 	if(currentState.opacity < 1.f)
-		boost::hash_combine(drawingData.currentHashcode, hashInt(currentState.opacity));
+		boost::hash_combine(drawingData.currentHashcode, HASH_INT(currentState.opacity));
 
 	if(currentState.color != Color::white)
-		boost::hash_combine(drawingData.currentHashcode, hashInt(currentState.color.rgba()));
+		boost::hash_combine(drawingData.currentHashcode, HASH_INT(currentState.color.rgba()));
 
 	if(currentState.compositionMode != Painter::CompositionMode_Normal)
-		boost::hash_combine(drawingData.currentHashcode, hashInt(currentState.compositionMode));
+		boost::hash_combine(drawingData.currentHashcode, HASH_INT(currentState.compositionMode));
 
 	if(currentState.shaderProgram)
-		boost::hash_combine(drawingData.currentHashcode, hashInt(currentState.shaderProgram->getProgramId()));
+		boost::hash_combine(drawingData.currentHashcode, HASH_INT(currentState.shaderProgram->getProgramId()));
 
 	if(method.rects.first.isValid()) {
-		boost::hash_combine(drawingData.currentHashcode, hashInt(method.rects.first.x()));
-		boost::hash_combine(drawingData.currentHashcode, hashInt(method.rects.first.y()));
+		boost::hash_combine(drawingData.currentHashcode, HASH_INT(method.rects.first.x()));
+		boost::hash_combine(drawingData.currentHashcode, HASH_INT(method.rects.first.y()));
 	}
 
 	if(method.rects.second.isValid()) {
-		boost::hash_combine(drawingData.currentHashcode, hashInt(method.rects.second.x()));
-		boost::hash_combine(drawingData.currentHashcode, hashInt(method.rects.second.y()));
+		boost::hash_combine(drawingData.currentHashcode, HASH_INT(method.rects.second.x()));
+		boost::hash_combine(drawingData.currentHashcode, HASH_INT(method.rects.second.y()));
 	}
 
 	if(currentState.clipRect.isValid()) {
-		boost::hash_combine(drawingData.currentHashcode, hashInt(currentState.clipRect.x()));
-		boost::hash_combine(drawingData.currentHashcode, hashInt(currentState.clipRect.y()));
+		boost::hash_combine(drawingData.currentHashcode, HASH_INT(currentState.clipRect.x()));
+		boost::hash_combine(drawingData.currentHashcode, HASH_INT(currentState.clipRect.y()));
 	}
 }
 

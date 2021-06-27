@@ -63,7 +63,7 @@ public:
 	FrameBufferPtr getFrameBuffer(const DrawType type) { return m_drawingData[type].frame; }
 
 private:
-	enum DrawMethodType {
+	enum class DrawMethodType {
 		DRAW_FILL_COORDS,
 		DRAW_TEXTURE_COORDS,
 		DRAW_TEXTURED_RECT,
@@ -82,10 +82,10 @@ private:
 	};
 
 	struct DrawObject {
-		/*~DrawObject() { coordsBuffer.clear(); }*/
+		~DrawObject() { coordsBuffer = nullptr; drawMethods.clear(); state.texture = nullptr; }
 		Painter::PainterState state;
-		std::vector<DrawMethod> drawMethods;
 		CoordsBufferPtr coordsBuffer;
+		std::vector<DrawMethod> drawMethods;
 		Painter::DrawMode drawMode{ Painter::Triangles };
 	};
 
@@ -108,7 +108,7 @@ private:
 
 	CoordsBuffer m_coordsBuffer;
 
-	const DrawObject m_nullDrawObject;
+	std::hash<size_t> HASH_INT;
 };
 
 extern DrawPool g_drawPool;
