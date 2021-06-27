@@ -2,23 +2,34 @@
   "name": "otclient",
   "version-string": "1.0.0",
   "dependencies": [
-    "boost-iostreams",
     "boost-asio",
-    "boost-system",
-    "boost-variant",
-    "boost-lockfree",
-    "glew",
     "boost-filesystem",
+    "boost-iostreams",
+    "boost-lockfree",
+    "boost-system",
+    "boost-thread",
     "boost-uuid",
-    "physfs",
-    "openal-soft",
+    "boost-variant",
+    "glew",
     "libogg",
     "libvorbis",
-    "zlib",
     "opengl",
+    "zlib",
     {
       "name": "luajit",
       "platform": "windows"
+    },
+    {
+      "name": "openal-soft",
+      "platform": "!osx"
+    },
+    {
+      "name": "openssl",
+      "platform": "windows"
+    },
+    {
+      "name": "physfs",
+      "platform": "!osx"
     }
   ]
 }

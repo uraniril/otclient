@@ -1,4 +1,4 @@
-# OTServ Brasil - OTClient
+# OpenTibiaBR - OTClient
 
 [![Discord Channel](https://img.shields.io/discord/528117503952551936.svg?style=flat-square&logo=discord)](https://discord.gg/3NxYnyV)
 [![GitHub issues](https://img.shields.io/github/issues/opentibiabr/otclient)](https://github.com/opentibiabr/otclient/issues)
@@ -9,13 +9,14 @@
 ![GitHub repo size](https://img.shields.io/github/repo-size/opentibiabr/otclient)
 
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/77c808ed38c0461f92a3487ada1fc57f)](https://www.codacy.com/gh/opentibiabr/otclient/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=opentibiabr/otclient&amp;utm_campaign=Badge_Grade)
-[![CodeQL](https://github.com/opentibiabr/otclient/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/opentibiabr/otclient/actions/workflows/codeql-analysis.yml)
+[![CodeQL](https://github.com/opentibiabr/otclient/actions/workflows/analysis-codeql.yml/badge.svg)](https://github.com/opentibiabr/otclient/actions/workflows/analysis-codeql.yml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=opentibiabr_otclient&metric=alert_status)](https://sonarcloud.io/dashboard?id=opentibiabr_otclient)
 
 ## Builds
 
-[![Build Status](https://travis-ci.com/opentibiabr/otclient.svg?branch=develop)](http://travis-ci.com/opentibiabr/otclient)
-[![Build Status](https://github.com/opentibiabr/otclient/actions/workflows/build-vcpkg.yml/badge.svg)](https://github.com/opentibiabr/otclient/actions/workflows/build-vcpkg.yml)
+[![Build Status](https://github.com/opentibiabr/otclient/actions/workflows/build-macos.yml/badge.svg)](https://github.com/opentibiabr/otclient/actions/workflows/build-macos.yml)
+[![Build Status](https://github.com/opentibiabr/otclient/actions/workflows/build-ubuntu.yml/badge.svg)](https://github.com/opentibiabr/otclient/actions/workflows/build-ubuntu.yml)
+[![Build Status](https://github.com/opentibiabr/otclient/actions/workflows/build-windows.yml/badge.svg)](https://github.com/opentibiabr/otclient/actions/workflows/build-windows.yml)
 
 ### What is otclient?
 
@@ -28,8 +29,10 @@ Otclient is written in C++17 and heavily scripted in lua.
 
 ### Where do I download?
 
-Compiled for macOS, Ubuntu and Windows can be found here:
-* [Actions](https://github.com/opentibiabr/otclient/actions/workflows/build-vcpkg.yml)
+Compiled for MacOS, Ubuntu and Windows can be found here:
+* [MacOS](https://github.com/opentibiabr/otclient/actions/workflows/build-macos.yml)
+* [Ubuntu](https://github.com/opentibiabr/otclient/actions/workflows/build-ubuntu.yml)
+* [Windows](https://github.com/opentibiabr/otclient/actions/workflows/build-windows.yml)
 
 Compatible Dat and Spr with [otservbr-global](https://github.com/opentibiabr/otservbr-global) and [canary](https://github.com/opentibiabr/canary):
 * [Client 10](https://github.com/opentibiabr/tools/blob/master/Tibia%20Client%2010.zip)
@@ -39,12 +42,11 @@ Compatible Dat and Spr with [otservbr-global](https://github.com/opentibiabr/ots
 ### Compiling
 
 In short, if you need to compile OTClient, follow these tutorials:
-* [Compiling on Windows](https://github.com/edubart/otclient/wiki/Compiling-on-Windows)
-* [Compiling on Linux](https://github.com/edubart/otclient/wiki/Compiling-on-Linux)
-* [Compiling on OS X](https://github.com/edubart/otclient/wiki/Compiling-on-Mac-OS-X)
+* [Compiling on Ubuntu/Debian](https://github.com/opentibiabr/otclient/wiki/Compiling-on-Ubuntu-or-Debian-GNU-Linux)
+* [Compiling on Windows](https://github.com/opentibiabr/otclient/wiki/Compiling-on-Windows-(vcpkg))
 
 Forum OTServBR:
-* [Compiling on Windows](https://forums.otserv.com.br/index.php?/forums/topic/169297-windowsvc2019-compilando-sources-otclient-vcpkg/)
+* [Compiling on Windows](https://forums.otserv.com.br/index.php?/forums/topic/170028-windowsvc2019-compilando-sources-opentibiabr-otclient-vcpkg/)
 
 ### Build and run with Docker
 
@@ -73,7 +75,7 @@ xhost -
 
 ### Need help?
 
-Try to ask questions in our [discord](https://discord.gg/3NxYnyV) 
+Try to ask questions in our [discord](https://discord.gg/3NxYnyV)
 
 ### Bugs
 

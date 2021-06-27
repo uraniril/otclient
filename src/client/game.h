@@ -63,8 +63,9 @@ using Vip = std::tuple<std::string, uint, std::string, int, bool>;
 class Game
 {
 public:
-    void init();
-    void terminate();
+	Game();
+	void init();
+	void terminate();
 
 private:
     void resetGameStates();

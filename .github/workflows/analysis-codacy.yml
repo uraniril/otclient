@@ -1,15 +1,20 @@
 ---
+name: Analysis - Codacy Security Scan
 
-name: Codacy Security Scan
-
-on: [push, pull_request]
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+      - dev
+      - devel
+      - develop
 
 jobs:
-  codacy-security-scan:
+  codacy:
     name: Codacy Security Scan
     runs-on: ubuntu-latest
     steps:
-
       - name: Checkout code
         uses: actions/checkout@v2
 

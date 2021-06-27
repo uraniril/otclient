@@ -64,8 +64,9 @@ void LocalPlayer::walk(const Position& oldPos, const Position& newPos)
         if(newPos == m_lastPrewalkDestination) {
             updateWalk();
             // was to another direction, replace the walk
-        } else
+        } else {
             Creature::walk(oldPos, newPos);
+				}
     }
     // no prewalk was going on, this must be an server side automated walk
     else {
@@ -227,9 +228,7 @@ void LocalPlayer::updateWalkOffset(int totalPixelsWalked)
 
 void LocalPlayer::terminateWalk()
 {
-    Creature::terminateWalk();
-
-    m_preWalking = false;
+    m_walkAnimationPhase = 0;
 
     if(m_serverWalking) {
         if(m_serverWalkEndEvent)
@@ -265,11 +264,11 @@ void LocalPlayer::onPositionChange(const Position& newPos, const Position& oldPo
     }
 }
 
-void LocalPlayer::setIcons(int icons)
+void LocalPlayer::setIcons(uint32_t icons)
 {
     if(m_icons == icons) return;
 
-    const int oldIcons = m_icons;
+    const uint32_t oldIcons = m_icons;
     m_icons = icons;
 
     callLuaField("onIconsChange", icons, oldIcons);
@@ -377,7 +376,7 @@ void LocalPlayer::setMana(double mana, double maxMana)
         return;
 
     const double oldMana = m_mana;
-    double oldMaxMana;
+    double oldMaxMana = m_maxMana;
     m_mana = mana;
     m_maxMana = maxMana;
 
@@ -442,11 +441,11 @@ void LocalPlayer::setInventoryItem(Otc::InventorySlot_t inventory, const ItemPtr
     callLuaField("onInventoryChange", inventory, item, oldItem);
 }
 
-void LocalPlayer::setVocation(int vocation)
+void LocalPlayer::setVocation(uint8_t vocation)
 {
     if(m_vocation == vocation) return;
 
-    const int oldVocation = m_vocation;
+    const uint8_t oldVocation = m_vocation;
     m_vocation = vocation;
 
     callLuaField("onVocationChange", vocation, oldVocation);
@@ -492,11 +491,11 @@ void LocalPlayer::setSpells(const std::vector<uint8>& spells)
     callLuaField("onSpellsChange", spells, oldSpells);
 }
 
-void LocalPlayer::setBlessings(int blessings)
+void LocalPlayer::setBlessings(uint16_t blessings)
 {
     if(blessings == m_blessings) return;
 
-    const int oldBlessings = m_blessings;
+    const uint16_t oldBlessings = m_blessings;
     m_blessings = blessings;
 
     callLuaField("onBlessingsChange", blessings, oldBlessings);

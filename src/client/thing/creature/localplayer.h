@@ -39,7 +39,7 @@ public:
     bool autoWalk(const Position& destination);
     bool canWalk(Otc::Direction_t direction);
 
-    void setIcons(int icons);
+    void setIcons(uint32_t icons);
     void setSkill(Otc::skills_t skill, uint8 level, uint8 levelPercent);
     void setBaseSkill(Otc::skills_t skill, int baseLevel);
     void setHealth(double health, double maxHealth);
@@ -55,12 +55,12 @@ public:
     void setKnown(bool known) { m_known = known; }
     void setPendingGame(bool pending) { m_pending = pending; }
     void setInventoryItem(Otc::InventorySlot_t inventory, const ItemPtr& item);
-    void setVocation(int vocation);
+    void setVocation(uint8_t vocation);
     void setPremium(bool premium, uint32 premiumExpiration);
     void setRegenerationTime(double regenerationTime);
     void setOfflineTrainingTime(double offlineTrainingTime);
     void setSpells(const std::vector<uint8>& spells);
-    void setBlessings(int blessings);
+    void setBlessings(uint16_t blessings);
 
     void setOpenPreyWindow(const bool can) { m_openPreyWindow = can; }
     bool canOpenPreyWindow() { return m_openPreyWindow; }
@@ -68,11 +68,12 @@ public:
     void setMagicShield(const bool v) { m_magicShield = v; }
     bool hasMagicShield() { return m_magicShield; }
 
-    int getIcons() { return m_icons; }
+    uint32 getIcons() { return m_icons; }
+    uint16 getBlessings() { return m_blessings; }
     uint16 getSkillLevel(const Otc::skills_t skill) { return m_skills[skill].level; }
     uint16 getSkillBaseLevel(const Otc::skills_t skill) { return m_skills[skill].baseLevel; }
     uint16 getSkillLevelPercent(const Otc::skills_t skill) { return m_skills[skill].percent; }
-    int getVocation() { return m_vocation; }
+    uint8 getVocation() { return m_vocation; }
     double getHealth() { return m_health; }
     double getMaxHealth() { return m_maxHealth; }
     double getFreeCapacity() { return m_freeCapacity; }
@@ -89,9 +90,8 @@ public:
     double getStamina() { return m_stamina; }
     double getRegenerationTime() { return m_regenerationTime; }
     double getOfflineTrainingTime() { return m_offlineTrainingTime; }
-    std::vector<uint8> getSpells() { return m_spells; }
+    const std::vector<uint8>& getSpells() { return m_spells; }
     ItemPtr getInventoryItem(const Otc::InventorySlot_t inventory) { return m_inventoryItems[inventory]; }
-    int getBlessings() { return m_blessings; }
 
     bool hasSight(const Position& pos);
     bool isKnown() { return m_known; }
@@ -131,10 +131,11 @@ private:
     Position m_lastPrewalkDestination,
         m_autoWalkDestination,
         m_lastAutoWalkPosition;
+
     ScheduledEventPtr m_serverWalkEndEvent,
         m_autoWalkContinueEvent;
 
-    ticks_t m_walkLockExpiration;
+    ticks_t m_walkLockExpiration{ 0 };
 
     bool m_preWalking{ false },
         m_serverWalking{ false },
@@ -145,33 +146,32 @@ private:
         m_openPreyWindow{ false },
         m_magicShield{ false };
 
-    uint32_t m_premiumExpiration;
-
     ItemPtr m_inventoryItems[Otc::LastInventorySlot];
 
     std::array<Skill, Otc::SKILL_LAST + 1> m_skills;
     std::vector<uint8> m_spells;
 
-    int m_icons{ 0 },
-        m_vocation{ 0 },
-        m_blessings{ Otc::BlessingNone };
+    uint8_t m_vocation{ 0 };
+    uint16_t m_blessings{ Otc::BlessingNone };
+    uint32_t m_premiumExpiration{ 0 },
+        m_icons{ 0 };
 
-    double m_health{ -1 };
-    double m_maxHealth{ -1 };
-    double m_freeCapacity{ -1 };
-    double m_totalCapacity{ -1 };
-    double m_experience{ -1 };
-    double m_level{ -1 };
-    double m_levelPercent{ -1 };
-    double m_mana{ -1 };
-    double m_maxMana{ -1 };
-    double m_magicLevel{ -1 };
-    double m_magicLevelPercent{ -1 };
-    double m_baseMagicLevel{ -1 };
-    double m_soul{ -1 };
-    double m_stamina{ -1 };
-    double m_regenerationTime{ -1 };
-    double m_offlineTrainingTime{ -1 };
+    double m_health{ -1 },
+        m_maxHealth{ -1 },
+        m_freeCapacity{ -1 },
+        m_totalCapacity{ -1 },
+        m_experience{ -1 },
+        m_level{ -1 },
+        m_levelPercent{ -1 },
+        m_mana{ -1 },
+        m_maxMana{ -1 },
+        m_magicLevel{ -1 },
+        m_magicLevelPercent{ -1 },
+        m_baseMagicLevel{ -1 },
+        m_soul{ -1 },
+        m_stamina{ -1 },
+        m_regenerationTime{ -1 },
+        m_offlineTrainingTime{ -1 };
 };
 
 #endif
