@@ -61,7 +61,7 @@ public:
         CompositionMode compositionMode;
         BlendEquation blendEquation;
         Rect clipRect;
-        Texture* texture;
+        TexturePtr texture;
         PainterShaderProgram* shaderProgram;
         bool alphaWriting;
 
@@ -69,8 +69,6 @@ public:
         {
             return resolution == s2.resolution &&
                 transformMatrix == s2.transformMatrix &&
-                projectionMatrix == s2.projectionMatrix &&
-                textureMatrix == s2.textureMatrix &&
                 color == s2.color &&
                 opacity == s2.opacity &&
                 compositionMode == s2.compositionMode &&

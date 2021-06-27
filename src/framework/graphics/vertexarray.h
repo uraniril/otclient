@@ -79,6 +79,21 @@ public:
         addVertex(right, top);
     }
 
+    void addUpsideDownRect(const Rect& rect)
+    {
+        const float top = rect.top();
+        const float right = rect.right() + 1;
+        const float bottom = rect.bottom() + 1;
+        const float left = rect.left();
+
+        addVertex(left, bottom);
+        addVertex(right, bottom);
+        addVertex(left, bottom);
+        addVertex(left, top);
+        addVertex(right, bottom);
+        addVertex(right, top);
+    }
+
     void clear() { m_buffer.reset(); }
     float* vertices() const { return m_buffer.data(); }
     int vertexCount() const { return m_buffer.size() / 2; }

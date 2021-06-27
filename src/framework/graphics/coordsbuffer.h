@@ -71,6 +71,13 @@ public:
         m_hardwareCached = false;
     }
 
+    void addUpsideDownRect(const Rect& dest, const Rect& src)
+    {
+        m_vertexArray.addUpsideDownRect(dest);
+        m_textureCoordArray.addRect(src);
+        m_hardwareCached = false;
+    }
+
     void addBoudingRect(const Rect& dest, int innerLineWidth);
     void addRepeatedRects(const Rect& dest, const Rect& src);
 

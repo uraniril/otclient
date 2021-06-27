@@ -81,23 +81,22 @@ PainterOGL::PainterState PainterOGL::getCurrentState()
     state.blendEquation = m_blendEquation;
     state.clipRect = m_clipRect;
     state.shaderProgram = m_shaderProgram;
-    state.texture = m_texture;
     state.alphaWriting = m_alphaWriting;
 
     return state;
 }
+
 void PainterOGL::executeState(const PainterState& state)
 {
-    setTextureMatrix(state.textureMatrix);
     setColor(state.color);
     setOpacity(state.opacity);
     setCompositionMode(state.compositionMode);
     setBlendEquation(state.blendEquation);
     setClipRect(state.clipRect);
     setShaderProgram(state.shaderProgram);
-    setTexture(state.texture);
     setAlphaWriting(state.alphaWriting);
     setTransformMatrix(state.transformMatrix);
+    setTexture(state.texture);
 }
 
 void PainterOGL::saveAndResetState()

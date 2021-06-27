@@ -75,6 +75,8 @@ void PainterOGL2::drawCoords(CoordsBuffer& coordsBuffer, DrawMode drawMode)
     if(textured && m_texture->isEmpty())
         return;
 
+    m_drawProgram = m_shaderProgram ? m_shaderProgram : textured ? m_drawTexturedProgram.get() : m_drawSolidColorProgram.get();
+
     // update shader with the current painter state
     m_drawProgram->bind();
     m_drawProgram->setTransformMatrix(m_transformMatrix);
