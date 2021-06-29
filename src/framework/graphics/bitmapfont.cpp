@@ -96,7 +96,7 @@ void BitmapFont::drawText(const std::string& text, const Rect& screenCoords, Fw:
 {
     s_coordsBuffer.clear();
     calculateDrawTextCoords(s_coordsBuffer, text, screenCoords, align);
-    g_painter->drawTextureCoords(s_coordsBuffer, m_texture);
+    g_drawPool.addTextureCoords(s_coordsBuffer, m_texture);
 }
 
 void BitmapFont::calculateDrawTextCoords(CoordsBuffer& coordsBuffer, const std::string& text, const Rect& screenCoords, Fw::AlignmentFlag align)

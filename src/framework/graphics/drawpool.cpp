@@ -30,10 +30,11 @@
 
 DrawPool g_drawPool;
 
-DrawPool::DrawPool()
+void DrawPool::init()
 {
-	for(int_fast8_t i = -1; ++i < m_drawingData.size();) {
-		m_drawingData[i].frame = g_framebuffers.createFrameBuffer();
+	for(int_fast8_t i = -1; ++i < DRAWTYPE_LAST;) {
+		const bool useAlphaWriting = i != DRAWTYPE_LIGHT && i != DRAWTYPE_MAP;
+		m_drawingData[i].frame = g_framebuffers.createFrameBuffer(useAlphaWriting);
 	}
 
 	m_drawingData[DRAWTYPE_MAP].frame->disableBlend();
@@ -47,7 +48,7 @@ void DrawPool::terminate()
 	}
 }
 
-void DrawPool::add(const CoordsBufferPtr& coordsBuffer, const TexturePtr& texture, const DrawMethod& method, const Painter::DrawMode drawMode)
+void DrawPool::add(const std::shared_ptr<CoordsBuffer>& coordsBuffer, const TexturePtr& texture, const DrawMethod& method, const Painter::DrawMode drawMode)
 {
 	if(m_currentDrawType == -1) return;
 
@@ -57,33 +58,19 @@ void DrawPool::add(const CoordsBufferPtr& coordsBuffer, const TexturePtr& textur
 	auto& list = drawingData.objects;
 
 	auto currentState = g_painter->getCurrentState();
-
 	currentState.texture = texture;
-	std::shared_ptr<DrawObject> drawObject;
 
-	if(!method.type == DrawMethodType::DRAW_TEXTURE_COORDS && !method.type == DrawMethodType::DRAW_FILL_COORDS) {
-		if(!list.empty()) {
-			auto& prevDrawObject = drawingData.objects.back();
+	if(!list.empty() && !(method.type == DrawMethodType::DRAW_TEXTURE_COORDS || method.type == DrawMethodType::DRAW_FILL_COORDS)) {
+		auto& prevDrawObject = drawingData.objects.back();
 
-			if(prevDrawObject->state.isEqual(currentState))
-				drawObject = prevDrawObject;
+		if(prevDrawObject.state.isEqual(currentState)) {
+			prevDrawObject.drawMode = Painter::Triangles;
+			prevDrawObject.drawMethods.push_back(method);
+			return;
 		}
 	}
 
-	if(!drawObject) {
-		drawObject = std::make_shared<DrawObject>();
-		drawObject->state = currentState;
-		drawObject->coordsBuffer = coordsBuffer;
-		drawObject->drawMode = drawMode;
-		if(texture)
-			drawObject->drawMode = Painter::TriangleStrip;
-
-		drawingData.objects.push_back(drawObject);
-	} else {
-		drawObject->drawMode = Painter::Triangles;
-	}
-
-	drawObject->drawMethods.push_back(method);
+	drawingData.objects.push_back(DrawObject{ currentState, coordsBuffer, drawMode, {method} });
 }
 
 bool DrawPool::drawUp(DrawType type, Size size, const Rect& dest, const Rect& src)
@@ -93,8 +80,8 @@ bool DrawPool::drawUp(DrawType type, Size size, const Rect& dest, const Rect& sr
 
 	bool canUpdate = drawingData.frame->canUpdate();
 	if(canUpdate) {
-		drawingData.frame->resize(size);
 		drawingData.objects.clear();
+		drawingData.frame->resize(size);
 		drawingData.dest = dest;
 		drawingData.src = src;
 		drawingData.currentHashcode = 0;
@@ -112,62 +99,82 @@ void DrawPool::update()
 	}
 }
 
-void DrawPool::draw()
+void DrawPool::draw(const bool updateForeground, const TexturePtr& foregroundTexture)
 {
+	Rect viewportRect(0, 0, g_painter->getResolution());
 	g_painter->saveAndResetState();
-	for(uint8 type = DRAWTYPE_MAP; type < DRAWTYPE_LAST; ++type) {
-		auto& drawingData = m_drawingData[type];
+
+	int type = -1;
+	for(auto& drawingData : m_drawingData) {
+		++type;
+
 		if(!drawingData.frame->isValid() || !drawingData.frame->isDrawable()) continue;
+
+		auto& objects = drawingData.objects;
+		if(objects.empty()) continue;
 
 		if(drawingData.currentHashcode != drawingData.lastHashcode) {
 			drawingData.lastHashcode = drawingData.currentHashcode;
-			auto& objects = drawingData.objects;
-			if(!objects.empty()) {
-				drawingData.frame->bind();
-				for(auto& obj : objects) {
-					g_painter->executeState(obj->state);
+			drawingData.frame->bind();
+			for(auto& obj : objects)
+				drawObject(obj);
 
-					CoordsBuffer& coords = obj->coordsBuffer ? *obj->coordsBuffer.get() : m_coordsBuffer;
-
-					if(!obj->coordsBuffer) {
-						m_coordsBuffer.clear();
-						for(const auto& method : obj->drawMethods) {
-							if(method.type == DrawMethodType::DRAW_BOUNDING_RECT) {
-								coords.addBoudingRect(method.rects.first, method.innerLineWidth);
-							} else if(method.type == DrawMethodType::DRAW_FILLED_RECT) {
-								coords.addRect(method.rects.first);
-							} else if(method.type == DrawMethodType::DRAW_FILLED_TRIANGLE) {
-								coords.addTriangle(std::get<0>(method.points), std::get<1>(method.points), std::get<2>(method.points));
-							} else if(method.type == DrawMethodType::DRAW_REPEATED_TEXTURED_RECT) {
-								coords.addRepeatedRects(method.rects.first, method.rects.second);
-							} else if(method.type == DrawMethodType::DRAW_TEXTURED_RECT) {
-								if(obj->drawMode == Painter::Triangles)
-									coords.addRect(method.rects.first, method.rects.second);
-								else
-									coords.addQuad(method.rects.first, method.rects.second);
-							} else if(method.type == DrawMethodType::DRAW_UPSIDEDOWN_TEXTURED_RECT) {
-								if(obj->drawMode == Painter::Triangles)
-									coords.addUpsideDownRect(method.rects.first, method.rects.second);
-								else
-									coords.addUpsideDownQuad(method.rects.first, method.rects.second);
-							}
-						}
-					}
-
-					g_painter->drawCoords(coords, obj->drawMode);
-				}
-				drawingData.frame->release();
+			if(updateForeground && type == DrawType::DRAWTYPE_FOREGROUND) {
+				foregroundTexture->copyFromScreen(viewportRect);
+				g_painter->clear(Color::black);
+				g_painter->setAlphaWriting(false);
 			}
+
+			drawingData.frame->release();
 		}
 
-		if(drawingData.dest.isNull())
+		if(drawingData.dest.isNull()) {
 			drawingData.frame->draw();
-		else {
+		} else {
 			drawingData.frame->draw(drawingData.dest, drawingData.src);
 		}
 	}
 
+	if(foregroundTexture) {
+		g_painter->resetColor();
+		g_painter->resetOpacity();
+		g_painter->drawTexturedRect(viewportRect, foregroundTexture, viewportRect);
+	}
+
 	g_painter->restoreSavedState();
+}
+
+void DrawPool::drawObject(const DrawObject& obj)
+{
+	g_painter->executeState(obj.state);
+	if(obj.coordsBuffer != nullptr) {
+		g_painter->drawCoords(*obj.coordsBuffer, obj.drawMode);
+	} else {
+		for(const auto& method : obj.drawMethods) {
+			if(method.type == DrawMethodType::DRAW_BOUNDING_RECT) {
+				m_coordsBuffer.addBoudingRect(method.rects.first, method.innerLineWidth);
+			} else if(method.type == DrawMethodType::DRAW_FILLED_RECT) {
+				m_coordsBuffer.addRect(method.rects.first);
+			} else if(method.type == DrawMethodType::DRAW_FILLED_TRIANGLE) {
+				m_coordsBuffer.addTriangle(std::get<0>(method.points), std::get<1>(method.points), std::get<2>(method.points));
+			} else if(method.type == DrawMethodType::DRAW_REPEATED_TEXTURED_RECT) {
+				m_coordsBuffer.addRepeatedRects(method.rects.first, method.rects.second);
+			} else if(method.type == DrawMethodType::DRAW_TEXTURED_RECT) {
+				if(obj.drawMode == Painter::Triangles)
+					m_coordsBuffer.addRect(method.rects.first, method.rects.second);
+				else
+					m_coordsBuffer.addQuad(method.rects.first, method.rects.second);
+			} else if(method.type == DrawMethodType::DRAW_UPSIDEDOWN_TEXTURED_RECT) {
+				if(obj.drawMode == Painter::Triangles)
+					m_coordsBuffer.addUpsideDownRect(method.rects.first, method.rects.second);
+				else
+					m_coordsBuffer.addUpsideDownQuad(method.rects.first, method.rects.second);
+			}
+		}
+	}
+
+	g_painter->drawCoords(m_coordsBuffer, obj.drawMode);
+	m_coordsBuffer.clear();
 }
 
 void DrawPool::updateHash(const TexturePtr& texture, const DrawMethod& method)
@@ -206,21 +213,21 @@ void DrawPool::updateHash(const TexturePtr& texture, const DrawMethod& method)
 	}
 }
 
-void DrawPool::addFillCoords(const CoordsBuffer& coordsBuffer)
+void DrawPool::addFillCoords(CoordsBuffer& coordsBuffer)
 {
 	DrawMethod method;
-	method.type = DRAW_FILL_COORDS;
-	add(std::make_shared<CoordsBuffer>(coordsBuffer), nullptr, method);
+	method.type = DrawMethodType::DRAW_FILL_COORDS;
+	add(std::shared_ptr<CoordsBuffer>(&coordsBuffer, [](CoordsBuffer*) {}), nullptr, method);
 }
 
-void DrawPool::addTextureCoords(const CoordsBuffer& coordsBuffer, const TexturePtr& texture, const Painter::DrawMode drawMode)
+void DrawPool::addTextureCoords(CoordsBuffer& coordsBuffer, const TexturePtr& texture, const Painter::DrawMode drawMode)
 {
 	if(texture && texture->isEmpty())
 		return;
 
 	DrawMethod method;
-	method.type = DRAW_TEXTURE_COORDS;
-	add(std::make_shared<CoordsBuffer>(coordsBuffer), texture, method, drawMode);
+	method.type = DrawMethodType::DRAW_TEXTURE_COORDS;
+	add(std::shared_ptr<CoordsBuffer>(&coordsBuffer, [](CoordsBuffer*) {}), texture, method, drawMode);
 }
 
 void DrawPool::addTexturedRect(const Rect& dest, const TexturePtr& texture)
@@ -234,10 +241,10 @@ void DrawPool::addTexturedRect(const Rect& dest, const TexturePtr& texture, cons
 		return;
 
 	DrawMethod method;
-	method.type = DRAW_TEXTURED_RECT;
+	method.type = DrawMethodType::DRAW_TEXTURED_RECT;
 	method.rects = std::make_pair(dest, src);
 
-	add(nullptr, texture, method);
+	add(nullptr, texture, method, Painter::TriangleStrip);
 }
 
 void DrawPool::addUpsideDownTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src)
@@ -246,10 +253,10 @@ void DrawPool::addUpsideDownTexturedRect(const Rect& dest, const TexturePtr& tex
 		return;
 
 	DrawMethod method;
-	method.type = DRAW_UPSIDEDOWN_TEXTURED_RECT;
+	method.type = DrawMethodType::DRAW_UPSIDEDOWN_TEXTURED_RECT;
 	method.rects = std::make_pair(dest, Rect(Point(), texture->getSize()));
 
-	add(nullptr, texture, method);
+	add(nullptr, texture, method, Painter::TriangleStrip);
 }
 
 void DrawPool::addRepeatedTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src)
@@ -258,7 +265,7 @@ void DrawPool::addRepeatedTexturedRect(const Rect& dest, const TexturePtr& textu
 		return;
 
 	DrawMethod method;
-	method.type = DRAW_REPEATED_TEXTURED_RECT;
+	method.type = DrawMethodType::DRAW_REPEATED_TEXTURED_RECT;
 	method.rects = std::make_pair(dest, Rect(Point(), texture->getSize()));
 
 	add(nullptr, texture, method);
@@ -270,7 +277,7 @@ void DrawPool::addFilledRect(const Rect& dest)
 		return;
 
 	DrawMethod method;
-	method.type = DRAW_FILLED_RECT;
+	method.type = DrawMethodType::DRAW_FILLED_RECT;
 	method.rects = std::make_pair(dest, Rect());
 
 	add(nullptr, nullptr, method);
@@ -282,7 +289,7 @@ void DrawPool::addFilledTriangle(const Point& a, const Point& b, const Point& c)
 		return;
 
 	DrawMethod method;
-	method.type = DRAW_FILLED_TRIANGLE;
+	method.type = DrawMethodType::DRAW_FILLED_TRIANGLE;
 	method.points = std::make_tuple(a, b, c);
 
 	add(nullptr, nullptr, method);
@@ -294,7 +301,7 @@ void DrawPool::addBoundingRect(const Rect& dest, int innerLineWidth)
 		return;
 
 	DrawMethod method;
-	method.type = DRAW_BOUNDING_RECT;
+	method.type = DrawMethodType::DRAW_BOUNDING_RECT;
 	method.rects = std::make_pair(dest, Rect());
 	method.innerLineWidth = innerLineWidth;
 

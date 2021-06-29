@@ -22,6 +22,7 @@
 
 #include <client/ui/uimap.h>
 #include <framework/graphics/graphics.h>
+#include <framework/graphics/drawpool.h>
 #include <framework/otml/otml.h>
 #include <client/game.h>
 #include <client/thing/creature/localplayer.h>
@@ -31,198 +32,198 @@
 
 UIMap::UIMap()
 {
-    m_draggable = true;
-    m_mapRect.resize(1, 1);
+	m_draggable = true;
+	m_mapRect.resize(1, 1);
 
-    m_mapView = MapViewPtr(new MapView);
-    m_zoom = m_mapView->getVisibleDimension().height();
-    m_aspectRatio = m_mapView->getVisibleDimension().ratio();
+	m_mapView = MapViewPtr(new MapView);
+	m_zoom = m_mapView->getVisibleDimension().height();
+	m_aspectRatio = m_mapView->getVisibleDimension().ratio();
 
-    g_map.addMapView(m_mapView);
+	g_map.addMapView(m_mapView);
 }
 
 UIMap::~UIMap()
 {
-    g_map.removeMapView(m_mapView);
+	g_map.removeMapView(m_mapView);
 }
 
 void UIMap::drawSelf(Fw::DrawPane drawPane)
 {
-    UIWidget::drawSelf(drawPane);
+	UIWidget::drawSelf(drawPane);
 
-    if(drawPane & Fw::ForegroundPane) {
-        // draw map border
-        g_painter->setColor(Color::black);
-        g_painter->drawBoundingRect(m_mapRect.expanded(1));
+	if(drawPane & Fw::ForegroundPane) {
+		// draw map border
+		g_painter->setColor(Color::black);
+		g_drawPool.addBoundingRect(m_mapRect.expanded(1));
 
-        if(drawPane != Fw::BothPanes) {
-            glDisable(GL_BLEND);
-            g_painter->setColor(Color::alpha);
-            g_painter->drawFilledRect(m_mapRect);
-            glEnable(GL_BLEND);
-        }
-    }
+		if(drawPane != Fw::BothPanes) {
+			glDisable(GL_BLEND);
+			g_painter->setColor(Color::alpha);
+			g_drawPool.addFilledRect(m_mapRect);
+			glEnable(GL_BLEND);
+		}
+	}
 
-    if(drawPane & Fw::BackgroundPane) {
-        g_painter->resetColor();
-        MapViewPainter::draw(m_mapView, m_mapRect);
-    }
+	if(drawPane & Fw::BackgroundPane) {
+		g_painter->resetColor();
+		MapViewPainter::draw(m_mapView, m_mapRect);
+	}
 }
 
 void UIMap::movePixels(int x, int y)
 {
-    m_mapView->move(x, y);
+	m_mapView->move(x, y);
 }
 
 bool UIMap::setZoom(int zoom)
 {
-    m_zoom = stdext::clamp<int>(zoom, m_maxZoomIn, m_maxZoomOut);
-    updateVisibleDimension();
-    return false;
+	m_zoom = stdext::clamp<int>(zoom, m_maxZoomIn, m_maxZoomOut);
+	updateVisibleDimension();
+	return false;
 }
 
 bool UIMap::zoomIn()
 {
-    int delta = 2;
-    if(m_zoom - delta < m_maxZoomIn)
-        --delta;
+	int delta = 2;
+	if(m_zoom - delta < m_maxZoomIn)
+		--delta;
 
-    if(m_zoom - delta < m_maxZoomIn)
-        return false;
+	if(m_zoom - delta < m_maxZoomIn)
+		return false;
 
-    const auto oldZoom = m_zoom;
+	const auto oldZoom = m_zoom;
 
-    m_zoom -= delta;
-    updateVisibleDimension();
+	m_zoom -= delta;
+	updateVisibleDimension();
 
-    callLuaField("onZoomChange", m_zoom, oldZoom);
+	callLuaField("onZoomChange", m_zoom, oldZoom);
 
-    return true;
+	return true;
 }
 
 bool UIMap::zoomOut()
 {
-    int delta = 2;
-    if(m_zoom + delta > m_maxZoomOut)
-        --delta;
+	int delta = 2;
+	if(m_zoom + delta > m_maxZoomOut)
+		--delta;
 
-    if(m_zoom + delta > m_maxZoomOut)
-        return false;
+	if(m_zoom + delta > m_maxZoomOut)
+		return false;
 
-    const auto oldZoom = m_zoom;
+	const auto oldZoom = m_zoom;
 
-    m_zoom += 2;
-    updateVisibleDimension();
+	m_zoom += 2;
+	updateVisibleDimension();
 
-    callLuaField("onZoomChange", m_zoom, oldZoom);
+	callLuaField("onZoomChange", m_zoom, oldZoom);
 
-    return true;
+	return true;
 }
 
 void UIMap::setVisibleDimension(const Size& visibleDimension)
 {
-    m_mapView->setVisibleDimension(visibleDimension);
-    m_aspectRatio = visibleDimension.ratio();
+	m_mapView->setVisibleDimension(visibleDimension);
+	m_aspectRatio = visibleDimension.ratio();
 
-    if(m_keepAspectRatio)
-        updateMapSize();
+	if(m_keepAspectRatio)
+		updateMapSize();
 }
 
 void UIMap::setKeepAspectRatio(bool enable)
 {
-    m_keepAspectRatio = enable;
-    if(enable)
-        m_aspectRatio = getVisibleDimension().ratio();
-    updateMapSize();
+	m_keepAspectRatio = enable;
+	if(enable)
+		m_aspectRatio = getVisibleDimension().ratio();
+	updateMapSize();
 }
 
 Position UIMap::getPosition(const Point& mousePos)
 {
-    if(!m_mapRect.contains(mousePos))
-        return Position();
+	if(!m_mapRect.contains(mousePos))
+		return Position();
 
-    const Point relativeMousePos = mousePos - m_mapRect.topLeft();
-    return m_mapView->getPosition(relativeMousePos, m_mapRect.size());
+	const Point relativeMousePos = mousePos - m_mapRect.topLeft();
+	return m_mapView->getPosition(relativeMousePos, m_mapRect.size());
 }
 
 TilePtr UIMap::getTile(const Point& mousePos)
 {
-    Position tilePos = getPosition(mousePos);
-    if(!tilePos.isValid())
-        return nullptr;
+	Position tilePos = getPosition(mousePos);
+	if(!tilePos.isValid())
+		return nullptr;
 
-    return m_mapView->getTopTile(tilePos);
+	return m_mapView->getTopTile(tilePos);
 }
 
 void UIMap::onStyleApply(const std::string& styleName, const OTMLNodePtr& styleNode)
 {
-    UIWidget::onStyleApply(styleName, styleNode);
-    for(const OTMLNodePtr& node : styleNode->children()) {
-        if(node->tag() == "multifloor")
-            setMultifloor(node->value<bool>());
-        else if(node->tag() == "auto-view-mode")
-            setAutoViewMode(node->value<bool>());
-        else if(node->tag() == "draw-texts")
-            setDrawTexts(node->value<bool>());
-        else if(node->tag() == "draw-lights")
-            setDrawLights(node->value<bool>());
-    }
+	UIWidget::onStyleApply(styleName, styleNode);
+	for(const OTMLNodePtr& node : styleNode->children()) {
+		if(node->tag() == "multifloor")
+			setMultifloor(node->value<bool>());
+		else if(node->tag() == "auto-view-mode")
+			setAutoViewMode(node->value<bool>());
+		else if(node->tag() == "draw-texts")
+			setDrawTexts(node->value<bool>());
+		else if(node->tag() == "draw-lights")
+			setDrawLights(node->value<bool>());
+	}
 }
 
 void UIMap::onGeometryChange(const Rect& oldRect, const Rect& newRect)
 {
-    UIWidget::onGeometryChange(oldRect, newRect);
-    updateMapSize();
+	UIWidget::onGeometryChange(oldRect, newRect);
+	updateMapSize();
 }
 
 bool UIMap::onMouseMove(const Point& mousePos, const Point& mouseMoved)
 {
-    const Position& pos = getPosition(mousePos);
-    if(pos.isValid() && m_mapView->getMousePosition() != pos) {
-        m_mapView->onMouseMove(pos);
-        m_mapView->setMousePosition(pos);
-    }
-    return UIWidget::onMouseMove(mousePos, mouseMoved);
+	const Position& pos = getPosition(mousePos);
+	if(pos.isValid() && m_mapView->getMousePosition() != pos) {
+		m_mapView->onMouseMove(pos);
+		m_mapView->setMousePosition(pos);
+	}
+	return UIWidget::onMouseMove(mousePos, mouseMoved);
 }
 
 void UIMap::updateVisibleDimension()
 {
-    int dimensionHeight = m_zoom;
+	int dimensionHeight = m_zoom;
 
-    float ratio = m_aspectRatio;
-    if(!m_limitVisibleRange && !m_mapRect.isEmpty() && !m_keepAspectRatio)
-        ratio = m_mapRect.size().ratio();
+	float ratio = m_aspectRatio;
+	if(!m_limitVisibleRange && !m_mapRect.isEmpty() && !m_keepAspectRatio)
+		ratio = m_mapRect.size().ratio();
 
-    if(dimensionHeight % 2 == 0)
-        dimensionHeight += 1;
-    int dimensionWidth = m_zoom * ratio;
-    if(dimensionWidth % 2 == 0)
-        dimensionWidth += 1;
+	if(dimensionHeight % 2 == 0)
+		dimensionHeight += 1;
+	int dimensionWidth = m_zoom * ratio;
+	if(dimensionWidth % 2 == 0)
+		dimensionWidth += 1;
 
-    m_mapView->setVisibleDimension(Size(dimensionWidth, dimensionHeight));
+	m_mapView->setVisibleDimension(Size(dimensionWidth, dimensionHeight));
 
-    if(m_keepAspectRatio)
-        updateMapSize();
+	if(m_keepAspectRatio)
+		updateMapSize();
 }
 
 void UIMap::updateMapSize()
 {
-    const Rect clippingRect = getPaddingRect();
-    Size mapSize;
-    if(m_keepAspectRatio) {
-        const Rect mapRect = clippingRect.expanded(-1);
-        mapSize = Size(m_aspectRatio * m_zoom, m_zoom);
-        mapSize.scale(mapRect.size(), Fw::KeepAspectRatio);
-    } else {
-        mapSize = clippingRect.expanded(-1).size();
-    }
+	const Rect clippingRect = getPaddingRect();
+	Size mapSize;
+	if(m_keepAspectRatio) {
+		const Rect mapRect = clippingRect.expanded(-1);
+		mapSize = Size(m_aspectRatio * m_zoom, m_zoom);
+		mapSize.scale(mapRect.size(), Fw::KeepAspectRatio);
+	} else {
+		mapSize = clippingRect.expanded(-1).size();
+	}
 
-    m_mapRect.resize(mapSize);
-    m_mapRect.moveCenter(clippingRect.center());
-    m_mapView->optimizeForSize(mapSize);
+	m_mapRect.resize(mapSize);
+	m_mapRect.moveCenter(clippingRect.center());
+	m_mapView->optimizeForSize(mapSize);
 
-    if(!m_keepAspectRatio)
-        updateVisibleDimension();
+	if(!m_keepAspectRatio)
+		updateVisibleDimension();
 }
 
 /* vim: set ts=4 sw=4 et: */

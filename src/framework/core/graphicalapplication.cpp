@@ -31,6 +31,7 @@
 #include <framework/graphics/painter.h>
 #include <framework/input/mouse.h>
 #include <framework/graphics/framebuffermanager.h>
+#include <framework/graphics/drawpool.h>
 
 #include "framework/stdext/time.h"
 
@@ -42,215 +43,214 @@ GraphicalApplication g_app;
 
 void GraphicalApplication::init(std::vector<std::string>& args)
 {
-    Application::init(args);
+	Application::init(args);
 
-    // setup platform window
-    g_window.init();
-    g_window.hide();
-    g_window.setOnResize([this](auto&& PH1) { resize(std::forward<decltype(PH1)>(PH1)); });
-    g_window.setOnInputEvent([this](auto&& PH1) { inputEvent(std::forward<decltype(PH1)>(PH1)); });
-    g_window.setOnClose([this] { close(); });
+	// setup platform window
+	g_window.init();
+	g_window.hide();
+	g_window.setOnResize([this](auto&& PH1) { resize(std::forward<decltype(PH1)>(PH1)); });
+	g_window.setOnInputEvent([this](auto&& PH1) { inputEvent(std::forward<decltype(PH1)>(PH1)); });
+	g_window.setOnClose([this] { close(); });
 
-    m_foregroundFrameCache = g_framebuffers.createFrameBuffer(true);
+	m_foregroundFrameCache = g_framebuffers.createFrameBuffer(true);
 
-    g_mouse.init();
+	g_mouse.init();
 
-    // initialize ui
-    g_ui.init();
+	// initialize ui
+	g_ui.init();
 
-    // initialize graphics
-    g_graphics.init();
+	// initialize graphics
+	g_graphics.init();
 
-    // fire first resize event
-    resize(g_window.getSize());
+	// fire first resize event
+	resize(g_window.getSize());
 
 #ifdef FW_SOUND
-    // initialize sound
-    g_sounds.init();
+	// initialize sound
+	g_sounds.init();
 #endif
+
+	g_drawPool.init();
 }
 
 void GraphicalApplication::deinit()
 {
-    // hide the window because there is no render anymore
-    g_window.hide();
+	// hide the window because there is no render anymore
+	g_window.hide();
 
-    Application::deinit();
+	Application::deinit();
 }
 
 void GraphicalApplication::terminate()
 {
-    // destroy particles
-    g_particles.terminate();
+	// destroy particles
+	g_particles.terminate();
 
-    // destroy any remaining widget
-    g_ui.terminate();
+	// destroy any remaining widget
+	g_ui.terminate();
 
-    Application::terminate();
-    m_terminated = false;
+	Application::terminate();
+	m_terminated = false;
 
 #ifdef FW_SOUND
-    // terminate sound
-    g_sounds.terminate();
+	// terminate sound
+	g_sounds.terminate();
 #endif
 
-    g_mouse.terminate();
+	g_mouse.terminate();
 
-    // terminate graphics
-    m_foreground = nullptr;
-    m_foregroundFrameCache = nullptr;
-    g_graphics.terminate();
-    g_window.terminate();
+	// terminate graphics
+	m_foreground = nullptr;
+	m_foregroundFrameCache = nullptr;
+	g_drawPool.terminate();
+	g_graphics.terminate();
+	g_window.terminate();
 
-    m_terminated = true;
+	m_terminated = true;
 }
 
 void GraphicalApplication::run()
 {
-    m_running = true;
+	m_running = true;
 
-    // first clock update
-    g_clock.update();
+	// first clock update
+	g_clock.update();
 
-    // run the first poll
-    poll();
-    g_clock.update();
+	// run the first poll
+	poll();
+	g_clock.update();
 
-    // show window
-    g_window.show();
+	// show window
+	g_window.show();
 
-    // run the second poll
-    poll();
-    g_clock.update();
+	// run the second poll
+	poll();
+	g_clock.update();
 
-    g_lua.callGlobalField("g_app", "onRun");
+	g_lua.callGlobalField("g_app", "onRun");
 
-    while(!m_stopping) {
-        // poll all events before rendering
-        poll();
+	while(!m_stopping) {
+		// poll all events before rendering
+		poll();
 
-        if(g_window.isVisible()) {
-            // the screen consists of two panes
-            // background pane - high updated and animated pane (where the game are stuff happens)
-            // foreground pane - steady pane with few animated stuff (UI)
-            bool redraw = false;
-            bool updateForeground = false;
+		if(g_window.isVisible()) {
+			// the screen consists of two panes
+			// background pane - high updated and animated pane (where the game are stuff happens)
+			// foreground pane - steady pane with few animated stuff (UI)
+			bool redraw = false;
+			bool updateForeground = false;
 
-            const bool cacheForeground = g_graphics.canCacheBackbuffer() && m_foregroundFrameCounter.getMaxFps() != 0;
+			const bool cacheForeground = g_graphics.canCacheBackbuffer() && m_foregroundFrameCounter.getMaxFps() != 0;
 
-            if(m_backgroundFrameCounter.shouldProcessNextFrame()) {
-                redraw = true;
+			if(m_backgroundFrameCounter.shouldProcessNextFrame()) {
+				redraw = true;
 
-                if(m_mustRepaint || m_foregroundFrameCounter.shouldProcessNextFrame()) {
-                    m_mustRepaint = false;
-                    updateForeground = true;
-                }
-            }
+				if(m_mustRepaint || m_foregroundFrameCounter.shouldProcessNextFrame()) {
+					m_mustRepaint = false;
+					updateForeground = true;
+				}
+			}
 
-            if(redraw) {
-                if(cacheForeground) {
-                    Rect viewportRect(0, 0, g_painter->getResolution());
+			if(redraw) {
+				if(cacheForeground) {
+					Rect viewportRect(0, 0, g_painter->getResolution());
 
-                    // draw the foreground into a texture
-                    if(updateForeground) {
-                        m_foregroundFrameCounter.processNextFrame();
+					// draw the foreground into a texture
+					g_drawPool.getFrameBuffer(DRAWTYPE_FOREGROUND)->setDrawable(updateForeground);
+					if(updateForeground) {
+						m_foregroundFrameCounter.processNextFrame();
 
-                        // draw foreground
-                        if(m_foregroundFrameCache->canUpdate()) {
-                            m_foregroundFrameCache->bind();
-                            g_ui.render(Fw::ForegroundPane);
+						// draw foreground
+						if(g_drawPool.drawUp(DRAWTYPE_FOREGROUND, g_graphics.getViewportSize())) {
+							g_ui.render(Fw::ForegroundPane);
+						}
+					}
 
-                            // copy the foreground to a texture
-                            m_foreground->copyFromScreen(viewportRect);
+					// draw background (animated stuff)
+					m_backgroundFrameCounter.processNextFrame();
+					g_ui.render(Fw::BackgroundPane);
 
-                            g_painter->clear(Color::black);
-                            g_painter->setAlphaWriting(false);
-                            m_foregroundFrameCache->release();
-                        }
+					//g_drawPool.draw(updateForeground, m_foreground);
+					g_drawPool.draw(false, nullptr);
+				} else {
+					m_foregroundFrameCounter.processNextFrame();
+					m_backgroundFrameCounter.processNextFrame();
 
-                        m_foregroundFrameCache->draw();
-                    }
+					if(g_drawPool.drawUp(DRAWTYPE_FOREGROUND, g_graphics.getViewportSize())) {
+						g_ui.render(Fw::ForegroundPane);
+					}
 
-                    // draw background (animated stuff)
-                    m_backgroundFrameCounter.processNextFrame();
-                    g_ui.render(Fw::BackgroundPane);
+					g_ui.render(Fw::BackgroundPane);
 
-                    // draw the foreground (steady stuff)
-                    g_painter->resetColor();
-                    g_painter->setOpacity(1.0);
-                    g_painter->drawTexturedRect(viewportRect, m_foreground, viewportRect);
-                } else {
-                    m_foregroundFrameCounter.processNextFrame();
-                    m_backgroundFrameCounter.processNextFrame();
-                    g_ui.render(Fw::BothPanes);
-                }
+					g_drawPool.draw(false, nullptr);
+				}
 
-                // update screen pixels
-                g_window.swapBuffers();
-            }
+				// update screen pixels
+				g_window.swapBuffers();
+			}
 
-            // only update the current time once per frame to gain performance
-            g_clock.update();
+			// only update the current time once per frame to gain performance
+			g_clock.update();
 
-            if(m_backgroundFrameCounter.update())
-                g_lua.callGlobalField("g_app", "onFps", m_backgroundFrameCounter.getLastFps());
-            m_foregroundFrameCounter.update();
+			if(m_backgroundFrameCounter.update())
+				g_lua.callGlobalField("g_app", "onFps", m_backgroundFrameCounter.getLastFps());
+			m_foregroundFrameCounter.update();
 
-            const int sleepMicros = m_backgroundFrameCounter.getMaximumSleepMicros();
-            if(sleepMicros >= AdaptativeFrameCounter::MINIMUM_MICROS_SLEEP)
-                stdext::microsleep(sleepMicros);
-        } else {
-            // sleeps until next poll to avoid massive cpu usage
-            stdext::millisleep(POLL_CYCLE_DELAY + 1);
-            g_clock.update();
-        }
-    }
+			const int sleepMicros = m_backgroundFrameCounter.getMaximumSleepMicros();
+			if(sleepMicros >= AdaptativeFrameCounter::MINIMUM_MICROS_SLEEP)
+				stdext::microsleep(sleepMicros);
+		} else {
+			// sleeps until next poll to avoid massive cpu usage
+			stdext::millisleep(POLL_CYCLE_DELAY + 1);
+			g_clock.update();
+		}
+	}
 
-    m_stopping = false;
-    m_running = false;
+	m_stopping = false;
+	m_running = false;
 }
 
 void GraphicalApplication::poll()
 {
 #ifdef FW_SOUND
-    g_sounds.poll();
+	g_sounds.poll();
 #endif
 
-    // poll window input events
-    g_window.poll();
-    g_particles.poll();
-    g_textures.poll();
+	// poll window input events
+	g_window.poll();
+	g_particles.poll();
+	g_textures.poll();
 
-    Application::poll();
+	Application::poll();
 }
 
 void GraphicalApplication::close()
 {
-    m_onInputEvent = true;
-    Application::close();
-    m_onInputEvent = false;
+	m_onInputEvent = true;
+	Application::close();
+	m_onInputEvent = false;
 }
 
 void GraphicalApplication::resize(const Size& size)
 {
-    m_onInputEvent = true;
-    g_graphics.resize(size);
-    g_ui.resize(size);
-    m_onInputEvent = false;
+	m_onInputEvent = true;
+	g_graphics.resize(size);
+	g_ui.resize(size);
+	m_onInputEvent = false;
 
-    if(g_graphics.canCacheBackbuffer()) {
-        m_foreground = TexturePtr(new Texture(size));
-        m_foreground->setUpsideDown(true);
-    }
+	if(g_graphics.canCacheBackbuffer()) {
+		m_foreground = TexturePtr(new Texture(size));
+		m_foreground->setUpsideDown(true);
+	}
 
-    m_foregroundFrameCache->resize(size);
+	//m_foregroundFrameCache->resize(size);
 
-    m_mustRepaint = true;
+	m_mustRepaint = true;
 }
 
 void GraphicalApplication::inputEvent(const InputEvent& event)
 {
-    m_onInputEvent = true;
-    g_ui.inputEvent(event);
-    m_onInputEvent = false;
+	m_onInputEvent = true;
+	g_ui.inputEvent(event);
+	m_onInputEvent = false;
 }

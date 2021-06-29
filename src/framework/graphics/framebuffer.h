@@ -76,7 +76,7 @@ private:
 
     TexturePtr m_texture;
     TexturePtr m_screenBackup;
-    Size m_oldViewportSize;
+    Size m_oldViewportSize, m_lastResolution;
     uint m_fbo;
     uint m_prevBoundFbo;
     bool m_forceUpdate{ true },

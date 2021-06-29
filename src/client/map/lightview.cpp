@@ -27,35 +27,37 @@
 #include <client/map/map.h>
 
 LightView::LightView(const MapViewPtr& mapView) :
-    m_mapView(mapView)
+	m_mapView(mapView)
 {
-    resize();
+	resize();
 }
 
 void LightView::addLightSource(const Point& pos, const Light& light)
 {
-    const uint16 radius = light.intensity * SPRITE_SIZE * m_mapView->m_scaleFactor;
+	if(!isDark()) return;
 
-    auto& lights = m_lights[m_currentFloor];
-    if(!lights.empty()) {
-        auto& prevLight = lights.back();
-        if(prevLight.pos == pos && prevLight.color == light.color) {
-            prevLight.radius = std::max<uint16>(prevLight.radius, radius);
-            return;
-        }
-    }
+	const uint16 radius = light.intensity * SPRITE_SIZE * m_mapView->m_scaleFactor;
 
-    lights.push_back(LightSource{ pos , light.color, radius, light.brightness });
+	auto& lights = m_lights[m_currentFloor];
+	if(!lights.empty()) {
+		auto& prevLight = lights.back();
+		if(prevLight.pos == pos && prevLight.color == light.color) {
+			prevLight.radius = std::max<uint16>(prevLight.radius, radius);
+			return;
+		}
+	}
+
+	lights.push_back(LightSource{ pos , light.color, radius, light.brightness });
 }
 
 void LightView::setShade(const Point& point)
 {
-    const size_t index = (m_mapView->m_drawDimension.width() * (point.y / m_mapView->m_tileSize)) + (point.x / m_mapView->m_tileSize);
-    if(index >= m_shades.size()) return;
-    m_shades[index] = ShadeBlock{ m_currentFloor, point };
+	const size_t index = (m_mapView->m_drawDimension.width() * (point.y / m_mapView->m_tileSize)) + (point.x / m_mapView->m_tileSize);
+	if(index >= m_shades.size()) return;
+	m_shades[index] = ShadeBlock{ m_currentFloor, point };
 }
 
 void LightView::resize()
 {
-    m_shades.resize(m_mapView->m_drawDimension.area());
+	m_shades.resize(m_mapView->m_drawDimension.area());
 }

@@ -27,175 +27,176 @@
 #include <framework/core/eventdispatcher.h>
 #include <framework/platform/platformwindow.h>
 #include <framework/core/application.h>
+#include <framework/graphics/drawpool.h>
 
 uint FrameBuffer::boundFbo = 0;
 
 FrameBuffer::FrameBuffer(const bool useAlphaWriting, const uint16_t minTimeUpdate)
 {
-    internalCreate();
-    m_useAlphaWriting = useAlphaWriting;
-    m_minTimeUpdate = minTimeUpdate;
+	internalCreate();
+	m_useAlphaWriting = useAlphaWriting;
+	m_minTimeUpdate = minTimeUpdate;
 }
 
 void FrameBuffer::internalCreate()
 {
-    m_prevBoundFbo = 0;
-    m_fbo = 0;
-    if(g_graphics.canUseFBO()) {
-        glGenFramebuffers(1, &m_fbo);
-        if(!m_fbo)
-            g_logger.fatal("Unable to create framebuffer object");
-    }
+	m_prevBoundFbo = 0;
+	m_fbo = 0;
+	if(g_graphics.canUseFBO()) {
+		glGenFramebuffers(1, &m_fbo);
+		if(!m_fbo)
+			g_logger.fatal("Unable to create framebuffer object");
+	}
 }
 
 FrameBuffer::~FrameBuffer()
 {
 #ifndef NDEBUG
-    assert(!g_app.isTerminated());
+	assert(!g_app.isTerminated());
 #endif
-    if(g_graphics.ok() && m_fbo != 0)
-        glDeleteFramebuffers(1, &m_fbo);
+	if(g_graphics.ok() && m_fbo != 0)
+		glDeleteFramebuffers(1, &m_fbo);
 }
 
 void FrameBuffer::clear(const Color color)
 {
-    if(m_useAlphaWriting) {
-        g_painter->clear(Color::alpha);
-    } else {
-        g_painter->setColor(color);
-        g_painter->drawFilledRect(Rect(0, 0, getSize()));
-        g_painter->resetColor();
-    }
+	if(m_useAlphaWriting) {
+		g_painter->clear(Color::alpha);
+	} else {
+		g_painter->setColor(color);
+		g_painter->drawFilledRect(Rect(0, 0, getSize()));
+		g_painter->resetColor();
+	}
 }
 
 void FrameBuffer::resize(const Size& size)
 {
-    assert(size.isValid());
+	assert(size.isValid());
 
-    if(m_texture && m_texture->getSize() == size)
-        return;
+	if(m_texture && m_texture->getSize() == size)
+		return;
 
-    m_texture = TexturePtr(new Texture(size));
-    m_texture->setSmooth(m_smooth);
-    m_texture->setUpsideDown(true);
+	m_texture = TexturePtr(new Texture(size));
+	m_texture->setSmooth(m_smooth);
+	m_texture->setUpsideDown(true);
 
-    if(m_fbo) {
-        internalBind();
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_texture->getId(), 0);
+	if(m_fbo) {
+		internalBind();
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_texture->getId(), 0);
 
-        const GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-        if(status != GL_FRAMEBUFFER_COMPLETE)
-            g_logger.fatal("Unable to setup framebuffer object");
-        internalRelease();
-    } else {
-        if(m_backuping) {
-            m_screenBackup = TexturePtr(new Texture(size));
-            m_screenBackup->setUpsideDown(true);
-        }
-    }
+		const GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+		if(status != GL_FRAMEBUFFER_COMPLETE)
+			g_logger.fatal("Unable to setup framebuffer object");
+		internalRelease();
+	} else {
+		if(m_backuping) {
+			m_screenBackup = TexturePtr(new Texture(size));
+			m_screenBackup->setUpsideDown(true);
+		}
+	}
 }
 
 void FrameBuffer::bind(const bool autoClear)
 {
-    g_painter->saveAndResetState();
-    internalBind();
-    g_painter->setResolution(m_texture->getSize());
-    g_painter->setAlphaWriting(m_useAlphaWriting);
+	internalBind();
+	m_lastResolution = g_painter->getResolution();
+	g_painter->setResolution(m_texture->getSize());
+	g_painter->setAlphaWriting(m_useAlphaWriting);
 
-    if(autoClear) clear(m_colorClear);
+	clear(m_colorClear);
 }
 
 void FrameBuffer::release()
 {
-    internalRelease();
-    g_painter->restoreSavedState();
-    g_painter->setAlphaWriting(false);
+	internalRelease();
+	g_painter->setResolution(m_lastResolution);
+	g_painter->setAlphaWriting(false);
 
-    m_forceUpdate = false;
-    m_lastRenderedTime.restart();
+	m_forceUpdate = false;
+	m_lastRenderedTime.restart();
 }
 
 void FrameBuffer::draw()
 {
-    Rect rect(0, 0, getSize());
+	Rect rect(0, 0, getSize());
 
-    if(m_disableBlend) glDisable(GL_BLEND);
-    g_painter->setCompositionMode(m_compositeMode);
-    g_painter->drawTexturedRect(rect, m_texture, rect);
-    g_painter->resetCompositionMode();
-    if(m_disableBlend) glEnable(GL_BLEND);
+	if(m_disableBlend) glDisable(GL_BLEND);
+	g_painter->setCompositionMode(m_compositeMode);
+	g_painter->drawTexturedRect(rect, m_texture, rect);
+	g_painter->resetCompositionMode();
+	if(m_disableBlend) glEnable(GL_BLEND);
 }
 
 void FrameBuffer::draw(const Rect& dest, const Rect& src)
 {
-    if(m_disableBlend) glDisable(GL_BLEND);
-    g_painter->setCompositionMode(m_compositeMode);
-    g_painter->drawTexturedRect(dest, m_texture, src);
-    g_painter->resetCompositionMode();
-    if(m_disableBlend) glEnable(GL_BLEND);
+	if(m_disableBlend) glDisable(GL_BLEND);
+	g_painter->setCompositionMode(m_compositeMode);
+	g_painter->drawTexturedRect(dest, m_texture, src);
+	g_painter->resetCompositionMode();
+	if(m_disableBlend) glEnable(GL_BLEND);
 }
 
 void FrameBuffer::draw(const Rect& dest)
 {
-    if(m_disableBlend) glDisable(GL_BLEND);
-    g_painter->setCompositionMode(m_compositeMode);
-    g_painter->drawTexturedRect(dest, m_texture, Rect(0, 0, getSize()));
-    g_painter->resetCompositionMode();
-    if(m_disableBlend) glEnable(GL_BLEND);
+	if(m_disableBlend) glDisable(GL_BLEND);
+	g_painter->setCompositionMode(m_compositeMode);
+	g_painter->drawTexturedRect(dest, m_texture, Rect(0, 0, getSize()));
+	g_painter->resetCompositionMode();
+	if(m_disableBlend) glEnable(GL_BLEND);
 }
 
 void FrameBuffer::internalBind()
 {
-    if(m_fbo) {
-        assert(boundFbo != m_fbo);
-        glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
-        m_prevBoundFbo = boundFbo;
-        boundFbo = m_fbo;
-    } else if(m_backuping) {
-        // backup screen color buffer into a texture
-        m_screenBackup->copyFromScreen(Rect(0, 0, getSize()));
-    }
+	if(m_fbo) {
+		assert(boundFbo != m_fbo);
+		glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
+		m_prevBoundFbo = boundFbo;
+		boundFbo = m_fbo;
+	} else if(m_backuping) {
+		// backup screen color buffer into a texture
+		m_screenBackup->copyFromScreen(Rect(0, 0, getSize()));
+	}
 }
 
 void FrameBuffer::internalRelease()
 {
-    if(m_fbo) {
-        assert(boundFbo == m_fbo);
-        glBindFramebuffer(GL_FRAMEBUFFER, m_prevBoundFbo);
-        boundFbo = m_prevBoundFbo;
-    } else {
-        Rect screenRect(0, 0, getSize());
+	if(m_fbo) {
+		assert(boundFbo == m_fbo);
+		glBindFramebuffer(GL_FRAMEBUFFER, m_prevBoundFbo);
+		boundFbo = m_prevBoundFbo;
+	} else {
+		Rect screenRect(0, 0, getSize());
 
-        // copy the drawn color buffer into the framebuffer texture
-        m_texture->copyFromScreen(screenRect);
+		// copy the drawn color buffer into the framebuffer texture
+		m_texture->copyFromScreen(screenRect);
 
-        // restore screen original content
-        if(m_backuping) {
-            glDisable(GL_BLEND);
-            g_painter->resetColor();
-            g_painter->drawTexturedRect(screenRect, m_screenBackup, screenRect);
-            glEnable(GL_BLEND);
-        }
-    }
+		// restore screen original content
+		if(m_backuping) {
+			glDisable(GL_BLEND);
+			g_painter->resetColor();
+			g_painter->drawTexturedRect(screenRect, m_screenBackup, screenRect);
+			glEnable(GL_BLEND);
+		}
+	}
 }
 
 Size FrameBuffer::getSize()
 {
-    if(m_fbo == 0) {
-        // the buffer size is limited by the window size
-        return Size(std::min<int>(m_texture->getWidth(), g_window.getWidth()),
-                    std::min<int>(m_texture->getHeight(), g_window.getHeight()));
-    }
+	if(m_fbo == 0) {
+		// the buffer size is limited by the window size
+		return Size(std::min<int>(m_texture->getWidth(), g_window.getWidth()),
+								std::min<int>(m_texture->getHeight(), g_window.getHeight()));
+	}
 
-    return m_texture->getSize();
+	return m_texture->getSize();
 }
 
 bool FrameBuffer::canUpdate()
 {
-    return m_forceUpdate || (m_minTimeUpdate > 0 && (m_lastRenderedTime.ticksElapsed() >= m_minTimeUpdate));
+	return m_forceUpdate || (m_minTimeUpdate > 0 && (m_lastRenderedTime.ticksElapsed() >= m_minTimeUpdate));
 }
 
 void FrameBuffer::update()
 {
-    m_forceUpdate = true;
+	m_forceUpdate = true;
 }

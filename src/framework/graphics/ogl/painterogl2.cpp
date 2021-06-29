@@ -92,7 +92,7 @@ void PainterOGL2::drawCoords(CoordsBuffer& coordsBuffer, DrawMode drawMode)
 
     // update coords buffer hardware caches if enabled
     coordsBuffer.updateCaches();
-    const bool hardwareCached = coordsBuffer.isHardwareCached();
+    const bool hardwareCached = coordsBuffer.isHardwareCached() && coordsBuffer.getHardwareTextureCoordArray();
 
     // only set texture coords arrays when needed
     if(textured) {

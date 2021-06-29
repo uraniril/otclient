@@ -127,7 +127,7 @@ void UIWidget::drawChildren(const Rect& visibleRect, Fw::DrawPane drawPane)
         // debug draw box
         if(g_ui.isDrawingDebugBoxes() && drawPane & Fw::ForegroundPane) {
             g_painter->setColor(Color::green);
-            g_painter->drawBoundingRect(child->getRect());
+            g_drawPool.addBoundingRect(child->getRect());
         }
         //g_fonts.getDefaultFont()->renderText(child->getId(), child->getPosition() + Point(2, 0), Color::red);
 

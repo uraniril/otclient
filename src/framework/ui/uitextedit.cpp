@@ -81,7 +81,7 @@ void UITextEdit::drawSelf(Fw::DrawPane drawPane)
                 m_glyphsTextCoordsBuffer.addRect(m_glyphsCoords[i], m_glyphsTexCoords[i]);
         }
         g_painter->setColor(m_color);
-        g_painter->drawTextureCoords(m_glyphsTextCoordsBuffer, texture);
+        g_drawPool.addTextureCoords(m_glyphsTextCoordsBuffer, texture);
     }
 
     if(hasSelection()) {
@@ -91,9 +91,9 @@ void UITextEdit::drawSelf(Fw::DrawPane drawPane)
                 m_glyphsSelectCoordsBuffer.addRect(m_glyphsCoords[i], m_glyphsTexCoords[i]);
         }
         g_painter->setColor(m_selectionBackgroundColor);
-        g_painter->drawFillCoords(m_glyphsSelectCoordsBuffer);
+        g_drawPool.addFillCoords(m_glyphsSelectCoordsBuffer);
         g_painter->setColor(m_selectionColor);
-        g_painter->drawTextureCoords(m_glyphsSelectCoordsBuffer, texture);
+        g_drawPool.addTextureCoords(m_glyphsSelectCoordsBuffer, texture);
     }
 
     // render cursor
@@ -115,7 +115,7 @@ void UITextEdit::drawSelf(Fw::DrawPane drawPane)
             else
                 g_painter->setColor(m_color);
 
-            g_painter->drawFilledRect(cursorRect);
+            g_drawPool.addFilledRect(cursorRect);
         } else if(elapsed >= 2 * delay) {
             m_cursorTicks = g_clock.millis();
         }

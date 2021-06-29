@@ -172,7 +172,7 @@ void UIWidget::drawImage(const Rect& screenCoords)
     //m_imageTexture->setSmooth(m_imageSmooth);
 
     g_painter->setColor(m_imageColor);
-    g_painter->drawTextureCoords(m_imageCoordsBuffer, m_imageTexture);
+    g_drawPool.addTextureCoords(m_imageCoordsBuffer, m_imageTexture);
 }
 
 void UIWidget::setImageSource(const std::string& source)

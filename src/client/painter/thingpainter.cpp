@@ -207,7 +207,7 @@ void ThingPainter::draw(const ThingTypePtr& thingType, const Point& dest, float 
             g_painter->setColor(Color(1.0f, 1.0f, 1.0f, thingType->m_opacity));
 
         g_drawPool.addTexturedRect(screenRect, texture, textureRect);
-        //g_painter->drawTexturedRect(screenRect, texture, textureRect);
+        //g_drawPool.addTexturedRect(screenRect, texture, textureRect);
 
         if(useOpacity)
             g_painter->resetColor();

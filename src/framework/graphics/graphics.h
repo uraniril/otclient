@@ -25,79 +25,80 @@
 
 #include "declarations.h"
 #include "painter.h"
+#include "drawpool.h"
 
  // @bindsingleton g_graphics
 class Graphics
 {
 public:
-    Graphics();
+	Graphics();
 
-    enum PainterEngine {
-        Painter_Any = 0,
-        Painter_OpenGL1,
-        Painter_OpenGL2,
-        Painter_DirectX9
-    };
+	enum PainterEngine {
+		Painter_Any = 0,
+		Painter_OpenGL1,
+		Painter_OpenGL2,
+		Painter_DirectX9
+	};
 
-    // @dontbind
-    void init();
-    // @dontbind
-    void terminate();
+	// @dontbind
+	void init();
+	// @dontbind
+	void terminate();
 
-    bool parseOption(const std::string& option);
+	bool parseOption(const std::string& option);
 
-    bool isPainterEngineAvailable(PainterEngine painterEngine);
-    bool selectPainterEngine(PainterEngine painterEngine);
-    PainterEngine getPainterEngine() { return m_selectedPainterEngine; }
+	bool isPainterEngineAvailable(PainterEngine painterEngine);
+	bool selectPainterEngine(PainterEngine painterEngine);
+	PainterEngine getPainterEngine() { return m_selectedPainterEngine; }
 
-    void resize(const Size& size);
+	void resize(const Size& size);
 
-    int getMaxTextureSize() { return m_maxTextureSize; }
-    const Size& getViewportSize() { return m_viewportSize; }
+	int getMaxTextureSize() { return m_maxTextureSize; }
+	const Size& getViewportSize() { return m_viewportSize; }
 
-    std::string getVendor() { return (const char*)glGetString(GL_VENDOR); }
-    std::string getRenderer() { return (const char*)glGetString(GL_RENDERER); }
-    std::string getVersion() { return (const char*)glGetString(GL_VERSION); }
-    std::string getExtensions() { return (const char*)glGetString(GL_EXTENSIONS); }
+	std::string getVendor() { return (const char*)glGetString(GL_VENDOR); }
+	std::string getRenderer() { return (const char*)glGetString(GL_RENDERER); }
+	std::string getVersion() { return (const char*)glGetString(GL_VERSION); }
+	std::string getExtensions() { return (const char*)glGetString(GL_EXTENSIONS); }
 
-    void setShouldUseShaders(bool enable) { m_shouldUseShaders = enable; }
+	void setShouldUseShaders(bool enable) { m_shouldUseShaders = enable; }
 
-    bool ok() { return m_ok; }
-    bool canUseDrawArrays();
-    bool canUseShaders();
-    bool canUseFBO();
-    bool canUseBilinearFiltering();
-    bool canUseHardwareBuffers();
-    bool canUseNonPowerOfTwoTextures();
-    bool canUseMipmaps();
-    bool canUseHardwareMipmaps();
-    bool canUseClampToEdge();
-    bool canUseBlendFuncSeparate();
-    bool canUseBlendEquation();
-    bool canCacheBackbuffer();
-    bool shouldUseShaders() { return m_shouldUseShaders; }
-    bool hasScissorBug();
+	bool ok() { return m_ok; }
+	bool canUseDrawArrays();
+	bool canUseShaders();
+	bool canUseFBO();
+	bool canUseBilinearFiltering();
+	bool canUseHardwareBuffers();
+	bool canUseNonPowerOfTwoTextures();
+	bool canUseMipmaps();
+	bool canUseHardwareMipmaps();
+	bool canUseClampToEdge();
+	bool canUseBlendFuncSeparate();
+	bool canUseBlendEquation();
+	bool canCacheBackbuffer();
+	bool shouldUseShaders() { return m_shouldUseShaders; }
+	bool hasScissorBug();
 
 private:
-    Size m_viewportSize;
+	Size m_viewportSize;
 
-    int m_maxTextureSize;
-    int m_alphaBits;
+	int m_maxTextureSize;
+	int m_alphaBits;
 
-    bool m_ok{ false },
-        m_useDrawArrays{ true },
-        m_useFBO{ true },
-        m_useHardwareBuffers{ false },
-        m_useBilinearFiltering{ true },
-        m_useNonPowerOfTwoTextures{ true },
-        m_useMipmaps{ true },
-        m_useHardwareMipmaps{ true },
-        m_useClampToEdge{ true },
-        m_shouldUseShaders{ true },
-        m_cacheBackbuffer{ true };
+	bool m_ok{ false },
+		m_useDrawArrays{ true },
+		m_useFBO{ true },
+		m_useHardwareBuffers{ false },
+		m_useBilinearFiltering{ true },
+		m_useNonPowerOfTwoTextures{ true },
+		m_useMipmaps{ true },
+		m_useHardwareMipmaps{ true },
+		m_useClampToEdge{ true },
+		m_shouldUseShaders{ true },
+		m_cacheBackbuffer{ true };
 
-    PainterEngine m_prefferedPainterEngine;
-    PainterEngine m_selectedPainterEngine;
+	PainterEngine m_prefferedPainterEngine;
+	PainterEngine m_selectedPainterEngine;
 };
 
 extern Graphics g_graphics;
