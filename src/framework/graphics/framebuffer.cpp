@@ -103,7 +103,7 @@ void FrameBuffer::bind(const bool autoClear)
 	g_painter->setResolution(m_texture->getSize());
 	g_painter->setAlphaWriting(m_useAlphaWriting);
 
-	clear(m_colorClear);
+	if(autoClear) clear(m_colorClear);
 }
 
 void FrameBuffer::release()
