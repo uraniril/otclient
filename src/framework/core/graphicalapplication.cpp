@@ -140,8 +140,6 @@ void GraphicalApplication::run()
 			bool redraw = false;
 			bool updateForeground = false;
 
-			const bool cacheForeground = g_graphics.canCacheBackbuffer() && m_foregroundFrameCounter.getMaxFps() != 0;
-
 			if(m_backgroundFrameCounter.shouldProcessNextFrame()) {
 				redraw = true;
 
@@ -152,38 +150,25 @@ void GraphicalApplication::run()
 			}
 
 			if(redraw) {
-				if(cacheForeground) {
-					Rect viewportRect(0, 0, g_painter->getResolution());
+				const Rect viewportRect(0, 0, g_painter->getResolution());
 
-					// draw the foreground into a texture
-					g_drawPool.getFrameBuffer(DRAWTYPE_FOREGROUND)->setDrawable(updateForeground);
-					if(updateForeground) {
-						m_foregroundFrameCounter.processNextFrame();
-
-						// draw foreground
-						if(g_drawPool.drawUp(DRAWTYPE_FOREGROUND, g_graphics.getViewportSize())) {
-							g_ui.render(Fw::ForegroundPane);
-						}
-					}
-
-					// draw background (animated stuff)
-					m_backgroundFrameCounter.processNextFrame();
-					g_ui.render(Fw::BackgroundPane);
-
-					//g_drawPool.draw(updateForeground, m_foreground);
-					g_drawPool.draw(false, nullptr);
-				} else {
+				// draw the foreground into a texture
+				g_drawPool.getFrameBuffer(DRAWTYPE_FOREGROUND)->setDrawable(updateForeground);
+				if(updateForeground) {
 					m_foregroundFrameCounter.processNextFrame();
-					m_backgroundFrameCounter.processNextFrame();
 
+					// draw foreground
 					if(g_drawPool.drawUp(DRAWTYPE_FOREGROUND, g_graphics.getViewportSize())) {
 						g_ui.render(Fw::ForegroundPane);
 					}
-
-					g_ui.render(Fw::BackgroundPane);
-
-					g_drawPool.draw(false, nullptr);
 				}
+
+				// draw background (animated stuff)
+				m_backgroundFrameCounter.processNextFrame();
+				g_ui.render(Fw::BackgroundPane);
+
+				//g_drawPool.draw(updateForeground, m_foreground);
+				g_drawPool.draw(false, nullptr);
 
 				// update screen pixels
 				g_window.swapBuffers();

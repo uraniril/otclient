@@ -98,8 +98,8 @@ void FrameBuffer::resize(const Size& size)
 
 void FrameBuffer::bind(const bool autoClear)
 {
+	g_painter->saveAndResetState();
 	internalBind();
-	m_lastResolution = g_painter->getResolution();
 	g_painter->setResolution(m_texture->getSize());
 	g_painter->setAlphaWriting(m_useAlphaWriting);
 
@@ -109,8 +109,7 @@ void FrameBuffer::bind(const bool autoClear)
 void FrameBuffer::release()
 {
 	internalRelease();
-	g_painter->setResolution(m_lastResolution);
-	g_painter->setAlphaWriting(false);
+	g_painter->restoreSavedState();
 
 	m_forceUpdate = false;
 	m_lastRenderedTime.restart();
@@ -119,12 +118,12 @@ void FrameBuffer::release()
 void FrameBuffer::draw()
 {
 	Rect rect(0, 0, getSize());
+	draw(rect, rect);
+}
 
-	if(m_disableBlend) glDisable(GL_BLEND);
-	g_painter->setCompositionMode(m_compositeMode);
-	g_painter->drawTexturedRect(rect, m_texture, rect);
-	g_painter->resetCompositionMode();
-	if(m_disableBlend) glEnable(GL_BLEND);
+void FrameBuffer::draw(const Rect& dest)
+{
+	draw(dest, Rect(0, 0, getSize()));
 }
 
 void FrameBuffer::draw(const Rect& dest, const Rect& src)
@@ -132,15 +131,6 @@ void FrameBuffer::draw(const Rect& dest, const Rect& src)
 	if(m_disableBlend) glDisable(GL_BLEND);
 	g_painter->setCompositionMode(m_compositeMode);
 	g_painter->drawTexturedRect(dest, m_texture, src);
-	g_painter->resetCompositionMode();
-	if(m_disableBlend) glEnable(GL_BLEND);
-}
-
-void FrameBuffer::draw(const Rect& dest)
-{
-	if(m_disableBlend) glDisable(GL_BLEND);
-	g_painter->setCompositionMode(m_compositeMode);
-	g_painter->drawTexturedRect(dest, m_texture, Rect(0, 0, getSize()));
 	g_painter->resetCompositionMode();
 	if(m_disableBlend) glEnable(GL_BLEND);
 }

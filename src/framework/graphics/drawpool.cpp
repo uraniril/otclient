@@ -80,7 +80,6 @@ bool DrawPool::drawUp(DrawType type, Size size, const Rect& dest, const Rect& sr
 
 	bool canUpdate = drawingData.frame->canUpdate();
 	if(canUpdate) {
-		drawingData.objects.clear();
 		drawingData.frame->resize(size);
 		drawingData.dest = dest;
 		drawingData.src = src;
@@ -101,9 +100,9 @@ void DrawPool::update()
 
 void DrawPool::draw(const bool updateForeground, const TexturePtr& foregroundTexture)
 {
-	Rect viewportRect(0, 0, g_painter->getResolution());
 	g_painter->saveAndResetState();
 
+	Rect viewportRect(0, 0, g_painter->getResolution());
 	int type = -1;
 	for(auto& drawingData : m_drawingData) {
 		++type;
@@ -127,6 +126,7 @@ void DrawPool::draw(const bool updateForeground, const TexturePtr& foregroundTex
 
 			drawingData.frame->release();
 		}
+		drawingData.objects.clear();
 
 		if(drawingData.dest.isNull()) {
 			drawingData.frame->draw();
@@ -197,6 +197,11 @@ void DrawPool::updateHash(const TexturePtr& texture, const DrawMethod& method)
 	if(currentState.shaderProgram)
 		boost::hash_combine(drawingData.currentHashcode, HASH_INT(currentState.shaderProgram->getProgramId()));
 
+	if(currentState.clipRect.isValid()) {
+		boost::hash_combine(drawingData.currentHashcode, HASH_INT(currentState.clipRect.x()));
+		boost::hash_combine(drawingData.currentHashcode, HASH_INT(currentState.clipRect.y()));
+	}
+
 	if(method.rects.first.isValid()) {
 		boost::hash_combine(drawingData.currentHashcode, HASH_INT(method.rects.first.x()));
 		boost::hash_combine(drawingData.currentHashcode, HASH_INT(method.rects.first.y()));
@@ -207,9 +212,21 @@ void DrawPool::updateHash(const TexturePtr& texture, const DrawMethod& method)
 		boost::hash_combine(drawingData.currentHashcode, HASH_INT(method.rects.second.y()));
 	}
 
-	if(currentState.clipRect.isValid()) {
-		boost::hash_combine(drawingData.currentHashcode, HASH_INT(currentState.clipRect.x()));
-		boost::hash_combine(drawingData.currentHashcode, HASH_INT(currentState.clipRect.y()));
+	const auto& a = std::get<0>(method.points),
+		b = std::get<1>(method.points),
+		c = std::get<2>(method.points);
+
+	if(!a.isNull()) {
+		boost::hash_combine(drawingData.currentHashcode, HASH_INT(a.x));
+		boost::hash_combine(drawingData.currentHashcode, HASH_INT(a.y));
+	}
+	if(!b.isNull()) {
+		boost::hash_combine(drawingData.currentHashcode, HASH_INT(b.x));
+		boost::hash_combine(drawingData.currentHashcode, HASH_INT(b.y));
+	}
+	if(!c.isNull()) {
+		boost::hash_combine(drawingData.currentHashcode, HASH_INT(c.x));
+		boost::hash_combine(drawingData.currentHashcode, HASH_INT(c.y));
 	}
 }
 

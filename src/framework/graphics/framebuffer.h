@@ -35,64 +35,64 @@ static constexpr int32_t MAX_NODES = 512;
 class FrameBuffer : public stdext::shared_object
 {
 protected:
-    FrameBuffer(bool useAlphaWriting, uint16_t minTimeUpdate);
+	FrameBuffer(bool useAlphaWriting, uint16_t minTimeUpdate);
 
-    friend class FrameBufferManager;
+	friend class FrameBufferManager;
 
 public:
-    ~FrameBuffer() override;
+	~FrameBuffer() override;
 
-    void resize(const Size& size);
-    void bind(bool autoClear = true);
-    void release();
-    void draw();
-    void clear(Color color = Color::black);
-    void draw(const Rect& dest);
-    void draw(const Rect& dest, const Rect& src);
+	void resize(const Size& size);
+	void bind(bool autoClear = true);
+	void release();
+	void draw();
+	void clear(Color color = Color::black);
+	void draw(const Rect& dest);
+	void draw(const Rect& dest, const Rect& src);
 
-    void setBackuping(bool enabled) { m_backuping = enabled; }
-    void setSmooth(bool enabled) { m_smooth = enabled; }
+	void setBackuping(bool enabled) { m_backuping = enabled; }
+	void setSmooth(bool enabled) { m_smooth = enabled; }
 
-    TexturePtr getTexture() { return m_texture; }
-    Size getSize();
-    bool isBackuping() { return m_backuping; }
-    bool isSmooth() { return m_smooth; }
+	TexturePtr getTexture() { return m_texture; }
+	Size getSize();
+	bool isBackuping() { return m_backuping; }
+	bool isSmooth() { return m_smooth; }
 
-    bool canUpdate();
-    void update();
-    void cleanTexture() { m_texture = nullptr; }
-    bool isValid() { return m_texture != nullptr; }
-    void setColorClear(const Color color) { m_colorClear = color; }
-    void setCompositeMode(const Painter::CompositionMode mode) { m_compositeMode = mode; }
-    void disableBlend() { m_disableBlend = true; }
+	bool canUpdate();
+	void update();
+	void cleanTexture() { m_texture = nullptr; }
+	bool isValid() { return m_texture != nullptr; }
+	void setColorClear(const Color color) { m_colorClear = color; }
+	void setCompositeMode(const Painter::CompositionMode mode) { m_compositeMode = mode; }
+	void disableBlend() { m_disableBlend = true; }
 
-    void setDrawable(const bool v) { m_drawable = v; }
-    bool isDrawable() { return m_drawable; }
+	void setDrawable(const bool v) { m_drawable = v; }
+	bool isDrawable() { return m_drawable; }
 
 private:
-    void internalCreate();
-    void internalBind();
-    void internalRelease();
+	void internalCreate();
+	void internalBind();
+	void internalRelease();
 
-    TexturePtr m_texture;
-    TexturePtr m_screenBackup;
-    Size m_oldViewportSize, m_lastResolution;
-    uint m_fbo;
-    uint m_prevBoundFbo;
-    bool m_forceUpdate{ true },
-        m_backuping{ true },
-        m_smooth{ true },
-        m_useAlphaWriting{ false },
-        m_disableBlend{ false },
-        m_drawable{ true };
+	static uint boundFbo;
 
-    static uint boundFbo;
+	TexturePtr m_texture, m_screenBackup;
 
-    Timer m_lastRenderedTime;
-    uint16_t m_minTimeUpdate;
+	Size m_oldViewportSize;
 
-    Color m_colorClear = { Color::black };
-    Painter::CompositionMode m_compositeMode{ Painter::CompositionMode_Normal };
+	uint32 m_fbo, m_prevBoundFbo;
+	uint16_t m_minTimeUpdate;
+
+	Timer m_lastRenderedTime;
+	Color m_colorClear = { Color::black };
+	Painter::CompositionMode m_compositeMode{ Painter::CompositionMode_Normal };
+
+	bool m_forceUpdate{ true },
+		m_backuping{ true },
+		m_smooth{ true },
+		m_useAlphaWriting{ false },
+		m_disableBlend{ false },
+		m_drawable{ true };
 };
 
 #endif
