@@ -47,7 +47,7 @@ void LightViewPainter::terminate()
 void LightViewPainter::draw(const LightViewPtr& lightView, const Rect& dest, const Rect& src)
 {
 	// draw light, only if there is darkness
-	if(!lightView->isDark() || !lightView->m_lightbuffer->canUpdate()) return;
+	if(!lightView || !lightView->isDark() || !lightView->m_lightbuffer->canUpdate()) return;
 
 	g_drawPool.setFrameBuffer(lightView->m_lightbuffer);
 	lightView->m_lightbuffer->setColorClear(lightView->m_globalLightColor);

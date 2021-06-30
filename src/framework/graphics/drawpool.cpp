@@ -56,18 +56,8 @@ void DrawPool::draw(const FrameBufferPtr& frameBuffer, const Rect& dest, const R
 		frameBuffer->updateStatus();
 		frameBuffer->bind();
 
-		//for(auto& obj : frameBuffer->getScheduledDrawings())
-		for(size_t i = 0; i < frameBuffer->getScheduledDrawings().size(); i++)
-		{
-			const auto& obj = frameBuffer->getScheduledDrawings()[i];
+		for(auto& obj : frameBuffer->getScheduledDrawings())
 			drawObject(obj);
-			if(i == 70) {
-				/*glDisable(GL_BLEND);
-				g_painter->setColor(Color::alpha);
-				g_painter->drawFilledRect(Rect(Point(376, 40), Point(1345, 751)));
-				glEnable(GL_BLEND);*/
-			}
-		}
 
 		if(m_onBind) {
 			m_onBind();
