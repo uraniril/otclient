@@ -50,7 +50,8 @@ void MapViewPainter::draw(const MapViewPtr& mapView, const Rect& rect)
 
 	const Position cameraPosition = mapView->getCameraPosition();
 
-	if(g_drawPool.drawUp(DRAWTYPE_MAP, mapView->m_rectDimension.size(), mapView->m_rectCache.rect, mapView->m_rectCache.srcRect)) {
+	g_drawPool.setFrameBuffer(mapView->m_frameCache.tile);
+	if(g_drawPool.canUpdate()) {
 		const auto& lightView = mapView->m_drawLights ? mapView->m_lightView.get() : nullptr;
 		for(int_fast8_t z = mapView->m_floorMax; z >= mapView->m_floorMin; --z) {
 			if(lightView) {
@@ -147,13 +148,13 @@ void MapViewPainter::draw(const MapViewPtr& mapView, const Rect& rect)
 
 	g_painter->setOpacity(fadeOpacity);*/
 
-	// this could happen if the player position is not known yet
-	//if(!cameraPosition.isValid())
-			//return;
+	g_drawPool.draw(mapView->m_frameCache.tile, mapView->m_rectCache.rect, mapView->m_rectCache.srcRect);
 
-	if(mapView->m_drawLights && g_drawPool.drawUp(DRAWTYPE_LIGHT, mapView->m_rectDimension.size(), mapView->m_rectCache.rect, mapView->m_rectCache.srcRect)) {
-		LightViewPainter::draw(mapView->m_lightView);
-	}
+	// this could happen if the player position is not known yet
+	if(!cameraPosition.isValid())
+		return;
+
+	LightViewPainter::draw(mapView->m_lightView, mapView->m_rectCache.rect, mapView->m_rectCache.srcRect);
 
 	drawCreatureInformation(mapView);
 	drawText(mapView);
@@ -163,8 +164,8 @@ void MapViewPainter::drawCreatureInformation(const MapViewPtr& mapView)
 {
 	if(!mapView->m_drawNames && !mapView->m_drawHealthBars && !mapView->m_drawManaBar) return;
 
-	if(g_drawPool.drawUp(DRAWTYPE_CREATURE_INFORMATION, g_graphics.getViewportSize()))
-	{
+	g_drawPool.setFrameBuffer(mapView->m_frameCache.creatureInformation);
+	if(g_drawPool.canUpdate()) {
 		const Position cameraPosition = mapView->getCameraPosition();
 
 		uint32_t flags = 0;
@@ -176,6 +177,7 @@ void MapViewPainter::drawCreatureInformation(const MapViewPtr& mapView)
 			CreaturePainter::drawInformation(creature, mapView->m_rectCache.rect, mapView->transformPositionTo2D(creature->getPosition(), cameraPosition), mapView->m_scaleFactor, mapView->m_rectCache.drawOffset, mapView->m_rectCache.horizontalStretchFactor, mapView->m_rectCache.verticalStretchFactor, flags);
 		}
 	}
+	g_drawPool.draw(mapView->m_frameCache.creatureInformation);
 }
 
 void MapViewPainter::drawText(const MapViewPtr& mapView)
@@ -184,7 +186,8 @@ void MapViewPainter::drawText(const MapViewPtr& mapView)
 
 	const Position cameraPosition = mapView->getCameraPosition();
 
-	if(!g_map.getStaticTexts().empty() && g_drawPool.drawUp(DRAWTYPE_STATIC_TEXT, g_graphics.getViewportSize())) {
+	g_drawPool.setFrameBuffer(mapView->m_frameCache.staticText);
+	if(g_drawPool.canUpdate() && !g_map.getStaticTexts().empty()) {
 		for(const StaticTextPtr& staticText : g_map.getStaticTexts()) {
 			const Position pos = staticText->getPosition();
 
@@ -199,8 +202,7 @@ void MapViewPainter::drawText(const MapViewPtr& mapView)
 		}
 	}
 
-	if(!g_map.getAnimatedTexts().empty() && g_drawPool.drawUp(DRAWTYPE_DYNAMIC_TEXT, g_graphics.getViewportSize()))
-	{
+	if(g_drawPool.canUpdate() && !g_map.getAnimatedTexts().empty()) {
 		for(const AnimatedTextPtr& animatedText : g_map.getAnimatedTexts()) {
 			const Position pos = animatedText->getPosition();
 
@@ -215,6 +217,9 @@ void MapViewPainter::drawText(const MapViewPtr& mapView)
 			ThingPainter::drawText(animatedText, p, mapView->m_rectCache.rect);
 		}
 	}
+
+	g_drawPool.draw(mapView->m_frameCache.staticText);
+	g_drawPool.draw(mapView->m_frameCache.dynamicText);
 }
 
 bool MapViewPainter::canRenderTile(const MapViewPtr& mapView, const TilePtr& tile, const AwareRange& viewPort, LightView* lightView)

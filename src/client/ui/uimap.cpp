@@ -57,10 +57,10 @@ void UIMap::drawSelf(Fw::DrawPane drawPane)
 		g_drawPool.addBoundingRect(m_mapRect.expanded(1));
 
 		if(drawPane != Fw::BothPanes) {
-			glDisable(GL_BLEND);
 			g_painter->setColor(Color::alpha);
+			g_drawPool.disableGL(GL_BLEND);
 			g_drawPool.addFilledRect(m_mapRect);
-			glEnable(GL_BLEND);
+			g_drawPool.enableGL(GL_BLEND);
 		}
 	}
 

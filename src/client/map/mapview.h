@@ -159,12 +159,17 @@ protected:
 	friend class MapViewPainter;
 
 private:
+	struct FrameCache {
+		FrameBufferPtr tile, staticText, dynamicText, creatureInformation;
+	};
+
 	struct RectCache {
 		Rect rect, srcRect;
 		Point drawOffset;
 		float horizontalStretchFactor, verticalStretchFactor;
 	};
 
+	void updateStaticTextFrame() { m_frameCache.staticText->update(); }
 	void requestVisibleTilesCacheUpdate() { m_mustUpdateVisibleTilesCache = true; }
 	void updateGeometry(const Size& visibleDimension, const Size& optimizedSize);
 	void updateVisibleTilesCache();
@@ -242,6 +247,7 @@ private:
 	LightViewPtr m_lightView;
 	CreaturePtr m_followingCreature;
 
+	FrameCache m_frameCache;
 	RectCache m_rectCache;
 	ViewMode m_viewMode;
 

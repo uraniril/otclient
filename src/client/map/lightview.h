@@ -30,47 +30,47 @@
 #include <client/thing/type/thingtype.h>
 
 struct ShadeBlock {
-    int8 floor = -1;
-    Point pos;
+	int8 floor = -1;
+	Point pos;
 };
 
 struct LightSource {
-    Point pos;
-    uint8 color;
-    uint16 radius;
-    float brightness;
+	Point pos;
+	uint8 color;
+	uint16 radius;
+	float brightness;
 };
 
 class LightView : public LuaObject
 {
 public:
-    LightView(const MapViewPtr& mapView);
+	LightView(const MapViewPtr& mapView);
 
-    void resize();
+	void resize();
 
-    void addLightSource(const Point& mainCenter, const Light& light);
+	void addLightSource(const Point& mainCenter, const Light& light);
 
-    void setGlobalLight(const Light& light) { m_globalLight = light; m_globalLightColor = Color::from8bit(m_globalLight.color, m_globalLight.intensity / static_cast<float>(UINT8_MAX)); }
-    void setFloor(const uint8 floor) { m_currentFloor = floor; }
-    void setShade(const Point& point);
+	void setGlobalLight(const Light& light) { m_globalLight = light; m_globalLightColor = Color::from8bit(m_globalLight.color, m_globalLight.intensity / static_cast<float>(UINT8_MAX)); }
+	void setFloor(const uint8 floor) { m_currentFloor = floor; }
+	void setShade(const Point& point);
 
-    const Light& getGlobalLight() const { return m_globalLight; }
-    bool isDark() const { return m_globalLight.intensity < 250; }
+	const Light& getGlobalLight() const { return m_globalLight; }
+	bool isDark() const { return m_globalLight.intensity < 250; }
 
 private:
 
-    Light m_globalLight;
-    Color m_globalLightColor;
+	Light m_globalLight;
+	Color m_globalLightColor;
 
-    FrameBufferPtr m_lightbuffer;
-    MapViewPtr m_mapView;
+	FrameBufferPtr m_lightbuffer;
+	MapViewPtr m_mapView;
 
-    int8 m_currentFloor;
+	int8 m_currentFloor;
 
-    std::vector<ShadeBlock> m_shades;
-    std::array<std::vector<LightSource>, MAX_Z + 1> m_lights;
+	std::vector<ShadeBlock> m_shades;
+	std::array<std::vector<LightSource>, MAX_Z + 1> m_lights;
 
-    friend class LightViewPainter;
+	friend class LightViewPainter;
 };
 
 #endif

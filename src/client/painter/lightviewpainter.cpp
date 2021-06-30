@@ -44,13 +44,14 @@ void LightViewPainter::terminate()
 	m_lightTexture = nullptr;
 }
 
-void LightViewPainter::draw(const LightViewPtr& lightView)
+void LightViewPainter::draw(const LightViewPtr& lightView, const Rect& dest, const Rect& src)
 {
 	// draw light, only if there is darkness
-	g_drawPool.getFrameBuffer(DRAWTYPE_LIGHT)->setDrawable(lightView->isDark());
-	if(!lightView->isDark()) return;
+	if(!lightView->isDark() || !lightView->m_lightbuffer->canUpdate()) return;
 
-	g_drawPool.setColorClear(DRAWTYPE_LIGHT, lightView->m_globalLightColor);
+	g_drawPool.setFrameBuffer(lightView->m_lightbuffer);
+	lightView->m_lightbuffer->setColorClear(lightView->m_globalLightColor);
+
 	const auto& mapView = lightView->m_mapView;
 	const auto& shadeBase = std::make_pair<Point, Size>(Point(mapView->getTileSize() / 4.8), Size(mapView->getTileSize() * 1.4));
 	for(int_fast8_t z = mapView->getFloorMax(); z >= mapView->getFloorMin(); --z) {
@@ -72,6 +73,8 @@ void LightViewPainter::draw(const LightViewPtr& lightView)
 		}
 		lights.clear();
 	}
+
+	g_drawPool.draw(lightView->m_lightbuffer, dest, src);
 }
 
 bool LightViewPainter::orderLightComparator(const LightSource& a, const LightSource& b)

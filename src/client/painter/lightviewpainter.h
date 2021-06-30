@@ -31,17 +31,17 @@ struct LightSource;
 class LightViewPainter
 {
 public:
-    static void draw(const LightViewPtr& lightView);
+	static void draw(const LightViewPtr& lightView, const Rect& dest, const Rect& src);
 
-    void init();
-    void terminate();
+	void init();
+	void terminate();
 
 private:
-    static bool orderLightComparator(const LightSource& a, const LightSource& b);
+	static bool orderLightComparator(const LightSource& a, const LightSource& b);
 
-    void generateLightTexture(), generateShadeTexture();
+	void generateLightTexture(), generateShadeTexture();
 
-    TexturePtr m_lightTexture, m_shadeTexture;
+	TexturePtr m_lightTexture, m_shadeTexture;
 };
 
 extern LightViewPainter g_lightViewPaint;

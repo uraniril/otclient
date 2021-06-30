@@ -150,25 +150,35 @@ void GraphicalApplication::run()
 			}
 
 			if(redraw) {
-				const Rect viewportRect(0, 0, g_painter->getResolution());
+				Rect viewportRect(0, 0, g_painter->getResolution());
 
 				// draw the foreground into a texture
-				g_drawPool.getFrameBuffer(DRAWTYPE_FOREGROUND)->setDrawable(updateForeground);
 				if(updateForeground) {
 					m_foregroundFrameCounter.processNextFrame();
 
 					// draw foreground
-					if(g_drawPool.drawUp(DRAWTYPE_FOREGROUND, g_graphics.getViewportSize())) {
+					g_drawPool.setFrameBuffer(m_foregroundFrameCache);
+					if(g_drawPool.canUpdate()) {
 						g_ui.render(Fw::ForegroundPane);
+
+						g_drawPool.setOnBind([&]() {
+							m_foreground->copyFromScreen(viewportRect);
+							g_painter->clear(Color::black);
+							g_painter->setAlphaWriting(false);
+						});
 					}
+
+					g_drawPool.draw();
 				}
 
 				// draw background (animated stuff)
 				m_backgroundFrameCounter.processNextFrame();
 				g_ui.render(Fw::BackgroundPane);
 
-				//g_drawPool.draw(updateForeground, m_foreground);
-				g_drawPool.draw(false, nullptr);
+				// draw the foreground (steady stuff)
+				g_painter->resetColor();
+				g_painter->resetOpacity();
+				g_painter->drawTexturedRect(viewportRect, m_foreground, viewportRect);
 
 				// update screen pixels
 				g_window.swapBuffers();
@@ -228,7 +238,7 @@ void GraphicalApplication::resize(const Size& size)
 		m_foreground->setUpsideDown(true);
 	}
 
-	//m_foregroundFrameCache->resize(size);
+	m_foregroundFrameCache->resize(size);
 
 	m_mustRepaint = true;
 }

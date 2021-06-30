@@ -32,10 +32,10 @@ void UIParticles::drawSelf(Fw::DrawPane drawPane)
 {
 	if(drawPane & Fw::ForegroundPane) {
 		if(drawPane != Fw::BothPanes) {
-			glDisable(GL_BLEND);
+			g_drawPool.disableGL(GL_BLEND);
 			g_painter->setColor(Color::alpha);
 			g_drawPool.addFilledRect(m_rect);
-			glEnable(GL_BLEND);
+			g_drawPool.enableGL(GL_BLEND);
 		}
 	}
 

@@ -28,16 +28,6 @@
 #include <framework/graphics/framebuffer.h>
 #include <unordered_set>
 
-enum DrawType {
-	DRAWTYPE_FOREGROUND,
-	DRAWTYPE_MAP,
-	DRAWTYPE_CREATURE_INFORMATION,
-	DRAWTYPE_LIGHT,
-	DRAWTYPE_STATIC_TEXT,
-	DRAWTYPE_DYNAMIC_TEXT,
-	DRAWTYPE_LAST
-};
-
 class DrawPool
 {
 public:
@@ -45,8 +35,10 @@ public:
 	void init();
 	void terminate();
 
+	void setFrameBuffer(const FrameBufferPtr& frameBuffer);
+
 	void addFillCoords(CoordsBuffer& coordsBuffer);
-	void addTextureCoords(CoordsBuffer& coordsBuffer, const TexturePtr& texture, Painter::DrawMode drawMode = Painter::Triangles);
+	void addTextureCoords(CoordsBuffer& coordsBuffer, const TexturePtr& texture, Painter::DrawMode drawMode = Painter::DrawMode::Triangles);
 
 	void addTexturedRect(const Rect& dest, const TexturePtr& texture);
 	void addTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src);
@@ -56,62 +48,28 @@ public:
 	void addFilledTriangle(const Point& a, const Point& b, const Point& c);
 	void addBoundingRect(const Rect& dest, int innerLineWidth = 1);
 
-	void draw(const bool updateForeground, const TexturePtr& texture);
-	void setColorClear(const DrawType type, const Color color) { m_drawingData[type].frame->setColorClear(color); }
-	bool drawUp(DrawType type, Size size) { return drawUp(type, size, Rect(), Rect()); }
-	bool drawUp(DrawType type, Size size, const Rect& dest, const Rect& src);
-	void update();
+	void disableGL(GLenum cap);
+	void enableGL(GLenum cap);
 
-	FrameBufferPtr getFrameBuffer(const DrawType type) { return m_drawingData[type].frame; }
+	void draw() { if(m_currentFrameBuffer) draw(m_currentFrameBuffer); }
+	void draw(const Rect& dest, const Rect& src) { if(m_currentFrameBuffer) draw(m_currentFrameBuffer, dest, src); }
+	void draw(const FrameBufferPtr& frameBuffer) { draw(frameBuffer, Rect(), Rect()); }
+	void draw(const FrameBufferPtr& frameBuffer, const Rect& dest, const Rect& src);
+
+	bool canUpdate() const { return m_currentFrameBuffer ? m_currentFrameBuffer->canUpdate() : false; }
+
+	void setOnBind(std::function<void()> f) { m_onBind = f; }
 
 private:
-	enum class DrawMethodType {
-		DRAW_FILL_COORDS,
-		DRAW_TEXTURE_COORDS,
-		DRAW_TEXTURED_RECT,
-		DRAW_UPSIDEDOWN_TEXTURED_RECT,
-		DRAW_REPEATED_TEXTURED_RECT,
-		DRAW_FILLED_RECT,
-		DRAW_FILLED_TRIANGLE,
-		DRAW_BOUNDING_RECT
-	};
+	void drawObject(const FrameBuffer::ActionObject& obj);
+	void add(const std::shared_ptr<CoordsBuffer>& coordsBuffer, const TexturePtr& texture, const FrameBuffer::ScheduledMethod& method, const Painter::DrawMode drawMode = Painter::DrawMode::Triangles);
 
-	struct DrawMethod {
-		DrawMethodType type;
-		std::pair<Rect, Rect> rects;
-		std::tuple<Point, Point, Point> points;
-		uint8 innerLineWidth;
-	};
-
-	struct DrawObject {
-		~DrawObject() { drawMethods.clear(); coordsBuffer = nullptr; state.texture = nullptr; }
-
-		Painter::PainterState state;
-		std::shared_ptr<CoordsBuffer> coordsBuffer;
-		Painter::DrawMode drawMode{ Painter::Triangles };
-		std::vector<DrawMethod> drawMethods;
-	};
-
-	struct DrawingData {
-		Rect dest, src;
-		FrameBufferPtr frame;
-		std::vector<DrawObject> objects;
-		size_t lastHashcode{ 0 }, currentHashcode{ 0 };
-
-		void destroy() { frame = nullptr; objects.clear(); }
-	};
-
-	void updateHash(const TexturePtr& texture, const DrawMethod& method);
-
-	void add(const std::shared_ptr<CoordsBuffer>& coordsBuffer, const TexturePtr& texture, const DrawMethod& method, const Painter::DrawMode drawMode = Painter::Triangles);
-	void drawObject(const DrawObject& obj);
-
-	std::array<DrawingData, DRAWTYPE_LAST> m_drawingData;
-
-	int8_t m_currentDrawType{ -1 };
+	std::function<void()> m_onBind;
 
 	CoordsBuffer m_coordsBuffer;
+	FrameBufferPtr m_currentFrameBuffer;
 
+	std::list<FrameBufferPtr> m_frames;
 	std::hash<size_t> HASH_INT;
 };
 

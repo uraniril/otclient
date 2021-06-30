@@ -30,24 +30,59 @@
 #include <framework/core/timer.h>
 #include <client/const.h>
 
-static constexpr int32_t MAX_NODES = 512;
+enum class DrawMethodType {
+	DRAW_FILL_COORDS,
+	DRAW_TEXTURE_COORDS,
+	DRAW_TEXTURED_RECT,
+	DRAW_UPSIDEDOWN_TEXTURED_RECT,
+	DRAW_REPEATED_TEXTURED_RECT,
+	DRAW_FILLED_RECT,
+	DRAW_FILLED_TRIANGLE,
+	DRAW_BOUNDING_RECT,
+	CLEAR_AREA,
+	GL_DISABLE,
+	GL_ENABLE
+};
 
 class FrameBuffer : public stdext::shared_object
 {
-protected:
-	FrameBuffer(bool useAlphaWriting, uint16_t minTimeUpdate);
-
-	friend class FrameBufferManager;
-
 public:
+	enum class ScheduledMethodType {
+		DRAW_FILL_COORDS,
+		DRAW_TEXTURE_COORDS,
+		DRAW_TEXTURED_RECT,
+		DRAW_UPSIDEDOWN_TEXTURED_RECT,
+		DRAW_REPEATED_TEXTURED_RECT,
+		DRAW_FILLED_RECT,
+		DRAW_FILLED_TRIANGLE,
+		DRAW_BOUNDING_RECT,
+		CLEAR_AREA,
+		GL_DISABLE,
+		GL_ENABLE
+	};
+
+	struct ScheduledMethod {
+		DrawMethodType type;
+		std::pair<Rect, Rect> rects;
+		std::tuple<Point, Point, Point> points;
+		uint intValue;
+	};
+
+	struct ActionObject {
+		~ActionObject() { drawMethods.clear(); coordsBuffer = nullptr; state.texture = nullptr; }
+
+		Painter::PainterState state;
+		std::shared_ptr<CoordsBuffer> coordsBuffer;
+		Painter::DrawMode drawMode{ Painter::DrawMode::Triangles };
+		std::vector<ScheduledMethod> drawMethods;
+	};
+
 	~FrameBuffer() override;
 
 	void resize(const Size& size);
 	void bind(bool autoClear = true);
 	void release();
-	void draw();
 	void clear(Color color = Color::black);
-	void draw(const Rect& dest);
 	void draw(const Rect& dest, const Rect& src);
 
 	void setBackuping(bool enabled) { m_backuping = enabled; }
@@ -59,20 +94,35 @@ public:
 	bool isSmooth() { return m_smooth; }
 
 	bool canUpdate();
-	void update();
+	void update() { m_forceUpdate = true; }
 	void cleanTexture() { m_texture = nullptr; }
-	bool isValid() { return m_texture != nullptr; }
+	bool isValid() const { return m_texture != nullptr; }
 	void setColorClear(const Color color) { m_colorClear = color; }
 	void setCompositeMode(const Painter::CompositionMode mode) { m_compositeMode = mode; }
 	void disableBlend() { m_disableBlend = true; }
 
 	void setDrawable(const bool v) { m_drawable = v; }
-	bool isDrawable() { return m_drawable; }
+	bool isDrawable() const { return m_drawable; }
+
+	void scheduleMethod(const ScheduledMethod& method);
+	void scheduleDrawing(const std::shared_ptr<CoordsBuffer>& coordsBuffer, const TexturePtr& texture, const ScheduledMethod& method, const Painter::DrawMode drawMode = Painter::DrawMode::Triangles);
+
+	bool hasModification() const { return m_statusHashCode != m_currentStatusHashcode; }
+	void updateStatus() { m_statusHashCode = m_currentStatusHashcode; }
+	void resetStatus() { m_currentStatusHashcode = 0; }
+
+	std::vector<ActionObject>& getScheduledDrawings() { return m_actionObjects; }
+
+protected:
+	FrameBuffer(bool useAlphaWriting, uint16_t minTimeUpdate);
+
+	friend class FrameBufferManager;
 
 private:
 	void internalCreate();
 	void internalBind();
 	void internalRelease();
+	void updateHash(const TexturePtr& texture, const ScheduledMethod& method);
 
 	static uint boundFbo;
 
@@ -87,12 +137,17 @@ private:
 	Color m_colorClear = { Color::black };
 	Painter::CompositionMode m_compositeMode{ Painter::CompositionMode_Normal };
 
+	std::vector<ActionObject> m_actionObjects;
+	size_t m_statusHashCode{ 0 }, m_currentStatusHashcode{ 0 };
+
 	bool m_forceUpdate{ true },
 		m_backuping{ true },
 		m_smooth{ true },
 		m_useAlphaWriting{ false },
 		m_disableBlend{ false },
 		m_drawable{ true };
+
+	std::hash<size_t> HASH_INT;
 };
 
 #endif

@@ -46,7 +46,9 @@ public:
 		CompositionMode_DestBlending,
 		CompositionMode_Light
 	};
-	enum DrawMode {
+
+	enum class DrawMode {
+		None = GL_NONE,
 		Triangles = GL_TRIANGLES,
 		TriangleStrip = GL_TRIANGLE_STRIP
 	};
@@ -94,9 +96,9 @@ public:
 
 	virtual void clear(const Color& color) = 0;
 
-	virtual void drawCoords(CoordsBuffer& coordsBuffer, DrawMode drawMode = Triangles) = 0;
+	virtual void drawCoords(CoordsBuffer& coordsBuffer, DrawMode drawMode = DrawMode::Triangles) = 0;
 	virtual void drawFillCoords(CoordsBuffer& coordsBuffer) = 0;
-	virtual void drawTextureCoords(CoordsBuffer& coordsBuffer, const TexturePtr& texture, DrawMode drawMode = Triangles) = 0;
+	virtual void drawTextureCoords(CoordsBuffer& coordsBuffer, const TexturePtr& texture, DrawMode drawMode = DrawMode::Triangles) = 0;
 	virtual void drawTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src) = 0;
 	void drawTexturedRect(const Rect& dest, const TexturePtr& texture) { drawTexturedRect(dest, texture, Rect(Point(), texture->getSize())); }
 	virtual void drawUpsideDownTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src) = 0;

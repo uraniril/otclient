@@ -57,9 +57,12 @@ MapView::MapView()
 	m_viewMode = NEAR_VIEW;
 	m_optimizedSize = Size(g_map.getAwareRange().horizontal(), g_map.getAwareRange().vertical()) * SPRITE_SIZE;
 
-	/*m_frameCache.creatureInformation = g_framebuffers.createFrameBuffer(true);
+	m_frameCache.tile = g_framebuffers.createFrameBuffer();
+	m_frameCache.creatureInformation = g_framebuffers.createFrameBuffer(true);
 	m_frameCache.staticText = g_framebuffers.createFrameBuffer(true, 0);
-	m_frameCache.dynamicText = g_framebuffers.createFrameBuffer(true, 50);*/
+	m_frameCache.dynamicText = g_framebuffers.createFrameBuffer(true, 50);
+
+	m_frameCache.tile->disableBlend();
 
 	m_shader = g_shaders.getDefaultMapShader();
 
@@ -217,10 +220,10 @@ void MapView::updateGeometry(const Size& visibleDimension, const Size& optimized
 
 	m_scaleFactor = m_tileSize / static_cast<float>(SPRITE_SIZE);
 
+	m_frameCache.tile->resize(bufferSize);
 	if(m_drawLights) m_lightView->resize();
-
-	/*for(const auto& frame : {m_frameCache.creatureInformation, m_frameCache.staticText, m_frameCache.dynamicText})
-		frame->resize(g_graphics.getViewportSize());*/
+	for(const auto& frame : { m_frameCache.creatureInformation, m_frameCache.staticText, m_frameCache.dynamicText })
+		frame->resize(g_graphics.getViewportSize());
 
 	m_awareRange.left = std::min<uint16>(g_map.getAwareRange().left, (m_drawDimension.width() / 2) - 1);
 	m_awareRange.top = std::min<uint16>(g_map.getAwareRange().top, (m_drawDimension.height() / 2) - 1);
@@ -236,12 +239,10 @@ void MapView::onCameraMove(const Point& /*offset*/)
 {
 	m_rectCache.rect = Rect();
 
-	g_drawPool.update();
+	for(const auto& frame : { m_frameCache.tile, m_frameCache.staticText, m_frameCache.dynamicText })
+		frame->update();
 
-	/*for(const auto& frame : {m_frameCache.staticText, m_frameCache.dynamicText})
-		frame->update();*/
-
-		//if(m_drawLights) m_lightView->update();
+	//if(m_drawLights) m_lightView->update();
 
 	if(isFollowingCreature()) {
 		if(m_followingCreature->isWalking()) {

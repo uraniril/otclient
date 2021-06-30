@@ -110,27 +110,19 @@ void FrameBuffer::release()
 {
 	internalRelease();
 	g_painter->restoreSavedState();
-
 	m_forceUpdate = false;
 	m_lastRenderedTime.restart();
 }
 
-void FrameBuffer::draw()
-{
-	Rect rect(0, 0, getSize());
-	draw(rect, rect);
-}
-
-void FrameBuffer::draw(const Rect& dest)
-{
-	draw(dest, Rect(0, 0, getSize()));
-}
-
 void FrameBuffer::draw(const Rect& dest, const Rect& src)
 {
+	Rect _dest(0, 0, getSize()), _src = _dest;
+	if(dest.isValid()) _dest = dest;
+	if(src.isValid()) _src = src;
+
 	if(m_disableBlend) glDisable(GL_BLEND);
 	g_painter->setCompositionMode(m_compositeMode);
-	g_painter->drawTexturedRect(dest, m_texture, src);
+	g_painter->drawTexturedRect(_dest, m_texture, _src);
 	g_painter->resetCompositionMode();
 	if(m_disableBlend) glEnable(GL_BLEND);
 }
@@ -186,7 +178,79 @@ bool FrameBuffer::canUpdate()
 	return m_forceUpdate || (m_minTimeUpdate > 0 && (m_lastRenderedTime.ticksElapsed() >= m_minTimeUpdate));
 }
 
-void FrameBuffer::update()
+void FrameBuffer::scheduleMethod(const ScheduledMethod& method)
 {
-	m_forceUpdate = true;
+	m_actionObjects.push_back(ActionObject{ {}, nullptr, Painter::DrawMode::None, {method} });
+}
+
+void FrameBuffer::scheduleDrawing(const std::shared_ptr<CoordsBuffer>& coordsBuffer, const TexturePtr& texture, const ScheduledMethod& method, const Painter::DrawMode drawMode)
+{
+	updateHash(texture, method);
+
+	auto currentState = g_painter->getCurrentState();
+	currentState.texture = texture;
+
+	if(!m_actionObjects.empty() && !(method.type == DrawMethodType::DRAW_TEXTURE_COORDS || method.type == DrawMethodType::DRAW_FILL_COORDS)) {
+		auto& prevDrawObject = m_actionObjects.back();
+
+		if(prevDrawObject.state.isEqual(currentState)) {
+			prevDrawObject.drawMode = Painter::DrawMode::Triangles;
+			prevDrawObject.drawMethods.push_back(method);
+			return;
+		}
+	}
+
+	m_actionObjects.push_back(ActionObject{ currentState, coordsBuffer, drawMode, {method} });
+}
+
+void FrameBuffer::updateHash(const TexturePtr& texture, const ScheduledMethod& method)
+{
+	const auto& currentState = g_painter->getCurrentState();
+
+	if(texture)
+		boost::hash_combine(m_currentStatusHashcode, HASH_INT(texture->getId()));
+
+	if(currentState.opacity < 1.f)
+		boost::hash_combine(m_currentStatusHashcode, HASH_INT(currentState.opacity));
+
+	if(currentState.color != Color::white)
+		boost::hash_combine(m_currentStatusHashcode, HASH_INT(currentState.color.rgba()));
+
+	if(currentState.compositionMode != Painter::CompositionMode_Normal)
+		boost::hash_combine(m_currentStatusHashcode, HASH_INT(currentState.compositionMode));
+
+	if(currentState.shaderProgram)
+		boost::hash_combine(m_currentStatusHashcode, HASH_INT(currentState.shaderProgram->getProgramId()));
+
+	if(currentState.clipRect.isValid()) {
+		boost::hash_combine(m_currentStatusHashcode, HASH_INT(currentState.clipRect.x()));
+		boost::hash_combine(m_currentStatusHashcode, HASH_INT(currentState.clipRect.y()));
+	}
+
+	if(method.rects.first.isValid()) {
+		boost::hash_combine(m_currentStatusHashcode, HASH_INT(method.rects.first.x()));
+		boost::hash_combine(m_currentStatusHashcode, HASH_INT(method.rects.first.y()));
+	}
+
+	if(method.rects.second.isValid()) {
+		boost::hash_combine(m_currentStatusHashcode, HASH_INT(method.rects.second.x()));
+		boost::hash_combine(m_currentStatusHashcode, HASH_INT(method.rects.second.y()));
+	}
+
+	const auto& a = std::get<0>(method.points),
+		b = std::get<1>(method.points),
+		c = std::get<2>(method.points);
+
+	if(!a.isNull()) {
+		boost::hash_combine(m_currentStatusHashcode, HASH_INT(a.x));
+		boost::hash_combine(m_currentStatusHashcode, HASH_INT(a.y));
+	}
+	if(!b.isNull()) {
+		boost::hash_combine(m_currentStatusHashcode, HASH_INT(b.x));
+		boost::hash_combine(m_currentStatusHashcode, HASH_INT(b.y));
+	}
+	if(!c.isNull()) {
+		boost::hash_combine(m_currentStatusHashcode, HASH_INT(c.x));
+		boost::hash_combine(m_currentStatusHashcode, HASH_INT(c.y));
+	}
 }

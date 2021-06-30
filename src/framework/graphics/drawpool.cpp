@@ -30,129 +30,77 @@
 
 DrawPool g_drawPool;
 
-void DrawPool::init()
-{
-	for(int_fast8_t i = -1; ++i < DRAWTYPE_LAST;) {
-		const bool useAlphaWriting = i != DRAWTYPE_LIGHT && i != DRAWTYPE_MAP;
-		m_drawingData[i].frame = g_framebuffers.createFrameBuffer(useAlphaWriting);
-	}
+void DrawPool::init() {}
+void DrawPool::terminate() { m_currentFrameBuffer = nullptr; }
 
-	m_drawingData[DRAWTYPE_MAP].frame->disableBlend();
-	m_drawingData[DRAWTYPE_LIGHT].frame->setCompositeMode(Painter::CompositionMode_Light);
+void DrawPool::add(const std::shared_ptr<CoordsBuffer>& coordsBuffer, const TexturePtr& texture, const FrameBuffer::ScheduledMethod& method, const Painter::DrawMode drawMode)
+{
+	if(!m_currentFrameBuffer || !m_currentFrameBuffer->isValid() ||
+		 !m_currentFrameBuffer->isDrawable()) return;
+
+	m_currentFrameBuffer->scheduleDrawing(coordsBuffer, texture, method, drawMode);
 }
 
-void DrawPool::terminate()
+void DrawPool::setFrameBuffer(const FrameBufferPtr& frameBuffer)
 {
-	for(auto& data : m_drawingData) {
-		data.destroy();
-	}
+	m_currentFrameBuffer = frameBuffer;
+	if(frameBuffer)	frameBuffer->resetStatus();
 }
 
-void DrawPool::add(const std::shared_ptr<CoordsBuffer>& coordsBuffer, const TexturePtr& texture, const DrawMethod& method, const Painter::DrawMode drawMode)
+void DrawPool::draw(const FrameBufferPtr& frameBuffer, const Rect& dest, const Rect& src)
 {
-	if(m_currentDrawType == -1) return;
+	if(!frameBuffer->isValid() || !frameBuffer->isDrawable()) return;
 
-	updateHash(texture, method);
-
-	auto& drawingData = m_drawingData[m_currentDrawType];
-	auto& list = drawingData.objects;
-
-	auto currentState = g_painter->getCurrentState();
-	currentState.texture = texture;
-
-	if(!list.empty() && !(method.type == DrawMethodType::DRAW_TEXTURE_COORDS || method.type == DrawMethodType::DRAW_FILL_COORDS)) {
-		auto& prevDrawObject = drawingData.objects.back();
-
-		if(prevDrawObject.state.isEqual(currentState)) {
-			prevDrawObject.drawMode = Painter::Triangles;
-			prevDrawObject.drawMethods.push_back(method);
-			return;
-		}
-	}
-
-	drawingData.objects.push_back(DrawObject{ currentState, coordsBuffer, drawMode, {method} });
-}
-
-bool DrawPool::drawUp(DrawType type, Size size, const Rect& dest, const Rect& src)
-{
-	auto& drawingData = m_drawingData[type];
-	m_currentDrawType = -1;
-
-	bool canUpdate = drawingData.frame->canUpdate();
-	if(canUpdate) {
-		drawingData.frame->resize(size);
-		drawingData.dest = dest;
-		drawingData.src = src;
-		drawingData.currentHashcode = 0;
-		m_currentDrawType = type;
-	}
-
-	return canUpdate;
-}
-
-void DrawPool::update()
-{
-	for(auto& buffer : m_drawingData) {
-		if(buffer.frame->isValid())
-			buffer.frame->update();
-	}
-}
-
-void DrawPool::draw(const bool updateForeground, const TexturePtr& foregroundTexture)
-{
 	g_painter->saveAndResetState();
+	if(frameBuffer->hasModification()) {
+		frameBuffer->updateStatus();
+		frameBuffer->bind();
 
-	Rect viewportRect(0, 0, g_painter->getResolution());
-	int type = -1;
-	for(auto& drawingData : m_drawingData) {
-		++type;
-
-		if(!drawingData.frame->isValid() || !drawingData.frame->isDrawable()) continue;
-
-		auto& objects = drawingData.objects;
-		if(objects.empty()) continue;
-
-		if(drawingData.currentHashcode != drawingData.lastHashcode) {
-			drawingData.lastHashcode = drawingData.currentHashcode;
-			drawingData.frame->bind();
-			for(auto& obj : objects)
-				drawObject(obj);
-
-			if(updateForeground && type == DrawType::DRAWTYPE_FOREGROUND) {
-				foregroundTexture->copyFromScreen(viewportRect);
-				g_painter->clear(Color::black);
-				g_painter->setAlphaWriting(false);
+		//for(auto& obj : frameBuffer->getScheduledDrawings())
+		for(size_t i = 0; i < frameBuffer->getScheduledDrawings().size(); i++)
+		{
+			const auto& obj = frameBuffer->getScheduledDrawings()[i];
+			drawObject(obj);
+			if(i == 70) {
+				/*glDisable(GL_BLEND);
+				g_painter->setColor(Color::alpha);
+				g_painter->drawFilledRect(Rect(Point(376, 40), Point(1345, 751)));
+				glEnable(GL_BLEND);*/
 			}
-
-			drawingData.frame->release();
 		}
-		drawingData.objects.clear();
 
-		if(drawingData.dest.isNull()) {
-			drawingData.frame->draw();
-		} else {
-			drawingData.frame->draw(drawingData.dest, drawingData.src);
+		if(m_onBind) {
+			m_onBind();
 		}
+
+		frameBuffer->release();
 	}
 
-	if(foregroundTexture) {
-		g_painter->resetColor();
-		g_painter->resetOpacity();
-		g_painter->drawTexturedRect(viewportRect, foregroundTexture, viewportRect);
-	}
+	m_onBind = []() {};
+
+	frameBuffer->getScheduledDrawings().clear();
+	frameBuffer->draw(dest, src);
 
 	g_painter->restoreSavedState();
 }
 
-void DrawPool::drawObject(const DrawObject& obj)
+void DrawPool::drawObject(const FrameBuffer::ActionObject& obj)
 {
-	g_painter->executeState(obj.state);
+	if(obj.drawMode != Painter::DrawMode::None)
+		g_painter->executeState(obj.state);
+
 	if(obj.coordsBuffer != nullptr) {
 		g_painter->drawCoords(*obj.coordsBuffer, obj.drawMode);
 	} else {
 		for(const auto& method : obj.drawMethods) {
-			if(method.type == DrawMethodType::DRAW_BOUNDING_RECT) {
-				m_coordsBuffer.addBoudingRect(method.rects.first, method.innerLineWidth);
+			if(method.type == DrawMethodType::GL_ENABLE) {
+				glEnable(GL_BLEND);
+				return;
+			} else if(method.type == DrawMethodType::GL_DISABLE) {
+				glDisable(GL_BLEND);
+				return;
+			} else if(method.type == DrawMethodType::DRAW_BOUNDING_RECT) {
+				m_coordsBuffer.addBoudingRect(method.rects.first, method.intValue);
 			} else if(method.type == DrawMethodType::DRAW_FILLED_RECT) {
 				m_coordsBuffer.addRect(method.rects.first);
 			} else if(method.type == DrawMethodType::DRAW_FILLED_TRIANGLE) {
@@ -160,12 +108,12 @@ void DrawPool::drawObject(const DrawObject& obj)
 			} else if(method.type == DrawMethodType::DRAW_REPEATED_TEXTURED_RECT) {
 				m_coordsBuffer.addRepeatedRects(method.rects.first, method.rects.second);
 			} else if(method.type == DrawMethodType::DRAW_TEXTURED_RECT) {
-				if(obj.drawMode == Painter::Triangles)
+				if(obj.drawMode == Painter::DrawMode::Triangles)
 					m_coordsBuffer.addRect(method.rects.first, method.rects.second);
 				else
 					m_coordsBuffer.addQuad(method.rects.first, method.rects.second);
 			} else if(method.type == DrawMethodType::DRAW_UPSIDEDOWN_TEXTURED_RECT) {
-				if(obj.drawMode == Painter::Triangles)
+				if(obj.drawMode == Painter::DrawMode::Triangles)
 					m_coordsBuffer.addUpsideDownRect(method.rects.first, method.rects.second);
 				else
 					m_coordsBuffer.addUpsideDownQuad(method.rects.first, method.rects.second);
@@ -177,62 +125,9 @@ void DrawPool::drawObject(const DrawObject& obj)
 	m_coordsBuffer.clear();
 }
 
-void DrawPool::updateHash(const TexturePtr& texture, const DrawMethod& method)
-{
-	const auto& currentState = g_painter->getCurrentState();
-	auto& drawingData = m_drawingData[m_currentDrawType];
-
-	if(texture)
-		boost::hash_combine(drawingData.currentHashcode, HASH_INT(texture->getId()));
-
-	if(currentState.opacity < 1.f)
-		boost::hash_combine(drawingData.currentHashcode, HASH_INT(currentState.opacity));
-
-	if(currentState.color != Color::white)
-		boost::hash_combine(drawingData.currentHashcode, HASH_INT(currentState.color.rgba()));
-
-	if(currentState.compositionMode != Painter::CompositionMode_Normal)
-		boost::hash_combine(drawingData.currentHashcode, HASH_INT(currentState.compositionMode));
-
-	if(currentState.shaderProgram)
-		boost::hash_combine(drawingData.currentHashcode, HASH_INT(currentState.shaderProgram->getProgramId()));
-
-	if(currentState.clipRect.isValid()) {
-		boost::hash_combine(drawingData.currentHashcode, HASH_INT(currentState.clipRect.x()));
-		boost::hash_combine(drawingData.currentHashcode, HASH_INT(currentState.clipRect.y()));
-	}
-
-	if(method.rects.first.isValid()) {
-		boost::hash_combine(drawingData.currentHashcode, HASH_INT(method.rects.first.x()));
-		boost::hash_combine(drawingData.currentHashcode, HASH_INT(method.rects.first.y()));
-	}
-
-	if(method.rects.second.isValid()) {
-		boost::hash_combine(drawingData.currentHashcode, HASH_INT(method.rects.second.x()));
-		boost::hash_combine(drawingData.currentHashcode, HASH_INT(method.rects.second.y()));
-	}
-
-	const auto& a = std::get<0>(method.points),
-		b = std::get<1>(method.points),
-		c = std::get<2>(method.points);
-
-	if(!a.isNull()) {
-		boost::hash_combine(drawingData.currentHashcode, HASH_INT(a.x));
-		boost::hash_combine(drawingData.currentHashcode, HASH_INT(a.y));
-	}
-	if(!b.isNull()) {
-		boost::hash_combine(drawingData.currentHashcode, HASH_INT(b.x));
-		boost::hash_combine(drawingData.currentHashcode, HASH_INT(b.y));
-	}
-	if(!c.isNull()) {
-		boost::hash_combine(drawingData.currentHashcode, HASH_INT(c.x));
-		boost::hash_combine(drawingData.currentHashcode, HASH_INT(c.y));
-	}
-}
-
 void DrawPool::addFillCoords(CoordsBuffer& coordsBuffer)
 {
-	DrawMethod method;
+	FrameBuffer::ScheduledMethod method;
 	method.type = DrawMethodType::DRAW_FILL_COORDS;
 	add(std::shared_ptr<CoordsBuffer>(&coordsBuffer, [](CoordsBuffer*) {}), nullptr, method);
 }
@@ -242,7 +137,7 @@ void DrawPool::addTextureCoords(CoordsBuffer& coordsBuffer, const TexturePtr& te
 	if(texture && texture->isEmpty())
 		return;
 
-	DrawMethod method;
+	FrameBuffer::ScheduledMethod method;
 	method.type = DrawMethodType::DRAW_TEXTURE_COORDS;
 	add(std::shared_ptr<CoordsBuffer>(&coordsBuffer, [](CoordsBuffer*) {}), texture, method, drawMode);
 }
@@ -257,11 +152,11 @@ void DrawPool::addTexturedRect(const Rect& dest, const TexturePtr& texture, cons
 	if(dest.isEmpty() || src.isEmpty() || texture->isEmpty())
 		return;
 
-	DrawMethod method;
+	FrameBuffer::ScheduledMethod method;
 	method.type = DrawMethodType::DRAW_TEXTURED_RECT;
 	method.rects = std::make_pair(dest, src);
 
-	add(nullptr, texture, method, Painter::TriangleStrip);
+	add(nullptr, texture, method, Painter::DrawMode::TriangleStrip);
 }
 
 void DrawPool::addUpsideDownTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src)
@@ -269,11 +164,11 @@ void DrawPool::addUpsideDownTexturedRect(const Rect& dest, const TexturePtr& tex
 	if(dest.isEmpty() || src.isEmpty() || texture->isEmpty())
 		return;
 
-	DrawMethod method;
+	FrameBuffer::ScheduledMethod method;
 	method.type = DrawMethodType::DRAW_UPSIDEDOWN_TEXTURED_RECT;
 	method.rects = std::make_pair(dest, Rect(Point(), texture->getSize()));
 
-	add(nullptr, texture, method, Painter::TriangleStrip);
+	add(nullptr, texture, method, Painter::DrawMode::TriangleStrip);
 }
 
 void DrawPool::addRepeatedTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src)
@@ -281,7 +176,7 @@ void DrawPool::addRepeatedTexturedRect(const Rect& dest, const TexturePtr& textu
 	if(dest.isEmpty() || src.isEmpty() || texture->isEmpty())
 		return;
 
-	DrawMethod method;
+	FrameBuffer::ScheduledMethod method;
 	method.type = DrawMethodType::DRAW_REPEATED_TEXTURED_RECT;
 	method.rects = std::make_pair(dest, Rect(Point(), texture->getSize()));
 
@@ -293,7 +188,7 @@ void DrawPool::addFilledRect(const Rect& dest)
 	if(dest.isEmpty())
 		return;
 
-	DrawMethod method;
+	FrameBuffer::ScheduledMethod method;
 	method.type = DrawMethodType::DRAW_FILLED_RECT;
 	method.rects = std::make_pair(dest, Rect());
 
@@ -305,7 +200,7 @@ void DrawPool::addFilledTriangle(const Point& a, const Point& b, const Point& c)
 	if(a == b || a == c || b == c)
 		return;
 
-	DrawMethod method;
+	FrameBuffer::ScheduledMethod method;
 	method.type = DrawMethodType::DRAW_FILLED_TRIANGLE;
 	method.points = std::make_tuple(a, b, c);
 
@@ -317,10 +212,31 @@ void DrawPool::addBoundingRect(const Rect& dest, int innerLineWidth)
 	if(dest.isEmpty() || innerLineWidth == 0)
 		return;
 
-	DrawMethod method;
+	FrameBuffer::ScheduledMethod method;
 	method.type = DrawMethodType::DRAW_BOUNDING_RECT;
 	method.rects = std::make_pair(dest, Rect());
-	method.innerLineWidth = innerLineWidth;
+	method.intValue = innerLineWidth;
 
 	add(nullptr, nullptr, method);
+}
+
+void DrawPool::disableGL(GLenum cap)
+{
+	if(!m_currentFrameBuffer) return;
+
+	FrameBuffer::ScheduledMethod method;
+	method.type = DrawMethodType::GL_DISABLE;
+	method.intValue = cap;
+
+	m_currentFrameBuffer->scheduleMethod(method);
+}
+void DrawPool::enableGL(GLenum cap)
+{
+	if(!m_currentFrameBuffer) return;
+
+	FrameBuffer::ScheduledMethod method;
+	method.type = DrawMethodType::GL_ENABLE;
+	method.intValue = cap;
+
+	m_currentFrameBuffer->scheduleMethod(method);
 }
