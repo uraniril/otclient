@@ -41,10 +41,14 @@ void DrawPool::add(const std::shared_ptr<CoordsBuffer>& coordsBuffer, const Text
 	m_currentFrameBuffer->scheduleDrawing(coordsBuffer, texture, method, drawMode);
 }
 
-void DrawPool::setFrameBuffer(const FrameBufferPtr& frameBuffer)
+bool DrawPool::startScope(const FrameBufferPtr& frameBuffer)
 {
 	m_currentFrameBuffer = frameBuffer;
-	if(frameBuffer)	frameBuffer->resetStatus();
+	if(!frameBuffer || !frameBuffer->canUpdate())
+		return false;
+
+	frameBuffer->resetStatus();
+	return true;
 }
 
 void DrawPool::draw(const FrameBufferPtr& frameBuffer, const Rect& dest, const Rect& src)
@@ -59,16 +63,11 @@ void DrawPool::draw(const FrameBufferPtr& frameBuffer, const Rect& dest, const R
 		for(auto& obj : frameBuffer->getScheduledDrawings())
 			drawObject(obj);
 
-		if(m_onBind) {
-			m_onBind();
-		}
-
 		frameBuffer->release();
 	}
-
 	m_onBind = []() {};
-
 	frameBuffer->getScheduledDrawings().clear();
+
 	frameBuffer->draw(dest, src);
 
 	g_painter->restoreSavedState();

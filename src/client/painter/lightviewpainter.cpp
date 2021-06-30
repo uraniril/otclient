@@ -47,31 +47,32 @@ void LightViewPainter::terminate()
 void LightViewPainter::draw(const LightViewPtr& lightView, const Rect& dest, const Rect& src)
 {
 	// draw light, only if there is darkness
-	if(!lightView || !lightView->isDark() || !lightView->m_lightbuffer->canUpdate()) return;
+	if(!lightView || !lightView->isDark()) return;
 
-	g_drawPool.setFrameBuffer(lightView->m_lightbuffer);
-	lightView->m_lightbuffer->setColorClear(lightView->m_globalLightColor);
+	if(g_drawPool.startScope(lightView->m_lightbuffer)) {
+		lightView->m_lightbuffer->setColorClear(Color::black);
 
-	const auto& mapView = lightView->m_mapView;
-	const auto& shadeBase = std::make_pair<Point, Size>(Point(mapView->getTileSize() / 4.8), Size(mapView->getTileSize() * 1.4));
-	for(int_fast8_t z = mapView->getFloorMax(); z >= mapView->getFloorMin(); --z) {
-		if(z < mapView->getFloorMax()) {
-			g_painter->setColor(lightView->m_globalLightColor);
-			for(auto& shade : lightView->m_shades) {
-				if(shade.floor != z) continue;
-				shade.floor = -1;
+		const auto& mapView = lightView->m_mapView;
+		const auto& shadeBase = std::make_pair<Point, Size>(Point(mapView->getTileSize() / 4.8), Size(mapView->getTileSize() * 1.4));
+		for(int_fast8_t z = mapView->getFloorMax(); z >= mapView->getFloorMin(); --z) {
+			if(z < mapView->getFloorMax()) {
+				g_painter->setColor(lightView->m_globalLightColor);
+				for(auto& shade : lightView->m_shades) {
+					if(shade.floor != z) continue;
+					shade.floor = -1;
 
-				g_drawPool.addTexturedRect(Rect(shade.pos - shadeBase.first, shadeBase.second), g_lightViewPaint.m_shadeTexture);
+					g_drawPool.addTexturedRect(Rect(shade.pos - shadeBase.first, shadeBase.second), g_lightViewPaint.m_shadeTexture);
+				}
 			}
-		}
 
-		auto& lights = lightView->m_lights[z];
-		std::sort(lights.begin(), lights.end(), orderLightComparator);
-		for(LightSource& light : lights) {
-			g_painter->setColor(Color::from8bit(light.color, light.brightness));
-			g_drawPool.addTexturedRect(Rect(light.pos - Point(light.radius), Size(light.radius * 2)), g_lightViewPaint.m_lightTexture);
+			auto& lights = lightView->m_lights[z];
+			std::sort(lights.begin(), lights.end(), orderLightComparator);
+			for(LightSource& light : lights) {
+				g_painter->setColor(Color::from8bit(light.color, light.brightness));
+				g_drawPool.addTexturedRect(Rect(light.pos - Point(light.radius), Size(light.radius * 2)), g_lightViewPaint.m_lightTexture);
+			}
+			lights.clear();
 		}
-		lights.clear();
 	}
 
 	g_drawPool.draw(lightView->m_lightbuffer, dest, src);

@@ -157,18 +157,9 @@ void GraphicalApplication::run()
 					m_foregroundFrameCounter.processNextFrame();
 
 					// draw foreground
-					g_drawPool.setFrameBuffer(m_foregroundFrameCache);
-					if(g_drawPool.canUpdate()) {
+					if(g_drawPool.startScope(m_foregroundFrameCache)) {
 						g_ui.render(Fw::ForegroundPane);
-
-						g_drawPool.setOnBind([&]() {
-							m_foreground->copyFromScreen(viewportRect);
-							g_painter->clear(Color::black);
-							g_painter->setAlphaWriting(false);
-						});
 					}
-
-					g_drawPool.draw();
 				}
 
 				// draw background (animated stuff)
@@ -176,9 +167,7 @@ void GraphicalApplication::run()
 				g_ui.render(Fw::BackgroundPane);
 
 				// draw the foreground (steady stuff)
-				g_painter->resetColor();
-				g_painter->resetOpacity();
-				g_painter->drawTexturedRect(viewportRect, m_foreground, viewportRect);
+				g_drawPool.draw(m_foregroundFrameCache);
 
 				// update screen pixels
 				g_window.swapBuffers();

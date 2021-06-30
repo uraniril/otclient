@@ -50,8 +50,7 @@ void MapViewPainter::draw(const MapViewPtr& mapView, const Rect& rect)
 
 	const Position cameraPosition = mapView->getCameraPosition();
 
-	g_drawPool.setFrameBuffer(mapView->m_frameCache.tile);
-	if(g_drawPool.canUpdate()) {
+	if(g_drawPool.startScope(mapView->m_frameCache.tile)) {
 		const auto& lightView = mapView->m_drawLights ? mapView->m_lightView.get() : nullptr;
 		for(int_fast8_t z = mapView->m_floorMax; z >= mapView->m_floorMin; --z) {
 			if(lightView) {
@@ -164,8 +163,7 @@ void MapViewPainter::drawCreatureInformation(const MapViewPtr& mapView)
 {
 	if(!mapView->m_drawNames && !mapView->m_drawHealthBars && !mapView->m_drawManaBar) return;
 
-	g_drawPool.setFrameBuffer(mapView->m_frameCache.creatureInformation);
-	if(g_drawPool.canUpdate()) {
+	if(g_drawPool.startScope(mapView->m_frameCache.creatureInformation)) {
 		const Position cameraPosition = mapView->getCameraPosition();
 
 		uint32_t flags = 0;
@@ -174,9 +172,13 @@ void MapViewPainter::drawCreatureInformation(const MapViewPtr& mapView)
 		if(mapView->m_drawManaBar) { flags |= Otc::DrawManaBar; }
 
 		for(const auto& creature : mapView->m_visibleCreatures) {
-			CreaturePainter::drawInformation(creature, mapView->m_rectCache.rect, mapView->transformPositionTo2D(creature->getPosition(), cameraPosition), mapView->m_scaleFactor, mapView->m_rectCache.drawOffset, mapView->m_rectCache.horizontalStretchFactor, mapView->m_rectCache.verticalStretchFactor, flags);
+			CreaturePainter::drawInformation(creature, mapView->m_rectCache.rect,
+																			 mapView->transformPositionTo2D(creature->getPosition(), cameraPosition),
+																			 mapView->m_scaleFactor, mapView->m_rectCache.drawOffset,
+																			 mapView->m_rectCache.horizontalStretchFactor, mapView->m_rectCache.verticalStretchFactor, flags);
 		}
 	}
+
 	g_drawPool.draw(mapView->m_frameCache.creatureInformation);
 }
 
@@ -186,40 +188,46 @@ void MapViewPainter::drawText(const MapViewPtr& mapView)
 
 	const Position cameraPosition = mapView->getCameraPosition();
 
-	g_drawPool.setFrameBuffer(mapView->m_frameCache.staticText);
-	if(g_drawPool.canUpdate() && !g_map.getStaticTexts().empty()) {
-		for(const StaticTextPtr& staticText : g_map.getStaticTexts()) {
-			const Position pos = staticText->getPosition();
+	if(!g_map.getStaticTexts().empty()) {
+		if(g_drawPool.startScope(mapView->m_frameCache.staticText)) {
+			for(const StaticTextPtr& staticText : g_map.getStaticTexts()) {
+				if(staticText->getMessageMode() == Otc::MESSAGE_NONE) continue;
 
-			if(pos.z != cameraPosition.z && staticText->getMessageMode() == Otc::MESSAGE_NONE)
-				continue;
+				const Position pos = staticText->getPosition();
 
-			Point p = mapView->transformPositionTo2D(pos, cameraPosition) - mapView->m_rectCache.drawOffset;
-			p.x *= mapView->m_rectCache.horizontalStretchFactor;
-			p.y *= mapView->m_rectCache.verticalStretchFactor;
-			p += mapView->m_rectCache.rect.topLeft();
-			ThingPainter::drawText(staticText, p, mapView->m_rectCache.rect);
+				if(pos.z != cameraPosition.z)
+					continue;
+
+				Point p = mapView->transformPositionTo2D(pos, cameraPosition) - mapView->m_rectCache.drawOffset;
+				p.x *= mapView->m_rectCache.horizontalStretchFactor;
+				p.y *= mapView->m_rectCache.verticalStretchFactor;
+				p += mapView->m_rectCache.rect.topLeft();
+				ThingPainter::drawText(staticText, p, mapView->m_rectCache.rect);
+			}
 		}
+
+		g_drawPool.draw(mapView->m_frameCache.staticText);
 	}
 
-	if(g_drawPool.canUpdate() && !g_map.getAnimatedTexts().empty()) {
-		for(const AnimatedTextPtr& animatedText : g_map.getAnimatedTexts()) {
-			const Position pos = animatedText->getPosition();
+	if(!g_map.getAnimatedTexts().empty()) {
+		if(g_drawPool.startScope(mapView->m_frameCache.staticText)) {
+			for(const AnimatedTextPtr& animatedText : g_map.getAnimatedTexts()) {
+				const Position pos = animatedText->getPosition();
 
-			if(pos.z != cameraPosition.z)
-				continue;
+				if(pos.z != cameraPosition.z)
+					continue;
 
-			Point p = mapView->transformPositionTo2D(pos, cameraPosition) - mapView->m_rectCache.drawOffset;
-			p.x *= mapView->m_rectCache.horizontalStretchFactor;
-			p.y *= mapView->m_rectCache.verticalStretchFactor;
-			p += mapView->m_rectCache.rect.topLeft();
+				Point p = mapView->transformPositionTo2D(pos, cameraPosition) - mapView->m_rectCache.drawOffset;
+				p.x *= mapView->m_rectCache.horizontalStretchFactor;
+				p.y *= mapView->m_rectCache.verticalStretchFactor;
+				p += mapView->m_rectCache.rect.topLeft();
 
-			ThingPainter::drawText(animatedText, p, mapView->m_rectCache.rect);
+				ThingPainter::drawText(animatedText, p, mapView->m_rectCache.rect);
+			}
 		}
-	}
 
-	g_drawPool.draw(mapView->m_frameCache.staticText);
-	g_drawPool.draw(mapView->m_frameCache.dynamicText);
+		g_drawPool.draw(mapView->m_frameCache.dynamicText);
+	}
 }
 
 bool MapViewPainter::canRenderTile(const MapViewPtr& mapView, const TilePtr& tile, const AwareRange& viewPort, LightView* lightView)

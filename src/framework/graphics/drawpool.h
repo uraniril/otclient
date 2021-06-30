@@ -35,7 +35,7 @@ public:
 	void init();
 	void terminate();
 
-	void setFrameBuffer(const FrameBufferPtr& frameBuffer);
+	bool startScope(const FrameBufferPtr& frameBuffer);
 
 	void addFillCoords(CoordsBuffer& coordsBuffer);
 	void addTextureCoords(CoordsBuffer& coordsBuffer, const TexturePtr& texture, Painter::DrawMode drawMode = Painter::DrawMode::Triangles);
@@ -51,14 +51,8 @@ public:
 	void disableGL(GLenum cap);
 	void enableGL(GLenum cap);
 
-	void draw() { if(m_currentFrameBuffer) draw(m_currentFrameBuffer); }
-	void draw(const Rect& dest, const Rect& src) { if(m_currentFrameBuffer) draw(m_currentFrameBuffer, dest, src); }
 	void draw(const FrameBufferPtr& frameBuffer) { draw(frameBuffer, Rect(), Rect()); }
 	void draw(const FrameBufferPtr& frameBuffer, const Rect& dest, const Rect& src);
-
-	bool canUpdate() const { return m_currentFrameBuffer ? m_currentFrameBuffer->canUpdate() : false; }
-
-	void setOnBind(std::function<void()> f) { m_onBind = f; }
 
 private:
 	void drawObject(const FrameBuffer::ActionObject& obj);
