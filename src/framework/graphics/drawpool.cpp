@@ -80,7 +80,6 @@ void DrawPool::add(const std::shared_ptr<CoordsBuffer>& coordsBuffer, const Text
 						break;
 					}
 				}
-				continue;
 			}
 		}
 
