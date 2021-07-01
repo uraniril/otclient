@@ -210,7 +210,7 @@ void MapViewPainter::drawText(const MapViewPtr& mapView)
 	}
 
 	if(!g_map.getAnimatedTexts().empty()) {
-		if(g_drawPool.startScope(mapView->m_frameCache.staticText)) {
+		if(g_drawPool.startScope(mapView->m_frameCache.dynamicText)) {
 			for(const AnimatedTextPtr& animatedText : g_map.getAnimatedTexts()) {
 				const Position pos = animatedText->getPosition();
 

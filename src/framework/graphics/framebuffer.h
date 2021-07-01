@@ -55,17 +55,15 @@ public:
 		DRAW_REPEATED_TEXTURED_RECT,
 		DRAW_FILLED_RECT,
 		DRAW_FILLED_TRIANGLE,
-		DRAW_BOUNDING_RECT,
-		CLEAR_AREA,
-		GL_DISABLE,
-		GL_ENABLE
+		DRAW_BOUNDING_RECT
 	};
 
 	struct ScheduledMethod {
 		DrawMethodType type;
 		std::pair<Rect, Rect> rects;
 		std::tuple<Point, Point, Point> points;
-		uint intValue;
+		uint64 intValue{ 0 };
+		float floatValue{ 0 };
 	};
 
 	struct ActionObject {
@@ -75,6 +73,8 @@ public:
 		std::shared_ptr<CoordsBuffer> coordsBuffer;
 		Painter::DrawMode drawMode{ Painter::DrawMode::Triangles };
 		std::vector<ScheduledMethod> drawMethods;
+
+		std::function<void()> action;
 	};
 
 	~FrameBuffer() override;
@@ -93,36 +93,31 @@ public:
 	bool isBackuping() { return m_backuping; }
 	bool isSmooth() { return m_smooth; }
 
-	bool canUpdate();
 	void update() { m_forceUpdate = true; }
 	void cleanTexture() { m_texture = nullptr; }
 	bool isValid() const { return m_texture != nullptr; }
 	void setColorClear(const Color color) { m_colorClear = color; }
-	void setCompositeMode(const Painter::CompositionMode mode) { m_compositeMode = mode; }
+	void setCompositionMode(const Painter::CompositionMode mode) { m_compositeMode = mode; }
 	void disableBlend() { m_disableBlend = true; }
 
 	void setDrawable(const bool v) { m_drawable = v; }
 	bool isDrawable() const { return m_drawable; }
 
-	void scheduleMethod(const ScheduledMethod& method);
-	void scheduleDrawing(const std::shared_ptr<CoordsBuffer>& coordsBuffer, const TexturePtr& texture, const ScheduledMethod& method, const Painter::DrawMode drawMode = Painter::DrawMode::Triangles);
-
-	bool hasModification() const { return m_statusHashCode != m_currentStatusHashcode; }
-	void updateStatus() { m_statusHashCode = m_currentStatusHashcode; }
-	void resetStatus() { m_currentStatusHashcode = 0; }
-
-	std::vector<ActionObject>& getScheduledDrawings() { return m_actionObjects; }
-
 protected:
 	FrameBuffer(bool useAlphaWriting, uint16_t minTimeUpdate);
 
 	friend class FrameBufferManager;
+	friend class DrawPool;
 
 private:
 	void internalCreate();
 	void internalBind();
 	void internalRelease();
-	void updateHash(const TexturePtr& texture, const ScheduledMethod& method);
+	size_t updateHash(const TexturePtr& texture, const ScheduledMethod& method);
+	bool hasModification() const { return m_statusHashCode != m_currentStatusHashcode; }
+	void updateStatus() { m_statusHashCode = m_currentStatusHashcode; }
+	void resetStatus() { m_currentStatusHashcode = 0; }
+	bool canUpdate();
 
 	static uint boundFbo;
 
@@ -137,7 +132,9 @@ private:
 	Color m_colorClear = { Color::black };
 	Painter::CompositionMode m_compositeMode{ Painter::CompositionMode_Normal };
 
-	std::vector<ActionObject> m_actionObjects;
+	std::vector<std::shared_ptr<ActionObject>> m_actionObjects;
+	std::unordered_map<size_t, std::vector<std::shared_ptr<ActionObject>>> m_coordsActionObjects;
+
 	size_t m_statusHashCode{ 0 }, m_currentStatusHashcode{ 0 };
 
 	bool m_forceUpdate{ true },
@@ -148,6 +145,7 @@ private:
 		m_drawable{ true };
 
 	std::hash<size_t> HASH_INT;
+	std::hash<float> HASH_FLOAT;
 };
 
 #endif

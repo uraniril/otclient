@@ -29,6 +29,7 @@
 LightView::LightView(const MapViewPtr& mapView) :
 	m_lightbuffer(g_framebuffers.createFrameBuffer()), m_mapView(mapView)
 {
+	m_lightbuffer->setCompositionMode(Painter::CompositionMode_Light);
 	resize();
 }
 

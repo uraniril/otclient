@@ -81,6 +81,8 @@ public:
 	void addBoudingRect(const Rect& dest, int innerLineWidth);
 	void addRepeatedRects(const Rect& dest, const Rect& src);
 
+	void generateHash() { m_vertexArray.generateHash(); m_textureCoordArray.generateHash(); }
+
 	void enableHardwareCaching(HardwareBuffer::UsagePattern usagePattern = HardwareBuffer::DynamicDraw);
 	void updateCaches();
 	bool isHardwareCached() { return m_hardwareCached; }
@@ -89,6 +91,8 @@ public:
 	float* getTextureCoordArray() { return m_textureCoordArray.vertices(); }
 	int getVertexCount() const { return m_vertexArray.vertexCount(); }
 	int getTextureCoordCount() const { return m_textureCoordArray.vertexCount(); }
+	size_t getVertexHash() const { return m_vertexArray.getHash(); }
+	size_t getTextureCoordHash() const { return m_textureCoordArray.getHash(); }
 
 	HardwareBuffer* getHardwareVertexArray() { return m_hardwareVertexArray; }
 	HardwareBuffer* getHardwareTextureCoordArray() { return m_hardwareTextureCoordArray; }

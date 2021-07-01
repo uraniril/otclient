@@ -38,7 +38,56 @@ void DrawPool::add(const std::shared_ptr<CoordsBuffer>& coordsBuffer, const Text
 	if(!m_currentFrameBuffer || !m_currentFrameBuffer->isValid() ||
 		 !m_currentFrameBuffer->isDrawable()) return;
 
-	m_currentFrameBuffer->scheduleDrawing(coordsBuffer, texture, method, drawMode);
+	const size_t rectHash = m_currentFrameBuffer->updateHash(texture, method);
+
+	auto currentState = g_painter->getCurrentState();
+	currentState.texture = texture;
+
+	if(!m_currentFrameBuffer->m_actionObjects.empty() && !(method.type == DrawMethodType::DRAW_TEXTURE_COORDS || method.type == DrawMethodType::DRAW_FILL_COORDS)) {
+		auto& prevDrawObject = m_currentFrameBuffer->m_actionObjects.back();
+
+		if(prevDrawObject->state.isEqual(currentState)) {
+			prevDrawObject->drawMode = Painter::DrawMode::Triangles;
+
+			// Search for identical objects in the same position
+			bool hasRect = false;
+			if(rectHash) {
+				for(auto& prevMethod : prevDrawObject->drawMethods) {
+					if(prevMethod.rects.first == method.rects.first && prevMethod.rects.second == method.rects.second) {
+						hasRect = true;
+						break;
+					}
+				}
+			}
+			if(!hasRect) {
+				prevDrawObject->drawMethods.push_back(method);
+			}
+			return;
+		}
+	}
+
+	const auto& actionObject = std::make_shared<FrameBuffer::ActionObject>(FrameBuffer::ActionObject{ currentState, coordsBuffer, drawMode, {method} });
+
+	// Look for identical or opaque textures that are greater than or equal to the size of the previous texture and remove.
+	if(rectHash && texture && currentState.opacity >= 1.f) {
+		auto& list = m_currentFrameBuffer->m_coordsActionObjects[rectHash];
+		for(auto& action : list) {
+			if(action->state.texture == texture || texture->isOpaque() && texture->getSize() >= action->state.texture->getSize()) {
+				for(auto itm = action->drawMethods.begin(); itm != action->drawMethods.end(); ++itm) {
+					auto& prevMethod = *itm;
+					if(prevMethod.rects.first == method.rects.first && prevMethod.rects.second == method.rects.second) {
+						action->drawMethods.erase(itm);
+						break;
+					}
+				}
+				continue;
+			}
+		}
+
+		list.push_back(actionObject);
+	}
+
+	m_currentFrameBuffer->m_actionObjects.push_back(actionObject);
 }
 
 bool DrawPool::startScope(const FrameBufferPtr& frameBuffer)
@@ -60,13 +109,15 @@ void DrawPool::draw(const FrameBufferPtr& frameBuffer, const Rect& dest, const R
 		frameBuffer->updateStatus();
 		frameBuffer->bind();
 
-		for(auto& obj : frameBuffer->getScheduledDrawings())
-			drawObject(obj);
+		for(auto& obj : frameBuffer->m_actionObjects)
+			drawObject(*obj);
 
 		frameBuffer->release();
 	}
 	m_onBind = []() {};
-	frameBuffer->getScheduledDrawings().clear();
+
+	frameBuffer->m_coordsActionObjects.clear();
+	frameBuffer->m_actionObjects.clear();
 
 	frameBuffer->draw(dest, src);
 
@@ -75,20 +126,21 @@ void DrawPool::draw(const FrameBufferPtr& frameBuffer, const Rect& dest, const R
 
 void DrawPool::drawObject(const FrameBuffer::ActionObject& obj)
 {
+	if(obj.action) {
+		obj.action();
+		return;
+	}
+
 	if(obj.drawMode != Painter::DrawMode::None)
 		g_painter->executeState(obj.state);
 
 	if(obj.coordsBuffer != nullptr) {
 		g_painter->drawCoords(*obj.coordsBuffer, obj.drawMode);
 	} else {
+		if(obj.drawMethods.empty()) return;
+
 		for(const auto& method : obj.drawMethods) {
-			if(method.type == DrawMethodType::GL_ENABLE) {
-				glEnable(GL_BLEND);
-				return;
-			} else if(method.type == DrawMethodType::GL_DISABLE) {
-				glDisable(GL_BLEND);
-				return;
-			} else if(method.type == DrawMethodType::DRAW_BOUNDING_RECT) {
+			if(method.type == DrawMethodType::DRAW_BOUNDING_RECT) {
 				m_coordsBuffer.addBoudingRect(method.rects.first, method.intValue);
 			} else if(method.type == DrawMethodType::DRAW_FILLED_RECT) {
 				m_coordsBuffer.addRect(method.rects.first);
@@ -118,6 +170,8 @@ void DrawPool::addFillCoords(CoordsBuffer& coordsBuffer)
 {
 	FrameBuffer::ScheduledMethod method;
 	method.type = DrawMethodType::DRAW_FILL_COORDS;
+	method.intValue = coordsBuffer.getVertexHash();
+
 	add(std::shared_ptr<CoordsBuffer>(&coordsBuffer, [](CoordsBuffer*) {}), nullptr, method);
 }
 
@@ -128,6 +182,10 @@ void DrawPool::addTextureCoords(CoordsBuffer& coordsBuffer, const TexturePtr& te
 
 	FrameBuffer::ScheduledMethod method;
 	method.type = DrawMethodType::DRAW_TEXTURE_COORDS;
+	method.intValue = coordsBuffer.getVertexHash();
+	if(method.intValue)
+		g_logger.info(std::to_string(method.intValue));
+
 	add(std::shared_ptr<CoordsBuffer>(&coordsBuffer, [](CoordsBuffer*) {}), texture, method, drawMode);
 }
 
@@ -155,7 +213,7 @@ void DrawPool::addUpsideDownTexturedRect(const Rect& dest, const TexturePtr& tex
 
 	FrameBuffer::ScheduledMethod method;
 	method.type = DrawMethodType::DRAW_UPSIDEDOWN_TEXTURED_RECT;
-	method.rects = std::make_pair(dest, Rect(Point(), texture->getSize()));
+	method.rects = std::make_pair(dest, src);
 
 	add(nullptr, texture, method, Painter::DrawMode::TriangleStrip);
 }
@@ -167,7 +225,7 @@ void DrawPool::addRepeatedTexturedRect(const Rect& dest, const TexturePtr& textu
 
 	FrameBuffer::ScheduledMethod method;
 	method.type = DrawMethodType::DRAW_REPEATED_TEXTURED_RECT;
-	method.rects = std::make_pair(dest, Rect(Point(), texture->getSize()));
+	method.rects = std::make_pair(dest, src);
 
 	add(nullptr, texture, method);
 }
@@ -209,23 +267,9 @@ void DrawPool::addBoundingRect(const Rect& dest, int innerLineWidth)
 	add(nullptr, nullptr, method);
 }
 
-void DrawPool::disableGL(GLenum cap)
+void DrawPool::addAction(std::function<void()> action)
 {
 	if(!m_currentFrameBuffer) return;
 
-	FrameBuffer::ScheduledMethod method;
-	method.type = DrawMethodType::GL_DISABLE;
-	method.intValue = cap;
-
-	m_currentFrameBuffer->scheduleMethod(method);
-}
-void DrawPool::enableGL(GLenum cap)
-{
-	if(!m_currentFrameBuffer) return;
-
-	FrameBuffer::ScheduledMethod method;
-	method.type = DrawMethodType::GL_ENABLE;
-	method.intValue = cap;
-
-	m_currentFrameBuffer->scheduleMethod(method);
+	m_currentFrameBuffer->m_actionObjects.push_back(std::make_shared<FrameBuffer::ActionObject>(FrameBuffer::ActionObject{ {}, nullptr, Painter::DrawMode::None, {}, action }));
 }

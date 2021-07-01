@@ -47,9 +47,7 @@ public:
 	void addFilledRect(const Rect& dest);
 	void addFilledTriangle(const Point& a, const Point& b, const Point& c);
 	void addBoundingRect(const Rect& dest, int innerLineWidth = 1);
-
-	void disableGL(GLenum cap);
-	void enableGL(GLenum cap);
+	void addAction(std::function<void()> action);
 
 	void draw(const FrameBufferPtr& frameBuffer) { draw(frameBuffer, Rect(), Rect()); }
 	void draw(const FrameBufferPtr& frameBuffer, const Rect& dest, const Rect& src);
@@ -57,14 +55,12 @@ public:
 private:
 	void drawObject(const FrameBuffer::ActionObject& obj);
 	void add(const std::shared_ptr<CoordsBuffer>& coordsBuffer, const TexturePtr& texture, const FrameBuffer::ScheduledMethod& method, const Painter::DrawMode drawMode = Painter::DrawMode::Triangles);
-
 	std::function<void()> m_onBind;
 
 	CoordsBuffer m_coordsBuffer;
 	FrameBufferPtr m_currentFrameBuffer;
 
 	std::list<FrameBufferPtr> m_frames;
-	std::hash<size_t> HASH_INT;
 };
 
 extern DrawPool g_drawPool;

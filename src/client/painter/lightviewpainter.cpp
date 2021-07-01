@@ -50,7 +50,7 @@ void LightViewPainter::draw(const LightViewPtr& lightView, const Rect& dest, con
 	if(!lightView || !lightView->isDark()) return;
 
 	if(g_drawPool.startScope(lightView->m_lightbuffer)) {
-		lightView->m_lightbuffer->setColorClear(Color::black);
+		lightView->m_lightbuffer->setColorClear(lightView->m_globalLightColor);
 
 		const auto& mapView = lightView->m_mapView;
 		const auto& shadeBase = std::make_pair<Point, Size>(Point(mapView->getTileSize() / 4.8), Size(mapView->getTileSize() * 1.4));

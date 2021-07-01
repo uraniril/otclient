@@ -173,12 +173,15 @@ void CreaturePainter::drawOutfit(const CreaturePtr& creature, const Rect& destRe
 		return;
 
 	if(g_graphics.canUseFBO()) {
-		const FrameBufferPtr& outfitBuffer = g_framebuffers.getTemporaryFrameBuffer();
-		outfitBuffer->resize(Size(frameSize, frameSize));
-		outfitBuffer->bind();
-		internalDrawOutfit(creature, Point(frameSize - SPRITE_SIZE) + creature->getDisplacement(), 1, false, Otc::South);
-		outfitBuffer->release();
-		outfitBuffer->draw(destRect, Rect(0, 0, frameSize, frameSize));
+		g_drawPool.addAction([&, rect = destRect, frameSize = frameSize]() {
+			const FrameBufferPtr& outfitBuffer = g_framebuffers.getTemporaryFrameBuffer();
+			const auto& size = Size(frameSize, frameSize);
+			outfitBuffer->resize(size);
+			outfitBuffer->bind();
+			internalDrawOutfit(creature, Point(frameSize - SPRITE_SIZE) + creature->getDisplacement(), 1, false, Otc::South);
+			outfitBuffer->release();
+			outfitBuffer->draw(rect, Rect(0, 0, size));
+		});
 	} else {
 		const float scaleFactor = destRect.width() / static_cast<float>(frameSize);
 		const Point dest = destRect.bottomRight() - (Point(SPRITE_SIZE) - creature->getDisplacement()) * scaleFactor;

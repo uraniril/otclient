@@ -29,48 +29,49 @@
 
 AnimatedText::AnimatedText()
 {
-    m_cachedText.setFont(g_fonts.getFont("verdana-11px-rounded"));
-    m_cachedText.setAlign(Fw::AlignLeft);
+	m_cachedText.setFont(g_fonts.getFont("verdana-11px-rounded"));
+	m_cachedText.setAlign(Fw::AlignLeft);
+	m_cachedText.generateHash();
 }
 
 void AnimatedText::onAppear()
 {
-    m_animationTimer.restart();
+	m_animationTimer.restart();
 
-    // schedule removal
-    auto self = asAnimatedText();
-    g_dispatcher.scheduleEvent([self]() { g_map.removeThing(self); }, ANIMATED_TEXT_DURATION);
+	// schedule removal
+	auto self = asAnimatedText();
+	g_dispatcher.scheduleEvent([self]() { g_map.removeThing(self); }, ANIMATED_TEXT_DURATION);
 }
 
 void AnimatedText::setColor(uint8 color)
 {
-    m_color = Color::from8bit(color);
+	m_color = Color::from8bit(color);
 }
 
 void AnimatedText::setText(const std::string& text)
 {
-    m_cachedText.setText(text);
+	m_cachedText.setText(text);
 }
 
 bool AnimatedText::merge(const AnimatedTextPtr& other)
 {
-    if(other->getColor() != m_color)
-        return false;
+	if(other->getColor() != m_color)
+		return false;
 
-    if(other->getCachedText().getFont() != m_cachedText.getFont())
-        return false;
+	if(other->getCachedText().getFont() != m_cachedText.getFont())
+		return false;
 
-    if(m_animationTimer.ticksElapsed() > ANIMATED_TEXT_DURATION / 2.5)
-        return false;
+	if(m_animationTimer.ticksElapsed() > ANIMATED_TEXT_DURATION / 2.5)
+		return false;
 
-    try {
-        const int number = stdext::safe_cast<int>(m_cachedText.getText());
-        const int otherNumber = stdext::safe_cast<int>(other->getCachedText().getText());
+	try {
+		const int number = stdext::safe_cast<int>(m_cachedText.getText());
+		const int otherNumber = stdext::safe_cast<int>(other->getCachedText().getText());
 
-        const std::string text = stdext::format("%d", number + otherNumber);
-        m_cachedText.setText(text);
-        return true;
-    } catch(...) {
-        return false;
-    }
+		const std::string text = stdext::format("%d", number + otherNumber);
+		m_cachedText.setText(text);
+		return true;
+	} catch(...) {
+		return false;
+	}
 }

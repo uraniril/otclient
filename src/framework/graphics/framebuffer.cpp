@@ -178,32 +178,7 @@ bool FrameBuffer::canUpdate()
 	return m_forceUpdate || (m_minTimeUpdate > 0 && (m_lastRenderedTime.ticksElapsed() >= m_minTimeUpdate));
 }
 
-void FrameBuffer::scheduleMethod(const ScheduledMethod& method)
-{
-	m_actionObjects.push_back(ActionObject{ {}, nullptr, Painter::DrawMode::None, {method} });
-}
-
-void FrameBuffer::scheduleDrawing(const std::shared_ptr<CoordsBuffer>& coordsBuffer, const TexturePtr& texture, const ScheduledMethod& method, const Painter::DrawMode drawMode)
-{
-	updateHash(texture, method);
-
-	auto currentState = g_painter->getCurrentState();
-	currentState.texture = texture;
-
-	if(!m_actionObjects.empty() && !(method.type == DrawMethodType::DRAW_TEXTURE_COORDS || method.type == DrawMethodType::DRAW_FILL_COORDS)) {
-		auto& prevDrawObject = m_actionObjects.back();
-
-		if(prevDrawObject.state.isEqual(currentState)) {
-			prevDrawObject.drawMode = Painter::DrawMode::Triangles;
-			prevDrawObject.drawMethods.push_back(method);
-			return;
-		}
-	}
-
-	m_actionObjects.push_back(ActionObject{ currentState, coordsBuffer, drawMode, {method} });
-}
-
-void FrameBuffer::updateHash(const TexturePtr& texture, const ScheduledMethod& method)
+size_t FrameBuffer::updateHash(const TexturePtr& texture, const ScheduledMethod& method)
 {
 	const auto& currentState = g_painter->getCurrentState();
 
@@ -227,14 +202,19 @@ void FrameBuffer::updateHash(const TexturePtr& texture, const ScheduledMethod& m
 		boost::hash_combine(m_currentStatusHashcode, HASH_INT(currentState.clipRect.y()));
 	}
 
-	if(method.rects.first.isValid()) {
-		boost::hash_combine(m_currentStatusHashcode, HASH_INT(method.rects.first.x()));
-		boost::hash_combine(m_currentStatusHashcode, HASH_INT(method.rects.first.y()));
-	}
-
-	if(method.rects.second.isValid()) {
-		boost::hash_combine(m_currentStatusHashcode, HASH_INT(method.rects.second.x()));
-		boost::hash_combine(m_currentStatusHashcode, HASH_INT(method.rects.second.y()));
+	size_t rectHash = 0;
+	{
+		if(method.rects.first.isValid()) {
+			boost::hash_combine(rectHash, HASH_INT(method.rects.first.x()));
+			boost::hash_combine(rectHash, HASH_INT(method.rects.first.y()));
+		}
+		if(method.rects.second.isValid()) {
+			boost::hash_combine(rectHash, HASH_INT(method.rects.second.x()));
+			boost::hash_combine(rectHash, HASH_INT(method.rects.second.y()));
+		}
+		if(rectHash > 0) {
+			boost::hash_combine(m_currentStatusHashcode, rectHash);
+		}
 	}
 
 	const auto& a = std::get<0>(method.points),
@@ -253,4 +233,12 @@ void FrameBuffer::updateHash(const TexturePtr& texture, const ScheduledMethod& m
 		boost::hash_combine(m_currentStatusHashcode, HASH_INT(c.x));
 		boost::hash_combine(m_currentStatusHashcode, HASH_INT(c.y));
 	}
+
+	if(method.intValue != 0)
+		boost::hash_combine(m_currentStatusHashcode, HASH_INT(method.intValue));
+
+	if(method.floatValue != 0)
+		boost::hash_combine(m_currentStatusHashcode, HASH_FLOAT(method.floatValue));
+
+	return rectHash;
 }
