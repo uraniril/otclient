@@ -69,7 +69,7 @@ void DrawPool::add(const std::shared_ptr<CoordsBuffer>& coordsBuffer, const Text
 	const auto& actionObject = std::make_shared<FrameBuffer::ActionObject>(FrameBuffer::ActionObject{ currentState, coordsBuffer, drawMode, {method} });
 
 	// Look for identical or opaque textures that are greater than or equal to the size of the previous texture and remove.
-	if(rectHash && texture && currentState.opacity >= 1.f) {
+	if(rectHash && texture && currentState.opacity >= 1.f && currentState.color.aF >= 1.f) {
 		auto& list = m_currentFrameBuffer->m_coordsActionObjects[rectHash];
 		for(auto& action : list) {
 			if(action->state.texture == texture || texture->isOpaque() && texture->getSize() >= action->state.texture->getSize()) {
@@ -182,8 +182,6 @@ void DrawPool::addTextureCoords(CoordsBuffer& coordsBuffer, const TexturePtr& te
 	FrameBuffer::ScheduledMethod method;
 	method.type = DrawMethodType::DRAW_TEXTURE_COORDS;
 	method.intValue = coordsBuffer.getVertexHash();
-	if(method.intValue)
-		g_logger.info(std::to_string(method.intValue));
 
 	add(std::shared_ptr<CoordsBuffer>(&coordsBuffer, [](CoordsBuffer*) {}), texture, method, drawMode);
 }
