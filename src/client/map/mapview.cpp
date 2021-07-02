@@ -60,7 +60,7 @@ MapView::MapView()
 	m_frameCache.tile = g_framebuffers.createFrameBuffer();
 	m_frameCache.creatureInformation = g_framebuffers.createFrameBuffer(true);
 	m_frameCache.staticText = g_framebuffers.createFrameBuffer(true);
-	m_frameCache.dynamicText = g_framebuffers.createFrameBuffer(true);
+	m_frameCache.dynamicText = g_framebuffers.createFrameBuffer(true, 50);
 
 	m_frameCache.tile->disableBlend();
 
