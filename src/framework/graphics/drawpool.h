@@ -41,7 +41,7 @@ public:
 	void addTextureCoords(CoordsBuffer& coordsBuffer, const TexturePtr& texture, Painter::DrawMode drawMode = Painter::DrawMode::Triangles);
 
 	void addTexturedRect(const Rect& dest, const TexturePtr& texture);
-	void addTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src);
+	void addTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src, const Point& originalDest = Point());
 	void addUpsideDownTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src);
 	void addRepeatedTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src);
 	void addFilledRect(const Rect& dest);

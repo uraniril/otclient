@@ -38,7 +38,7 @@ void DrawPool::add(const std::shared_ptr<CoordsBuffer>& coordsBuffer, const Text
 	if(!m_currentFrameBuffer || !m_currentFrameBuffer->isValid() ||
 		 !m_currentFrameBuffer->isDrawable()) return;
 
-	const size_t rectHash = m_currentFrameBuffer->updateHash(texture, method);
+	m_currentFrameBuffer->updateHash(texture, method);
 
 	auto currentState = g_painter->getCurrentState();
 	currentState.texture = texture;
@@ -50,18 +50,19 @@ void DrawPool::add(const std::shared_ptr<CoordsBuffer>& coordsBuffer, const Text
 			prevDrawObject->drawMode = Painter::DrawMode::Triangles;
 
 			// Search for identical objects in the same position
-			bool hasRect = false;
-			if(rectHash) {
-				for(auto& prevMethod : prevDrawObject->drawMethods) {
-					if(prevMethod.rects.first == method.rects.first && prevMethod.rects.second == method.rects.second) {
-						hasRect = true;
-						break;
-					}
-				}
+			bool push = false;
+			if(!method.dest.isNull()) {
+				const auto itFind = std::find_if(prevDrawObject->drawMethods.begin(), prevDrawObject->drawMethods.end(),
+																				 [&](const FrameBuffer::ScheduledMethod& prevMethod) { return prevMethod.dest == method.dest; });
+				push = itFind != prevDrawObject->drawMethods.end();
 			}
-			if(!hasRect) {
+
+			if(!push) {
 				prevDrawObject->drawMethods.push_back(method);
+				auto& list = m_currentFrameBuffer->m_coordsActionObjects[method.dest.hash()];
+				list.push_back(prevDrawObject);
 			}
+
 			return;
 		}
 	}
@@ -69,14 +70,15 @@ void DrawPool::add(const std::shared_ptr<CoordsBuffer>& coordsBuffer, const Text
 	const auto& actionObject = std::make_shared<FrameBuffer::ActionObject>(FrameBuffer::ActionObject{ currentState, coordsBuffer, drawMode, {method} });
 
 	// Look for identical or opaque textures that are greater than or equal to the size of the previous texture and remove.
-	if(rectHash && texture && currentState.opacity >= 1.f && currentState.color.aF() >= 1.f) {
-		auto& list = m_currentFrameBuffer->m_coordsActionObjects[rectHash];
-		for(auto& action : list) {
-			if(action->state.texture == texture || texture->isOpaque() && texture->getSize() >= action->state.texture->getSize()) {
-				for(auto itm = action->drawMethods.begin(); itm != action->drawMethods.end(); ++itm) {
+	if(currentState.compositionMode != Painter::CompositionMode_Multiply && !method.dest.isNull() &&
+		 texture && currentState.opacity >= 1.f && currentState.color.aF() >= 1.f) {
+		auto& list = m_currentFrameBuffer->m_coordsActionObjects[method.dest.hash()];
+		for(auto& prevAction : list) {
+			if(prevAction->state.texture == texture || texture->isOpaque() && texture->getSize() >= prevAction->state.texture->getSize()) {
+				for(auto itm = prevAction->drawMethods.begin(); itm != prevAction->drawMethods.end(); ++itm) {
 					auto& prevMethod = *itm;
-					if(prevMethod.rects.first == method.rects.first && prevMethod.rects.second == method.rects.second) {
-						action->drawMethods.erase(itm);
+					if(prevMethod.dest == method.dest) {
+						prevAction->drawMethods.erase(itm);
 						break;
 					}
 				}
@@ -191,7 +193,7 @@ void DrawPool::addTexturedRect(const Rect& dest, const TexturePtr& texture)
 	addTexturedRect(dest, texture, Rect(Point(), texture->getSize()));
 }
 
-void DrawPool::addTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src)
+void DrawPool::addTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src, const Point& originalDest)
 {
 	if(dest.isEmpty() || src.isEmpty() || texture->isEmpty())
 		return;
@@ -199,6 +201,7 @@ void DrawPool::addTexturedRect(const Rect& dest, const TexturePtr& texture, cons
 	FrameBuffer::ScheduledMethod method;
 	method.type = DrawMethodType::DRAW_TEXTURED_RECT;
 	method.rects = std::make_pair(dest, src);
+	method.dest = originalDest;
 
 	add(nullptr, texture, method, Painter::DrawMode::TriangleStrip);
 }

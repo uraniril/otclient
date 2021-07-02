@@ -143,6 +143,7 @@ TexturePtr TextureManager::loadTexture(std::stringstream& file)
 				framesDelay.push_back(frameDelay);
 
 				const auto image = ImagePtr(new Image(imageSize, apng.bpp, frameData));
+				// TODO:
 				image->setTransparentPixel(true);
 
 				frames.push_back(image);

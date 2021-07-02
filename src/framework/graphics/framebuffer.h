@@ -62,6 +62,7 @@ public:
 		DrawMethodType type;
 		std::pair<Rect, Rect> rects;
 		std::tuple<Point, Point, Point> points;
+		Point dest;
 		uint64 intValue{ 0 };
 		float floatValue{ 0 };
 	};

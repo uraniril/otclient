@@ -30,168 +30,176 @@ SpriteManager g_sprites;
 
 SpriteManager::SpriteManager()
 {
-    m_spritesCount = 0;
-    m_signature = 0;
+	m_spritesCount = 0;
+	m_signature = 0;
 }
 
 void SpriteManager::terminate()
 {
-    unload();
+	unload();
 }
 
 bool SpriteManager::loadSpr(std::string file)
 {
-    m_spritesCount = 0;
-    m_signature = 0;
-    m_loaded = false;
-    try {
-        file = g_resources.guessFilePath(file, "spr");
+	m_spritesCount = 0;
+	m_signature = 0;
+	m_loaded = false;
+	try {
+		file = g_resources.guessFilePath(file, "spr");
 
-        m_spritesFile = g_resources.openFile(file);
-        // cache file buffer to avoid lags from hard drive
-        m_spritesFile->cache();
+		m_spritesFile = g_resources.openFile(file);
+		// cache file buffer to avoid lags from hard drive
+		m_spritesFile->cache();
 
-        m_signature = m_spritesFile->getU32();
-        m_spritesCount = m_spritesFile->getU32();
-        m_spritesOffset = m_spritesFile->tell();
-        m_loaded = true;
-        g_lua.callGlobalField("g_sprites", "onLoadSpr", file);
-        return true;
-    } catch(stdext::exception& e) {
-        g_logger.error(stdext::format("Failed to load sprites from '%s': %s", file, e.what()));
-        return false;
-    }
+		m_signature = m_spritesFile->getU32();
+		m_spritesCount = m_spritesFile->getU32();
+		m_spritesOffset = m_spritesFile->tell();
+		m_loaded = true;
+		g_lua.callGlobalField("g_sprites", "onLoadSpr", file);
+		return true;
+	} catch(stdext::exception& e) {
+		g_logger.error(stdext::format("Failed to load sprites from '%s': %s", file, e.what()));
+		return false;
+	}
 }
 
 void SpriteManager::saveSpr(const std::string& fileName)
 {
-    if(!m_loaded)
-        stdext::throw_exception("failed to save, spr is not loaded");
+	if(!m_loaded)
+		stdext::throw_exception("failed to save, spr is not loaded");
 
-    try {
-        FileStreamPtr fin = g_resources.createFile(fileName);
-        if(!fin)
-            stdext::throw_exception(stdext::format("failed to open file '%s' for write", fileName));
+	try {
+		FileStreamPtr fin = g_resources.createFile(fileName);
+		if(!fin)
+			stdext::throw_exception(stdext::format("failed to open file '%s' for write", fileName));
 
-        fin->cache();
+		fin->cache();
 
-        fin->addU32(m_signature);
-        fin->addU32(m_spritesCount);
+		fin->addU32(m_signature);
+		fin->addU32(m_spritesCount);
 
-        const uint32 offset = fin->tell();
-        uint32 spriteAddress = offset + 4 * m_spritesCount;
-        for(int i = 1; i <= m_spritesCount; ++i)
-            fin->addU32(0);
+		const uint32 offset = fin->tell();
+		uint32 spriteAddress = offset + 4 * m_spritesCount;
+		for(int i = 1; i <= m_spritesCount; ++i)
+			fin->addU32(0);
 
-        for(int i = 1; i <= m_spritesCount; ++i) {
-            m_spritesFile->seek((i - 1) * 4 + m_spritesOffset);
-            const uint32 fromAdress = m_spritesFile->getU32();
-            if(fromAdress != 0) {
-                fin->seek(offset + (i - 1) * 4);
-                fin->addU32(spriteAddress);
-                fin->seek(spriteAddress);
+		for(int i = 1; i <= m_spritesCount; ++i) {
+			m_spritesFile->seek((i - 1) * 4 + m_spritesOffset);
+			const uint32 fromAdress = m_spritesFile->getU32();
+			if(fromAdress != 0) {
+				fin->seek(offset + (i - 1) * 4);
+				fin->addU32(spriteAddress);
+				fin->seek(spriteAddress);
 
-                m_spritesFile->seek(fromAdress);
-                fin->addU8(m_spritesFile->getU8());
-                fin->addU8(m_spritesFile->getU8());
-                fin->addU8(m_spritesFile->getU8());
+				m_spritesFile->seek(fromAdress);
+				fin->addU8(m_spritesFile->getU8());
+				fin->addU8(m_spritesFile->getU8());
+				fin->addU8(m_spritesFile->getU8());
 
-                const uint16 dataSize = m_spritesFile->getU16();
-                fin->addU16(dataSize);
-                char spriteData[SPRITE_DATA_SIZE];
-                m_spritesFile->read(spriteData, dataSize);
-                fin->write(spriteData, dataSize);
+				const uint16 dataSize = m_spritesFile->getU16();
+				fin->addU16(dataSize);
+				char spriteData[SPRITE_DATA_SIZE];
+				m_spritesFile->read(spriteData, dataSize);
+				fin->write(spriteData, dataSize);
 
-                spriteAddress = fin->tell();
-            }
-            //TODO: Check for overwritten sprites.
-        }
+				spriteAddress = fin->tell();
+			}
+			//TODO: Check for overwritten sprites.
+		}
 
-        fin->flush();
-        fin->close();
-    } catch(std::exception& e) {
-        g_logger.error(stdext::format("Failed to save '%s': %s", fileName, e.what()));
-    }
+		fin->flush();
+		fin->close();
+	} catch(std::exception& e) {
+		g_logger.error(stdext::format("Failed to save '%s': %s", fileName, e.what()));
+	}
 }
 
 void SpriteManager::unload()
 {
-    m_spritesCount = 0;
-    m_signature = 0;
-    m_spritesFile = nullptr;
+	m_spritesCount = 0;
+	m_signature = 0;
+	m_spritesFile = nullptr;
 }
 
 ImagePtr SpriteManager::getSpriteImage(int id)
 {
-    try {
-        if(id == 0 || !m_spritesFile)
-            return nullptr;
+	try {
+		if(id == 0 || !m_spritesFile)
+			return nullptr;
 
-        m_spritesFile->seek(((id - 1) * 4) + m_spritesOffset);
+		m_spritesFile->seek(((id - 1) * 4) + m_spritesOffset);
 
-        const uint32 spriteAddress = m_spritesFile->getU32();
+		const uint32 spriteAddress = m_spritesFile->getU32();
 
-        // no sprite? return an empty texture
-        if(spriteAddress == 0)
-            return nullptr;
+		// no sprite? return an empty texture
+		if(spriteAddress == 0)
+			return nullptr;
 
-        m_spritesFile->seek(spriteAddress);
+		m_spritesFile->seek(spriteAddress);
 
-        // skip color key
-        m_spritesFile->getU8();
-        m_spritesFile->getU8();
-        m_spritesFile->getU8();
+		// skip color key
+		m_spritesFile->getU8();
+		m_spritesFile->getU8();
+		m_spritesFile->getU8();
 
-        const uint16 pixelDataSize = m_spritesFile->getU16();
+		const uint16 pixelDataSize = m_spritesFile->getU16();
 
-        ImagePtr image(new Image(Size(SPRITE_SIZE, SPRITE_SIZE)));
+		ImagePtr image(new Image(Size(SPRITE_SIZE, SPRITE_SIZE)));
 
-        uint8* pixels = image->getPixelData();
-        int writePos = 0;
-        int read = 0;
-        const bool useAlpha = g_game.getFeature(Otc::GameSpritesAlphaChannel);
-        const uint8 channels = useAlpha ? 4 : 3;
-        // decompress pixels
-        while(read < pixelDataSize && writePos < SPRITE_DATA_SIZE) {
-            const uint16 transparentPixels = m_spritesFile->getU16();
-            const uint16 coloredPixels = m_spritesFile->getU16();
-            if(!image->hasTransparentPixel())
-                image->setTransparentPixel(transparentPixels > 0);
-            for(int i = 0; i < transparentPixels && writePos < SPRITE_DATA_SIZE; ++i) {
-                pixels[writePos + 0] = 0x00;
-                pixels[writePos + 1] = 0x00;
-                pixels[writePos + 2] = 0x00;
-                pixels[writePos + 3] = 0x00;
-                writePos += 4;
-            }
+		uint8* pixels = image->getPixelData();
+		int writePos = 0;
+		int read = 0;
+		const bool useAlpha = g_game.getFeature(Otc::GameSpritesAlphaChannel);
+		const uint8 channels = useAlpha ? 4 : 3;
+		// decompress pixels
+		while(read < pixelDataSize && writePos < SPRITE_DATA_SIZE) {
+			const uint16 transparentPixels = m_spritesFile->getU16();
+			const uint16 coloredPixels = m_spritesFile->getU16();
 
-            for(int i = 0; i < coloredPixels && writePos < SPRITE_DATA_SIZE; ++i) {
-                pixels[writePos + 0] = m_spritesFile->getU8();
-                pixels[writePos + 1] = m_spritesFile->getU8();
-                pixels[writePos + 2] = m_spritesFile->getU8();
-                pixels[writePos + 3] = useAlpha ? m_spritesFile->getU8() : 0xFF;
-                writePos += 4;
-            }
+			for(int i = 0; i < transparentPixels && writePos < SPRITE_DATA_SIZE; ++i) {
+				pixels[writePos + 0] = 0x00;
+				pixels[writePos + 1] = 0x00;
+				pixels[writePos + 2] = 0x00;
+				pixels[writePos + 3] = 0x00;
+				writePos += 4;
+			}
 
-            read += 4 + (channels * coloredPixels);
-        }
+			for(int i = 0; i < coloredPixels && writePos < SPRITE_DATA_SIZE; ++i) {
+				pixels[writePos + 0] = m_spritesFile->getU8();
+				pixels[writePos + 1] = m_spritesFile->getU8();
+				pixels[writePos + 2] = m_spritesFile->getU8();
+				pixels[writePos + 3] = useAlpha ? m_spritesFile->getU8() : 0xFF;
+				writePos += 4;
+			}
 
-        // Error margin for 4 pixel transparent
-        if(writePos + 4 < SPRITE_DATA_SIZE && !image->hasTransparentPixel())
-            image->setTransparentPixel(true);
+			read += 4 + (channels * coloredPixels);
+		}
 
-        // fill remaining pixels with alpha
-        while(writePos < SPRITE_DATA_SIZE) {
-            pixels[writePos + 0] = 0x00;
-            pixels[writePos + 1] = 0x00;
-            pixels[writePos + 2] = 0x00;
-            pixels[writePos + 3] = 0x00;
-            writePos += 4;
-        }
+		// Error margin for 4 pixel transparent
+		if(!image->hasTransparentPixel() && writePos + 4 < SPRITE_DATA_SIZE)
+			image->setTransparentPixel(true);
 
-        return image;
-    } catch(stdext::exception& e) {
-        g_logger.error(stdext::format("Failed to get sprite id %d: %s", id, e.what()));
-        return nullptr;
-    }
+		// fill remaining pixels with alpha
+		while(writePos < SPRITE_DATA_SIZE) {
+			pixels[writePos + 0] = 0x00;
+			pixels[writePos + 1] = 0x00;
+			pixels[writePos + 2] = 0x00;
+			pixels[writePos + 3] = 0x00;
+			writePos += 4;
+		}
+
+		// The image must be more than 4 pixels transparent to be considered transparent.
+		uint8 cntTrans = 0;
+		for(uint8 pixel : image->getPixels()) {
+			if(pixel == 0x00 && ++cntTrans > 4) {
+				image->setTransparentPixel(true);
+				break;
+			}
+		}
+
+		return image;
+	} catch(stdext::exception& e) {
+		g_logger.error(stdext::format("Failed to get sprite id %d: %s", id, e.what()));
+		return nullptr;
+	}
 }
