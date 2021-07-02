@@ -31,7 +31,6 @@
 class DrawPool
 {
 public:
-
 	void init();
 	void terminate();
 
@@ -54,15 +53,12 @@ public:
 	void draw(const FrameBufferPtr& frameBuffer, const Rect& dest, const Rect& src);
 
 private:
-	void drawObject(const FrameBuffer::ActionObject& obj);
-	void add(const std::shared_ptr<CoordsBuffer>& coordsBuffer, const TexturePtr& texture, const FrameBuffer::ScheduledMethod& method, const Painter::DrawMode drawMode = Painter::DrawMode::Triangles);
+	void drawObject(const FrameBuffer::ScheduledAction& obj);
+	void add(const std::shared_ptr<CoordsBuffer>& coordsBuffer, const TexturePtr& texture, const FrameBuffer::DrawMethod& method, const Painter::DrawMode drawMode = Painter::DrawMode::Triangles);
 	bool canUpdate() { return m_lastRenderedTime.ticksElapsed() >= 16; }
 
 	CoordsBuffer m_coordsBuffer;
 	FrameBufferPtr m_currentFrameBuffer;
-
-	std::list<FrameBufferPtr> m_frames;
-
 	Timer m_lastRenderedTime;
 };
 

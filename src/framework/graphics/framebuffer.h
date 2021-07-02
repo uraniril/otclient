@@ -47,37 +47,6 @@ enum class DrawMethodType {
 class FrameBuffer : public stdext::shared_object
 {
 public:
-	enum class ScheduledMethodType {
-		DRAW_FILL_COORDS,
-		DRAW_TEXTURE_COORDS,
-		DRAW_TEXTURED_RECT,
-		DRAW_UPSIDEDOWN_TEXTURED_RECT,
-		DRAW_REPEATED_TEXTURED_RECT,
-		DRAW_FILLED_RECT,
-		DRAW_FILLED_TRIANGLE,
-		DRAW_BOUNDING_RECT
-	};
-
-	struct ScheduledMethod {
-		DrawMethodType type;
-		std::pair<Rect, Rect> rects;
-		std::tuple<Point, Point, Point> points;
-		Point dest;
-		uint64 intValue{ 0 };
-		float floatValue{ 0 };
-	};
-
-	struct ActionObject {
-		~ActionObject() { drawMethods.clear(); coordsBuffer = nullptr; state.texture = nullptr; }
-
-		Painter::PainterState state;
-		std::shared_ptr<CoordsBuffer> coordsBuffer;
-		Painter::DrawMode drawMode{ Painter::DrawMode::Triangles };
-		std::vector<ScheduledMethod> drawMethods;
-
-		std::function<void()> action;
-	};
-
 	~FrameBuffer() override;
 
 	void release();
@@ -109,14 +78,45 @@ protected:
 	friend class DrawPool;
 
 private:
+	enum class DrawMethodType {
+		DRAW_FILL_COORDS,
+		DRAW_TEXTURE_COORDS,
+		DRAW_TEXTURED_RECT,
+		DRAW_UPSIDEDOWN_TEXTURED_RECT,
+		DRAW_REPEATED_TEXTURED_RECT,
+		DRAW_FILLED_RECT,
+		DRAW_FILLED_TRIANGLE,
+		DRAW_BOUNDING_RECT
+	};
+
+	struct DrawMethod {
+		DrawMethodType type;
+		std::pair<Rect, Rect> rects;
+		std::tuple<Point, Point, Point> points;
+		Point dest;
+		uint64 intValue{ 0 };
+		float floatValue{ .0f };
+	};
+
+	struct ScheduledAction {
+		~ScheduledAction() { drawMethods.clear(); coordsBuffer = nullptr; state.texture = nullptr; }
+
+		Painter::PainterState state;
+		std::shared_ptr<CoordsBuffer> coordsBuffer;
+		Painter::DrawMode drawMode{ Painter::DrawMode::Triangles };
+		std::vector<DrawMethod> drawMethods;
+
+		std::function<void()> action;
+	};
+
 	void internalCreate();
 	void internalBind();
 	void internalRelease();
-	bool hasModification() const { return m_statusHashCode != m_currentStatusHashcode; }
-	void updateStatus() { m_statusHashCode = m_currentStatusHashcode; }
-	void resetStatus() { m_currentStatusHashcode = 0; }
+	void updateStatus() { m_status.first = m_status.second; }
+	void resetCurrentStatus() { m_status.second = 0; }
+	bool hasModification() const { return m_status.first != m_status.second; }
 
-	size_t updateHash(const TexturePtr& texture, const ScheduledMethod& method);
+	size_t updateHash(const TexturePtr& texture, const DrawMethod& method);
 
 	static uint boundFbo;
 
@@ -129,11 +129,10 @@ private:
 	Color m_colorClear = { Color::black };
 	Painter::CompositionMode m_compositeMode{ Painter::CompositionMode_Normal };
 
-	std::vector<std::shared_ptr<ActionObject>> m_actionObjects;
-	std::unordered_map<size_t, std::vector<std::shared_ptr<ActionObject>>> m_coordsActionObjects;
+	std::vector<std::shared_ptr<ScheduledAction>> m_actionObjects;
+	std::unordered_map<size_t, std::vector<std::shared_ptr<ScheduledAction>>> m_coordsActionObjects;
 
-	size_t m_statusHashCode{ 0 },
-		m_currentStatusHashcode{ 0 };
+	std::pair<size_t, size_t> m_status{ 0,0 };
 
 	bool m_backuping{ true },
 		m_smooth{ true },
