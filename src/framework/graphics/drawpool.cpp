@@ -35,8 +35,7 @@ void DrawPool::terminate() { m_currentFrameBuffer = nullptr; }
 
 void DrawPool::add(const std::shared_ptr<CoordsBuffer>& coordsBuffer, const TexturePtr& texture, const FrameBuffer::ScheduledMethod& method, const Painter::DrawMode drawMode)
 {
-	if(!m_currentFrameBuffer || !m_currentFrameBuffer->isValid() ||
-		 !m_currentFrameBuffer->isDrawable()) return;
+	if(!m_currentFrameBuffer || !m_currentFrameBuffer->isDrawable()) return;
 
 	m_currentFrameBuffer->updateHash(texture, method);
 
@@ -91,10 +90,10 @@ void DrawPool::add(const std::shared_ptr<CoordsBuffer>& coordsBuffer, const Text
 	m_currentFrameBuffer->m_actionObjects.push_back(actionObject);
 }
 
-bool DrawPool::startScope(const FrameBufferPtr& frameBuffer)
+bool DrawPool::canFill(const FrameBufferPtr& frameBuffer)
 {
 	m_currentFrameBuffer = frameBuffer;
-	if(!frameBuffer || !frameBuffer->canUpdate())
+	if(!frameBuffer || !canUpdate())
 		return false;
 
 	frameBuffer->resetStatus();
@@ -103,7 +102,7 @@ bool DrawPool::startScope(const FrameBufferPtr& frameBuffer)
 
 void DrawPool::draw(const FrameBufferPtr& frameBuffer, const Rect& dest, const Rect& src)
 {
-	if(!frameBuffer->isValid() || !frameBuffer->isDrawable()) return;
+	if(!frameBuffer->isDrawable()) return;
 
 	g_painter->saveAndResetState();
 	if(frameBuffer->hasModification()) {
@@ -115,7 +114,6 @@ void DrawPool::draw(const FrameBufferPtr& frameBuffer, const Rect& dest, const R
 
 		frameBuffer->release();
 	}
-	m_onBind = []() {};
 
 	frameBuffer->m_coordsActionObjects.clear();
 	frameBuffer->m_actionObjects.clear();
@@ -132,8 +130,7 @@ void DrawPool::drawObject(const FrameBuffer::ActionObject& obj)
 		return;
 	}
 
-	if(obj.drawMode != Painter::DrawMode::None)
-		g_painter->executeState(obj.state);
+	g_painter->executeState(obj.state);
 
 	if(obj.coordsBuffer != nullptr) {
 		g_painter->drawCoords(*obj.coordsBuffer, obj.drawMode);
@@ -271,5 +268,6 @@ void DrawPool::addAction(std::function<void()> action)
 {
 	if(!m_currentFrameBuffer) return;
 
-	m_currentFrameBuffer->m_actionObjects.push_back(std::make_shared<FrameBuffer::ActionObject>(FrameBuffer::ActionObject{ {}, nullptr, Painter::DrawMode::None, {}, action }));
+	m_currentFrameBuffer->m_actionObjects
+		.push_back(std::make_shared<FrameBuffer::ActionObject>(FrameBuffer::ActionObject{ {}, nullptr, Painter::DrawMode::None, {}, action }));
 }

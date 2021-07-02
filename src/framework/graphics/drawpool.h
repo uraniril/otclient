@@ -35,7 +35,8 @@ public:
 	void init();
 	void terminate();
 
-	bool startScope(const FrameBufferPtr& frameBuffer);
+	bool canFill(const FrameBufferPtr& frameBuffer);
+	void restart() { m_lastRenderedTime.restart(); }
 
 	void addFillCoords(CoordsBuffer& coordsBuffer);
 	void addTextureCoords(CoordsBuffer& coordsBuffer, const TexturePtr& texture, Painter::DrawMode drawMode = Painter::DrawMode::Triangles);
@@ -55,12 +56,14 @@ public:
 private:
 	void drawObject(const FrameBuffer::ActionObject& obj);
 	void add(const std::shared_ptr<CoordsBuffer>& coordsBuffer, const TexturePtr& texture, const FrameBuffer::ScheduledMethod& method, const Painter::DrawMode drawMode = Painter::DrawMode::Triangles);
-	std::function<void()> m_onBind;
+	bool canUpdate() { return m_lastRenderedTime.ticksElapsed() >= 16; }
 
 	CoordsBuffer m_coordsBuffer;
 	FrameBufferPtr m_currentFrameBuffer;
 
 	std::list<FrameBufferPtr> m_frames;
+
+	Timer m_lastRenderedTime;
 };
 
 extern DrawPool g_drawPool;

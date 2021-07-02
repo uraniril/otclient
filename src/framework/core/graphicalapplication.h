@@ -29,44 +29,43 @@
 
 class GraphicalApplication : public Application
 {
-    enum {
-        POLL_CYCLE_DELAY = 10
-    };
+	enum {
+		POLL_CYCLE_DELAY = 10
+	};
 
 public:
-    void init(std::vector<std::string>& args) override;
-    void deinit() override;
-    void terminate() override;
-    void run() override;
-    void poll() override;
-    void close() override;
+	void init(std::vector<std::string>& args) override;
+	void deinit() override;
+	void terminate() override;
+	void run() override;
+	void poll() override;
+	void close() override;
 
-    bool willRepaint() { return m_mustRepaint; }
-    void repaint() { m_mustRepaint = true; }
+	bool willRepaint() { return m_mustRepaint; }
+	void repaint() { m_mustRepaint = true; }
 
-    /* Force Max FPS 20, it is unnecessary more than that. */
-    void setForegroundPaneMaxFps(int /*maxFps*/) { m_foregroundFrameCounter.setMaxFps(20); }
-    void setBackgroundPaneMaxFps(int maxFps) { m_backgroundFrameCounter.setMaxFps(maxFps); }
+	/* Force Max FPS 20, it is unnecessary more than that. */
+	void setForegroundPaneMaxFps(int /*maxFps*/) { m_foregroundFrameCounter.setMaxFps(20); }
+	void setBackgroundPaneMaxFps(int maxFps) { m_backgroundFrameCounter.setMaxFps(maxFps); }
 
-    int getForegroundPaneFps() { return m_foregroundFrameCounter.getLastFps(); }
-    int getBackgroundPaneFps() { return m_backgroundFrameCounter.getLastFps(); }
-    int getForegroundPaneMaxFps() { return m_foregroundFrameCounter.getMaxFps(); }
-    int getBackgroundPaneMaxFps() { return m_backgroundFrameCounter.getMaxFps(); }
+	int getForegroundPaneFps() { return m_foregroundFrameCounter.getLastFps(); }
+	int getBackgroundPaneFps() { return m_backgroundFrameCounter.getLastFps(); }
+	int getForegroundPaneMaxFps() { return m_foregroundFrameCounter.getMaxFps(); }
+	int getBackgroundPaneMaxFps() { return m_backgroundFrameCounter.getMaxFps(); }
 
-    bool isOnInputEvent() { return m_onInputEvent; }
+	bool isOnInputEvent() { return m_onInputEvent; }
 
 protected:
-    void resize(const Size& size);
-    void inputEvent(const InputEvent& event);
+	void resize(const Size& size);
+	void inputEvent(const InputEvent& event);
 
 private:
-    bool m_onInputEvent{ false },
-        m_mustRepaint{ false };
-    AdaptativeFrameCounter m_backgroundFrameCounter;
-    AdaptativeFrameCounter m_foregroundFrameCounter;
-    TexturePtr m_foreground;
+	bool m_onInputEvent{ false },
+		m_mustRepaint{ false };
+	AdaptativeFrameCounter m_backgroundFrameCounter;
+	AdaptativeFrameCounter m_foregroundFrameCounter;
 
-    FrameBufferPtr m_foregroundFrameCache;
+	FrameBufferPtr m_foregroundFrameCache;
 };
 
 extern GraphicalApplication g_app;

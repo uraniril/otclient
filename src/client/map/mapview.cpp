@@ -57,10 +57,10 @@ MapView::MapView()
 	m_viewMode = NEAR_VIEW;
 	m_optimizedSize = Size(g_map.getAwareRange().horizontal(), g_map.getAwareRange().vertical()) * SPRITE_SIZE;
 
-	m_frameCache.tile = g_framebuffers.createFrameBuffer();
+	m_frameCache.tile = g_framebuffers.createFrameBuffer(false);
 	m_frameCache.creatureInformation = g_framebuffers.createFrameBuffer(true);
 	m_frameCache.staticText = g_framebuffers.createFrameBuffer(true);
-	m_frameCache.dynamicText = g_framebuffers.createFrameBuffer(true, 50);
+	m_frameCache.dynamicText = g_framebuffers.createFrameBuffer(true);
 
 	m_frameCache.tile->disableBlend();
 
@@ -239,11 +239,6 @@ void MapView::onCameraMove(const Point& /*offset*/)
 {
 	m_rectCache.rect = Rect();
 
-	for(const auto& frame : { m_frameCache.tile, m_frameCache.staticText, m_frameCache.dynamicText })
-		frame->update();
-
-	//if(m_drawLights) m_lightView->update();
-
 	if(isFollowingCreature()) {
 		if(m_followingCreature->isWalking()) {
 			m_viewport = m_viewPortDirection[m_followingCreature->getDirection()];
@@ -317,7 +312,6 @@ void MapView::updateLight()
 	ambientLight.intensity = std::max<uint8>(m_minimumAmbientLight * 255, ambientLight.intensity);
 
 	m_lightView->setGlobalLight(ambientLight);
-	//m_lightView->update();
 }
 
 void MapView::lockFirstVisibleFloor(uint8 firstVisibleFloor)
@@ -370,8 +364,7 @@ void MapView::optimizeForSize(const Size& visibleSize)
 
 void MapView::setAntiAliasingMode(const AntialiasingMode mode)
 {
-	//g_drawPool.getFrameBuffer(DRAWTYPE_MAP)->cleanTexture();
-	//g_drawPool.getFrameBuffer(DRAWTYPE_MAP)->setSmooth(mode != ANTIALIASING_DISABLED);
+	m_frameCache.tile->setSmooth(mode != ANTIALIASING_DISABLED);
 	m_renderScale = mode == ANTIALIASING_SMOOTH_RETRO ? 200 : 100;
 	updateGeometry(m_visibleDimension, m_optimizedSize);
 }

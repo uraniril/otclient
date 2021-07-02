@@ -80,32 +80,30 @@ public:
 
 	~FrameBuffer() override;
 
+	void release();
 	void resize(const Size& size);
 	void bind(bool autoClear = true);
-	void release();
 	void clear(Color color = Color::black);
 	void draw(const Rect& dest, const Rect& src);
 
+	void setSmooth(bool enabled) { m_smooth = enabled; m_texture = nullptr; }
 	void setBackuping(bool enabled) { m_backuping = enabled; }
-	void setSmooth(bool enabled) { m_smooth = enabled; }
 
 	TexturePtr getTexture() { return m_texture; }
 	Size getSize();
+
 	bool isBackuping() { return m_backuping; }
 	bool isSmooth() { return m_smooth; }
 
-	void update() { m_forceUpdate = true; }
-	void cleanTexture() { m_texture = nullptr; }
-	bool isValid() const { return m_texture != nullptr; }
 	void setColorClear(const Color color) { m_colorClear = color; }
 	void setCompositionMode(const Painter::CompositionMode mode) { m_compositeMode = mode; }
 	void disableBlend() { m_disableBlend = true; }
 
 	void setDrawable(const bool v) { m_drawable = v; }
-	bool isDrawable() const { return m_drawable; }
+	bool isDrawable() const { return m_drawable && m_texture != nullptr; }
 
 protected:
-	FrameBuffer(bool useAlphaWriting, uint16_t minTimeUpdate);
+	FrameBuffer(bool useAlphaWriting);
 
 	friend class FrameBufferManager;
 	friend class DrawPool;
@@ -114,11 +112,11 @@ private:
 	void internalCreate();
 	void internalBind();
 	void internalRelease();
-	size_t updateHash(const TexturePtr& texture, const ScheduledMethod& method);
 	bool hasModification() const { return m_statusHashCode != m_currentStatusHashcode; }
 	void updateStatus() { m_statusHashCode = m_currentStatusHashcode; }
 	void resetStatus() { m_currentStatusHashcode = 0; }
-	bool canUpdate();
+
+	size_t updateHash(const TexturePtr& texture, const ScheduledMethod& method);
 
 	static uint boundFbo;
 
@@ -127,19 +125,17 @@ private:
 	Size m_oldViewportSize;
 
 	uint32 m_fbo, m_prevBoundFbo;
-	uint16_t m_minTimeUpdate;
 
-	Timer m_lastRenderedTime;
 	Color m_colorClear = { Color::black };
 	Painter::CompositionMode m_compositeMode{ Painter::CompositionMode_Normal };
 
 	std::vector<std::shared_ptr<ActionObject>> m_actionObjects;
 	std::unordered_map<size_t, std::vector<std::shared_ptr<ActionObject>>> m_coordsActionObjects;
 
-	size_t m_statusHashCode{ 0 }, m_currentStatusHashcode{ 0 };
+	size_t m_statusHashCode{ 0 },
+		m_currentStatusHashcode{ 0 };
 
-	bool m_forceUpdate{ true },
-		m_backuping{ true },
+	bool m_backuping{ true },
 		m_smooth{ true },
 		m_useAlphaWriting{ false },
 		m_disableBlend{ false },

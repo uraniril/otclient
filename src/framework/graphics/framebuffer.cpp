@@ -31,11 +31,10 @@
 
 uint FrameBuffer::boundFbo = 0;
 
-FrameBuffer::FrameBuffer(const bool useAlphaWriting, const uint16_t minTimeUpdate)
+FrameBuffer::FrameBuffer(const bool useAlphaWriting)
 {
 	internalCreate();
 	m_useAlphaWriting = useAlphaWriting;
-	m_minTimeUpdate = minTimeUpdate;
 }
 
 void FrameBuffer::internalCreate()
@@ -110,8 +109,6 @@ void FrameBuffer::release()
 {
 	internalRelease();
 	g_painter->restoreSavedState();
-	m_forceUpdate = false;
-	m_lastRenderedTime.restart();
 }
 
 void FrameBuffer::draw(const Rect& dest, const Rect& src)
@@ -171,11 +168,6 @@ Size FrameBuffer::getSize()
 	}
 
 	return m_texture->getSize();
-}
-
-bool FrameBuffer::canUpdate()
-{
-	return m_forceUpdate || (m_minTimeUpdate > 0 && (m_lastRenderedTime.ticksElapsed() >= m_minTimeUpdate));
 }
 
 size_t FrameBuffer::updateHash(const TexturePtr& texture, const ScheduledMethod& method)

@@ -144,7 +144,6 @@ void Minimap::draw(const Rect& screenRect, const Position& mapCenter, float scal
 				tex->setSmooth(scale < 1.0f);
 				g_drawPool.addTexturedRect(dest, tex, src);
 			}
-			//g_drawPool.addBoundingRect(Rect(xs,ys, MMBLOCK_SIZE * scale, MMBLOCK_SIZE * scale));
 		}
 	}
 

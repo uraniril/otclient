@@ -100,7 +100,6 @@ void GraphicalApplication::terminate()
 	g_mouse.terminate();
 
 	// terminate graphics
-	m_foreground = nullptr;
 	m_foregroundFrameCache = nullptr;
 	g_drawPool.terminate();
 	g_graphics.terminate();
@@ -150,14 +149,12 @@ void GraphicalApplication::run()
 			}
 
 			if(redraw) {
-				Rect viewportRect(0, 0, g_painter->getResolution());
-
 				// draw the foreground into a texture
 				if(updateForeground) {
 					m_foregroundFrameCounter.processNextFrame();
 
 					// draw foreground
-					if(g_drawPool.startScope(m_foregroundFrameCache)) {
+					if(g_drawPool.canFill(m_foregroundFrameCache)) {
 						g_ui.render(Fw::ForegroundPane);
 					}
 				}
@@ -168,6 +165,9 @@ void GraphicalApplication::run()
 
 				// draw the foreground (steady stuff)
 				g_drawPool.draw(m_foregroundFrameCache);
+
+				// resets frame refresh time.
+				g_drawPool.restart();
 
 				// update screen pixels
 				g_window.swapBuffers();
@@ -221,11 +221,6 @@ void GraphicalApplication::resize(const Size& size)
 	g_graphics.resize(size);
 	g_ui.resize(size);
 	m_onInputEvent = false;
-
-	if(g_graphics.canCacheBackbuffer()) {
-		m_foreground = TexturePtr(new Texture(size));
-		m_foreground->setUpsideDown(true);
-	}
 
 	m_foregroundFrameCache->resize(size);
 

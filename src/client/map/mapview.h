@@ -169,7 +169,6 @@ private:
 		float horizontalStretchFactor, verticalStretchFactor;
 	};
 
-	void updateStaticTextFrame() { m_frameCache.staticText->update(); }
 	void requestVisibleTilesCacheUpdate() { m_mustUpdateVisibleTilesCache = true; }
 	void updateGeometry(const Size& visibleDimension, const Size& optimizedSize);
 	void updateVisibleTilesCache();
