@@ -28,52 +28,56 @@
 class Texture : public stdext::shared_object
 {
 public:
-    Texture();
-    Texture(const Size& size);
-    Texture(const ImagePtr& image, bool buildMipmaps = false, bool compress = false);
-    ~Texture() override;
+	Texture();
+	Texture(const Size& size);
+	Texture(const ImagePtr& image, bool buildMipmaps = false, bool compress = false);
+	~Texture() override;
 
-    void uploadPixels(const ImagePtr& image, bool buildMipmaps = false, bool compress = false);
-    void bind();
-    void copyFromScreen(const Rect& screenRect);
-    virtual bool buildHardwareMipmaps();
+	void uploadPixels(const ImagePtr& image, bool buildMipmaps = false, bool compress = false);
+	void bind();
+	void copyFromScreen(const Rect& screenRect);
+	virtual bool buildHardwareMipmaps();
 
-    virtual void setSmooth(bool smooth);
-    virtual void setRepeat(bool repeat);
-    void setUpsideDown(bool upsideDown);
-    void setTime(ticks_t time) { m_time = time; }
+	virtual void setSmooth(bool smooth);
+	virtual void setRepeat(bool repeat);
+	void setUpsideDown(bool upsideDown);
+	void setTime(ticks_t time) { m_time = time; }
 
-    uint getId() { return m_id; }
-    ticks_t getTime() { return m_time; }
-    int getWidth() { return m_size.width(); }
-    int getHeight() { return m_size.height(); }
-    const Size& getSize() { return m_size; }
-    const Size& getGlSize() { return m_glSize; }
-    const Matrix3& getTransformMatrix() { return m_transformMatrix; }
-    bool isEmpty() { return m_id == 0; }
-    bool hasRepeat() { return m_repeat; }
-    bool hasMipmaps() { return m_hasMipmaps; }
-    virtual bool isAnimatedTexture() { return false; }
-    bool isOpaque() const { return m_opaque; }
+	uint getId() { return m_id; }
+	ticks_t getTime() { return m_time; }
+	int getWidth() { return m_size.width(); }
+	int getHeight() { return m_size.height(); }
+	const Size& getSize() { return m_size; }
+	const Size& getGlSize() { return m_glSize; }
+	const Matrix3& getTransformMatrix() { return m_transformMatrix; }
+	bool isEmpty() { return m_id == 0; }
+	bool hasRepeat() { return m_repeat; }
+	bool hasMipmaps() { return m_hasMipmaps; }
+	virtual bool isAnimatedTexture() { return false; }
+	bool isOpaque() const { return m_opaque; }
+	uint16 getRealSize() const { return m_realSize; }
 
 protected:
-    void createTexture();
-    bool setupSize(const Size& size, bool forcePowerOfTwo = false);
-    void setupWrap();
-    void setupFilters();
-    void setupTranformMatrix();
-    void setupPixels(int level, const Size& size, uchar* pixels, int channels = 4, bool compress = false);
+	void createTexture();
+	bool setupSize(const Size& size, bool forcePowerOfTwo = false);
+	void setupWrap();
+	void setupFilters();
+	void setupTranformMatrix();
+	void setupPixels(int level, const Size& size, uchar* pixels, int channels = 4, bool compress = false);
 
-    uint m_id;
-    ticks_t m_time;
-    Size m_size;
-    Size m_glSize;
-    Matrix3 m_transformMatrix;
-    bool m_hasMipmaps{ false },
-        m_smooth{ false },
-        m_upsideDown{ false },
-        m_repeat{ false },
-        m_opaque{ false };
+	uint m_id;
+	ticks_t m_time;
+	Size m_size, m_glSize;
+
+	uint16 m_realSize{ 0 };
+
+	Matrix3 m_transformMatrix;
+
+	bool m_hasMipmaps{ false },
+		m_smooth{ false },
+		m_upsideDown{ false },
+		m_repeat{ false },
+		m_opaque{ false };
 };
 
 #endif

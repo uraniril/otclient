@@ -431,6 +431,7 @@ const TexturePtr& ThingType::getTexture(int animationPhase, bool allBlank)
 		}
 	}
 
+	fullImage->setRealSize(m_realSize);
 	animationPhaseTexture = TexturePtr(new Texture(fullImage, true));
 	return animationPhaseTexture;
 }

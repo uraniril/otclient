@@ -73,7 +73,7 @@ void DrawPool::add(const std::shared_ptr<CoordsBuffer>& coordsBuffer, const Text
 		 texture && currentState.opacity >= 1.f && currentState.color.aF() >= 1.f) {
 		auto& list = m_currentFrameBuffer->m_coordsActionObjects[method.dest.hash()];
 		for(auto& prevAction : list) {
-			if(prevAction->state.texture == texture || texture->isOpaque() && texture->getSize() >= prevAction->state.texture->getSize()) {
+			if(prevAction->state.texture == texture || texture->isOpaque() && prevAction->state.texture->getRealSize() <= SPRITE_SIZE) {
 				for(auto itm = prevAction->drawMethods.begin(); itm != prevAction->drawMethods.end(); ++itm) {
 					auto& prevMethod = *itm;
 					if(prevMethod.dest == method.dest) {
