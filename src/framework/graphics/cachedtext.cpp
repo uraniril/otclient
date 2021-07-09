@@ -37,16 +37,8 @@ void CachedText::draw(const Rect& rect)
 	if(!m_font)
 		return;
 
-	if(m_textMustRecache || m_textCachedScreenCoords != rect) {
-		m_textMustRecache = false;
-		m_textCachedScreenCoords = rect;
-
-		m_textCoordsBuffer.clear();
-		m_font->calculateDrawTextCoords(m_textCoordsBuffer, m_text, rect, Fw::AlignCenter);
-	}
-
-	if(m_font->getTexture())
-		g_drawPool.addTextureCoords(m_textCoordsBuffer, m_font->getTexture());
+	for(const auto& fontRect : m_font->getDrawTextCoords(m_text, rect, Fw::AlignCenter))
+		g_drawPool.addRepeatedTexturedRect(fontRect.first, m_font->getTexture(), fontRect.second);
 }
 
 void CachedText::update()

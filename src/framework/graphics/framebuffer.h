@@ -47,6 +47,14 @@ enum class DrawMethodType {
 class FrameBuffer : public stdext::shared_object
 {
 public:
+	struct CoordsBufferCache {
+		CoordsBufferCache() { coordsBuffer.enableHardwareCaching(); };
+		size_t currentHash{ 0 }, lastHash{ 0 };
+		std::vector<std::pair<Rect, Rect>> rects;
+		CoordsBuffer coordsBuffer;
+		TexturePtr texture;
+	};
+
 	~FrameBuffer() override;
 
 	void release();

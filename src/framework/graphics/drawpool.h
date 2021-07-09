@@ -54,7 +54,9 @@ public:
 
 private:
 	void drawObject(const FrameBuffer::ScheduledAction& obj);
-	void add(const std::shared_ptr<CoordsBuffer>& coordsBuffer, const TexturePtr& texture, const FrameBuffer::DrawMethod& method, const Painter::DrawMode drawMode = Painter::DrawMode::Triangles);
+	void add(const std::shared_ptr<CoordsBuffer>& coordsBuffer, const TexturePtr& texture,
+					 const FrameBuffer::DrawMethod& method, const Painter::DrawMode drawMode = Painter::DrawMode::Triangles);
+
 	bool canUpdate() { return m_lastRenderedTime.ticksElapsed() >= 16; }
 
 	CoordsBuffer m_coordsBuffer;

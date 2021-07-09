@@ -28,9 +28,6 @@
 
 class CoordsBuffer
 {
-	enum {
-		CACHE_MIN_VERTICES_COUNT = 48
-	};
 public:
 	CoordsBuffer();
 	~CoordsBuffer();
@@ -85,14 +82,7 @@ public:
 	void updateCaches();
 
 	bool isHardwareCached() { return m_hardwareCached; }
-	bool canCache() const
-	{
-		if(!m_hardwareCaching || m_hardwareCached)
-			return false;
-
-		// there is only performance improvement when caching a lot of vertices
-		return m_vertexArray.vertexCount() >= CACHE_MIN_VERTICES_COUNT;
-	}
+	bool canCache() const;
 
 	float* getVertexArray() { return m_vertexArray.vertices(); }
 	float* getTextureCoordArray() { return m_textureCoordArray.vertices(); }

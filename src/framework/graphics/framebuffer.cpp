@@ -55,6 +55,8 @@ FrameBuffer::~FrameBuffer()
 #endif
 	if(g_graphics.ok() && m_fbo != 0)
 		glDeleteFramebuffers(1, &m_fbo);
+
+	m_currentCoordsCache.clear();
 }
 
 void FrameBuffer::clear(const Color color)

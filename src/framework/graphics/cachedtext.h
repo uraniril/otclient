@@ -53,6 +53,8 @@ private:
 	Rect m_textCachedScreenCoords;
 	BitmapFontPtr m_font;
 	Fw::AlignmentFlag m_align;
+
+	std::hash<size_t> HASH_INT;
 };
 
 #endif
