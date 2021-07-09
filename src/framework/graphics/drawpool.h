@@ -43,6 +43,7 @@ public:
 	void addTexturedRect(const Rect& dest, const TexturePtr& texture);
 	void addTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src, const Point& originalDest = Point());
 	void addUpsideDownTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src);
+	void addRepeatedTexturedRect(const Rect& dest, const TexturePtr& texture);
 	void addRepeatedTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src);
 	void addFilledRect(const Rect& dest);
 	void addFilledTriangle(const Point& a, const Point& b, const Point& c);

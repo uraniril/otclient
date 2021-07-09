@@ -180,43 +180,46 @@ void DrawPool::drawObject(const FrameBuffer::ScheduledAction& obj)
 		return &coord;
 	};
 
-	if(obj.drawMethods[0].type == FrameBuffer::DrawMethodType::DRAW_REPEATED_TEXTURED_RECT) {
-		size_t hash = m_currentFrameBuffer->HASH_INT(obj.state.color.rgba());
-		boost::hash_combine(hash, m_currentFrameBuffer->HASH_INT(obj.state.texture->getId()));
+	const auto& methodType = obj.drawMethods[0].type;
+	if(methodType == FrameBuffer::DrawMethodType::DRAW_TEXTURED_RECT) {
+		if(addCoord(m_coordsBuffer)->canCache()) {
+			size_t hash = m_coordsBuffer.getVertexHash(); // Only Map
+			auto coordCached = m_currentFrameBuffer->m_lastCoordsCache[hash];
+			if(!coordCached) {
+				coordCached = std::make_shared<CoordsBuffer>();
+				coordCached->enableHardwareCaching(HardwareBuffer::StaticDraw);
+				addCoord(*coordCached);
+			}
 
-		auto coordCached = m_currentFrameBuffer->m_lastCoordsCache[hash];
-		if(!coordCached) {
-			coordCached = std::make_shared<CoordsBuffer>();
-			coordCached->enableHardwareCaching();			
+			m_currentFrameBuffer->m_currentCoordsCache[hash] = coordCached;
+			g_painter->drawCoords(*coordCached, obj.drawMode);
+		} else {
+			g_painter->drawCoords(m_coordsBuffer, obj.drawMode);
 		}
-		
-		if(addCoord(m_coordsBuffer)->getVertexHash() != coordCached->getVertexHash()) {
-			coordCached->clear();
-			addCoord(*coordCached);
-		}
 
-		g_painter->drawCoords(*coordCached, obj.drawMode);
-
-		m_currentFrameBuffer->m_currentCoordsCache[hash] = coordCached;
+		m_coordsBuffer.clear();
 		return;
 	}
 
-	if(addCoord(m_coordsBuffer)->canCache()) {
-		size_t hash = m_coordsBuffer.getVertexHash();
-		auto coordCached = m_currentFrameBuffer->m_lastCoordsCache[hash];
-		if(!coordCached) {
-			coordCached = std::make_shared<CoordsBuffer>();
-			coordCached->enableHardwareCaching(HardwareBuffer::StaticDraw);
-			addCoord(*coordCached);
-		}
-
-		m_currentFrameBuffer->m_currentCoordsCache[hash] = coordCached;
-		g_painter->drawCoords(*coordCached, obj.drawMode);
-	} else {
-		g_painter->drawCoords(m_coordsBuffer, obj.drawMode);
+	size_t hash = m_currentFrameBuffer->HASH_INT(obj.state.color.rgba());
+	if(obj.state.texture) {
+		boost::hash_combine(hash, m_currentFrameBuffer->HASH_INT(obj.state.texture->getId()));
 	}
 
-	m_coordsBuffer.clear();
+	auto coordCached = m_currentFrameBuffer->m_lastCoordsCache[hash];
+	if(!coordCached) {
+		coordCached = std::make_shared<CoordsBuffer>();
+		coordCached->enableHardwareCaching();
+	}
+
+	if(addCoord(m_coordsBuffer)->getVertexHash() != coordCached->getVertexHash()) {
+		coordCached->clear();
+		addCoord(*coordCached);
+	}
+
+	g_painter->drawCoords(*coordCached, obj.drawMode);
+
+	m_currentFrameBuffer->m_currentCoordsCache[hash] = coordCached;
 }
 
 void DrawPool::addFillCoords(CoordsBuffer& coordsBuffer)
@@ -273,6 +276,10 @@ void DrawPool::addUpsideDownTexturedRect(const Rect& dest, const TexturePtr& tex
 	add(nullptr, texture, method, Painter::DrawMode::TriangleStrip);
 }
 
+void DrawPool::addRepeatedTexturedRect(const Rect& dest, const TexturePtr& texture)
+{
+	addRepeatedTexturedRect(dest, texture, Rect(Point(), texture->getSize()));
+}
 void DrawPool::addRepeatedTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src)
 {
 	if(dest.isEmpty() || src.isEmpty() || texture->isEmpty())

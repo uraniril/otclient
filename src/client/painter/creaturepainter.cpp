@@ -279,26 +279,26 @@ void CreaturePainter::drawInformation(const CreaturePtr& creature, const Rect& p
 	if(creature->m_skull != Otc::SkullNone && creature->m_skullTexture) {
 		g_painter->resetColor();
 		const auto skullRect = Rect(backgroundRect.x() + 13.5 + 12, backgroundRect.y() + 5, creature->m_skullTexture->getSize());
-		g_drawPool.addTexturedRect(skullRect, creature->m_skullTexture);
+		g_drawPool.addRepeatedTexturedRect(skullRect, creature->m_skullTexture);
 	}
 	if(creature->m_shield != Otc::ShieldNone && creature->m_shieldTexture && creature->m_showShieldTexture) {
 		g_painter->resetColor();
 		const auto shieldRect = Rect(backgroundRect.x() + 13.5, backgroundRect.y() + 5, creature->m_shieldTexture->getSize());
-		g_drawPool.addTexturedRect(shieldRect, creature->m_shieldTexture);
+		g_drawPool.addRepeatedTexturedRect(shieldRect, creature->m_shieldTexture);
 	}
 	if(creature->m_emblem != Otc::EmblemNone && creature->m_emblemTexture) {
 		g_painter->resetColor();
 		const auto emblemRect = Rect(backgroundRect.x() + 13.5 + 12, backgroundRect.y() + 16, creature->m_emblemTexture->getSize());
-		g_drawPool.addTexturedRect(emblemRect, creature->m_emblemTexture);
+		g_drawPool.addRepeatedTexturedRect(emblemRect, creature->m_emblemTexture);
 	}
 	if(creature->m_type != Proto::CREATURE_TYPE_UNKNOW && creature->m_typeTexture) {
 		g_painter->resetColor();
 		const auto typeRect = Rect(backgroundRect.x() + 13.5 + 12 + 12, backgroundRect.y() + 16, creature->m_typeTexture->getSize());
-		g_drawPool.addTexturedRect(typeRect, creature->m_typeTexture);
+		g_drawPool.addRepeatedTexturedRect(typeRect, creature->m_typeTexture);
 	}
 	if(creature->m_icon != Otc::NpcIconNone && creature->m_iconTexture) {
 		g_painter->resetColor();
 		const auto iconRect = Rect(backgroundRect.x() + 13.5 + 12, backgroundRect.y() + 5, creature->m_iconTexture->getSize());
-		g_drawPool.addTexturedRect(iconRect, creature->m_iconTexture);
+		g_drawPool.addRepeatedTexturedRect(iconRect, creature->m_iconTexture);
 	}
 }
