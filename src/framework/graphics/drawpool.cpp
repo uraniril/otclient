@@ -41,10 +41,10 @@ void DrawPool::addRepeated(const TexturePtr& texture, const FrameBuffer::DrawMet
 	auto currentState = g_painter->getCurrentState();
 	currentState.texture = texture;
 
-	const auto itFind = std::find_if(m_actionObjects.begin(), m_actionObjects.end(),
+	const auto itFind = std::find_if(m_actionObjects.rbegin(), m_actionObjects.rend(),
 																	 [currentState](const std::shared_ptr<FrameBuffer::ScheduledAction>& action) { return action->state.isEqual(currentState); });
 
-	if(itFind != m_actionObjects.end()) {
+	if(itFind != m_actionObjects.rend()) {
 		(*itFind)->drawMethods.push_back(method);
 	} else
 		m_actionObjects.push_back(std::make_shared<FrameBuffer::ScheduledAction>(FrameBuffer::ScheduledAction{ 0, currentState, nullptr, drawMode, {method} }));
@@ -152,6 +152,7 @@ void DrawPool::draw(const FrameBufferPtr& frameBuffer, const Rect& dest, const R
 	frameBuffer->m_actionObjects.clear();
 
 	frameBuffer->draw(dest, src);
+	m_currentFrameBuffer = nullptr;
 
 	g_painter->restoreSavedState();
 }
@@ -163,11 +164,11 @@ void DrawPool::drawRepeatedObject(const FrameBuffer::ScheduledAction& obj)
 		return;
 	}
 
-	g_painter->executeState(obj.state);
+	const	std::hash<size_t> toHash;
 
-	size_t hash = m_currentFrameBuffer->HASH_INT(obj.state.color.rgba());
+	size_t hash = toHash(obj.state.color.rgba());
 	if(obj.state.texture) {
-		boost::hash_combine(hash, m_currentFrameBuffer->HASH_INT(obj.state.texture->getId()));
+		boost::hash_combine(hash, toHash(obj.state.texture->getId()));
 	}
 
 	auto coordCached = m_coordsCache[hash];
@@ -180,9 +181,10 @@ void DrawPool::drawRepeatedObject(const FrameBuffer::ScheduledAction& obj)
 		coordCached->clear();
 		addCoord(obj, *coordCached);
 	}
-
-	g_painter->drawCoords(*coordCached, obj.drawMode);
 	m_coordsBuffer.clear();
+
+	g_painter->executeState(obj.state);
+	g_painter->drawCoords(*coordCached, obj.drawMode);
 }
 
 void DrawPool::drawObject(const FrameBuffer::ScheduledAction& obj)
@@ -283,8 +285,10 @@ void DrawPool::addRepeatedTexturedRect(const Rect& dest, const TexturePtr& textu
 	if(dest.isEmpty() || src.isEmpty() || texture->isEmpty())
 		return;
 
-	size_t hash = m_currentFrameBuffer->HASH_INT(g_painter->getColor().rgba());
-	boost::hash_combine(hash, m_currentFrameBuffer->HASH_INT(texture->getId()));
+	const	std::hash<size_t> toHash;
+
+	size_t hash = toHash(g_painter->getColor().rgba());
+	boost::hash_combine(hash, toHash(texture->getId()));
 
 	FrameBuffer::DrawMethod method{ FrameBuffer::DrawMethodType::DRAW_REPEATED_TEXTURED_RECT };
 	method.rects = std::make_pair(dest, src);

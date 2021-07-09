@@ -112,11 +112,13 @@ void CoordsBuffer::updateCaches()
 	m_hardwareVertexArray->bind();
 	m_hardwareVertexArray->write(m_vertexArray.vertices(), m_vertexArray.size() * sizeof(float), m_hardwareCacheMode);
 
-	if(!m_hardwareTextureCoordArray)
-		m_hardwareTextureCoordArray = new HardwareBuffer(HardwareBuffer::VertexBuffer);
+	if(m_textureCoordArray.vertexCount() > 0) {
+		if(!m_hardwareTextureCoordArray)
+			m_hardwareTextureCoordArray = new HardwareBuffer(HardwareBuffer::VertexBuffer);
 
-	m_hardwareTextureCoordArray->bind();
-	m_hardwareTextureCoordArray->write(m_textureCoordArray.vertices(), m_textureCoordArray.size() * sizeof(float), m_hardwareCacheMode);
+		m_hardwareTextureCoordArray->bind();
+		m_hardwareTextureCoordArray->write(m_textureCoordArray.vertices(), m_textureCoordArray.size() * sizeof(float), m_hardwareCacheMode);
+	}
 
 	m_hardwareCached = true;
 }
