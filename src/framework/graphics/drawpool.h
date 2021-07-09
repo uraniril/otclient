@@ -45,6 +45,7 @@ public:
 	void addUpsideDownTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src);
 	void addRepeatedTexturedRect(const Rect& dest, const TexturePtr& texture);
 	void addRepeatedTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src);
+	void addRepeatedFilledRect(const Rect& dest);
 	void addFilledRect(const Rect& dest);
 	void addFilledTriangle(const Point& a, const Point& b, const Point& c);
 	void addBoundingRect(const Rect& dest, int innerLineWidth = 1);
@@ -55,10 +56,14 @@ public:
 
 private:
 	void drawObject(const FrameBuffer::ScheduledAction& obj);
+	void flush();
 	void add(const std::shared_ptr<CoordsBuffer>& coordsBuffer, const TexturePtr& texture,
 					 const FrameBuffer::DrawMethod& method, const Painter::DrawMode drawMode = Painter::DrawMode::Triangles);
 
 	bool canUpdate() { return m_lastRenderedTime.ticksElapsed() >= 16; }
+
+	std::vector<std::shared_ptr<FrameBuffer::ScheduledAction>> m_actionObjects;
+	std::unordered_map<size_t, std::shared_ptr<CoordsBuffer>> m_currentCoordsCache, m_coordsCache;
 
 	CoordsBuffer m_coordsBuffer;
 	FrameBufferPtr m_currentFrameBuffer;

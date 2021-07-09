@@ -244,10 +244,10 @@ void CreaturePainter::drawInformation(const CreaturePtr& creature, const Rect& p
 
 	if(drawFlags & Otc::DrawBars) {
 		g_painter->setColor(Color::black);
-		g_drawPool.addFilledRect(backgroundRect);
+		g_drawPool.addRepeatedFilledRect(backgroundRect);
 
 		g_painter->setColor(fillColor);
-		g_drawPool.addFilledRect(healthRect);
+		g_drawPool.addRepeatedFilledRect(healthRect);
 
 		if(drawFlags & Otc::DrawManaBar && creature->isLocalPlayer()) {
 			LocalPlayerPtr player = g_game.getLocalPlayer();
@@ -255,7 +255,7 @@ void CreaturePainter::drawInformation(const CreaturePtr& creature, const Rect& p
 				backgroundRect.moveTop(backgroundRect.bottom());
 
 				g_painter->setColor(Color::black);
-				g_drawPool.addFilledRect(backgroundRect);
+				g_drawPool.addRepeatedFilledRect(backgroundRect);
 
 				Rect manaRect = backgroundRect.expanded(-1);
 				const double maxMana = player->getMaxMana();
@@ -266,7 +266,7 @@ void CreaturePainter::drawInformation(const CreaturePtr& creature, const Rect& p
 				}
 
 				g_painter->setColor(Color::blue);
-				g_drawPool.addFilledRect(manaRect);
+				g_drawPool.addRepeatedFilledRect(manaRect);
 			}
 		}
 	}
