@@ -32,10 +32,8 @@ public:
 	void addVertex(float x, float y)
 	{
 		m_buffer << x << y;
-		if(m_generateHash) {
-			boost::hash_combine(m_hash, HASH_INT(x));
-			boost::hash_combine(m_hash, HASH_INT(y));
-		}
+		boost::hash_combine(m_hash, HASH_FLOAT(x));
+		boost::hash_combine(m_hash, HASH_FLOAT(y));
 	}
 
 	void addTriangle(const Point& a, const Point& b, const Point& c)
@@ -106,14 +104,12 @@ public:
 	int vertexCount() const { return m_buffer.size() / 2; }
 	int size() const { return m_buffer.size(); }
 	size_t getHash() const { return m_hash; }
-	void generateHash() { m_generateHash = true; }
 
 private:
 	DataBuffer<float> m_buffer;
 	size_t m_hash{ 0 };
-	bool m_generateHash{ false };
 
-	std::hash<size_t> HASH_INT;
+	std::hash<float> HASH_FLOAT;
 };
 
 #endif

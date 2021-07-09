@@ -37,7 +37,6 @@ public:
 	void setFont(const BitmapFontPtr& font) { m_font = font; update(); }
 	void setText(const std::string& text) { m_text = text; update(); }
 	void setAlign(Fw::AlignmentFlag align) { m_align = align; update(); }
-	void generateHash() { m_textCoordsBuffer.generateHash(); }
 
 	Size getTextSize() { return m_textSize; }
 	std::string getText() const { return m_text; }

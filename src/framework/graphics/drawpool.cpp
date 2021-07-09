@@ -37,7 +37,7 @@ void DrawPool::add(const std::shared_ptr<CoordsBuffer>& coordsBuffer, const Text
 {
 	if(!m_currentFrameBuffer || !m_currentFrameBuffer->isDrawable()) return;
 
-	m_currentFrameBuffer->updateHash(texture, method);
+	size_t hash = m_currentFrameBuffer->updateHash(texture, method);
 
 	auto currentState = g_painter->getCurrentState();
 	currentState.texture = texture;
@@ -66,7 +66,7 @@ void DrawPool::add(const std::shared_ptr<CoordsBuffer>& coordsBuffer, const Text
 		}
 	}
 
-	const auto& actionObject = std::make_shared<FrameBuffer::ScheduledAction>(FrameBuffer::ScheduledAction{ currentState, coordsBuffer, drawMode, {method} });
+	const auto& actionObject = std::make_shared<FrameBuffer::ScheduledAction>(FrameBuffer::ScheduledAction{ hash, currentState, coordsBuffer, drawMode, {method} });
 
 	// Look for identical or opaque textures that are greater than or equal to the size of the previous texture and remove.
 	if(currentState.compositionMode != Painter::CompositionMode_Multiply && !method.dest.isNull() &&
@@ -113,6 +113,9 @@ void DrawPool::draw(const FrameBufferPtr& frameBuffer, const Rect& dest, const R
 			drawObject(*obj);
 
 		frameBuffer->release();
+
+		frameBuffer->m_lastCoordsCache = frameBuffer->m_currentCoordsCache;
+		frameBuffer->m_currentCoordsCache.clear();
 	}
 
 	frameBuffer->m_coordsActionObjects.clear();
@@ -134,33 +137,52 @@ void DrawPool::drawObject(const FrameBuffer::ScheduledAction& obj)
 
 	if(obj.coordsBuffer != nullptr) {
 		g_painter->drawCoords(*obj.coordsBuffer, obj.drawMode);
-	} else {
-		if(obj.drawMethods.empty()) return;
-
-		for(const auto& method : obj.drawMethods) {
-			if(method.type == FrameBuffer::DrawMethodType::DRAW_BOUNDING_RECT) {
-				m_coordsBuffer.addBoudingRect(method.rects.first, method.intValue);
-			} else if(method.type == FrameBuffer::DrawMethodType::DRAW_FILLED_RECT) {
-				m_coordsBuffer.addRect(method.rects.first);
-			} else if(method.type == FrameBuffer::DrawMethodType::DRAW_FILLED_TRIANGLE) {
-				m_coordsBuffer.addTriangle(std::get<0>(method.points), std::get<1>(method.points), std::get<2>(method.points));
-			} else if(method.type == FrameBuffer::DrawMethodType::DRAW_REPEATED_TEXTURED_RECT) {
-				m_coordsBuffer.addRepeatedRects(method.rects.first, method.rects.second);
-			} else if(method.type == FrameBuffer::DrawMethodType::DRAW_TEXTURED_RECT) {
-				if(obj.drawMode == Painter::DrawMode::Triangles)
-					m_coordsBuffer.addRect(method.rects.first, method.rects.second);
-				else
-					m_coordsBuffer.addQuad(method.rects.first, method.rects.second);
-			} else if(method.type == FrameBuffer::DrawMethodType::DRAW_UPSIDEDOWN_TEXTURED_RECT) {
-				if(obj.drawMode == Painter::DrawMode::Triangles)
-					m_coordsBuffer.addUpsideDownRect(method.rects.first, method.rects.second);
-				else
-					m_coordsBuffer.addUpsideDownQuad(method.rects.first, method.rects.second);
-			}
-		}
+		return;
 	}
 
-	g_painter->drawCoords(m_coordsBuffer, obj.drawMode);
+	if(obj.drawMethods.empty()) return;
+
+	const auto& addCoord = [obj](CoordsBuffer& coord) {
+		for(const auto& method : obj.drawMethods) {
+			if(method.type == FrameBuffer::DrawMethodType::DRAW_BOUNDING_RECT) {
+				coord.addBoudingRect(method.rects.first, method.intValue);
+			} else if(method.type == FrameBuffer::DrawMethodType::DRAW_FILLED_RECT) {
+				coord.addRect(method.rects.first);
+			} else if(method.type == FrameBuffer::DrawMethodType::DRAW_FILLED_TRIANGLE) {
+				coord.addTriangle(std::get<0>(method.points), std::get<1>(method.points), std::get<2>(method.points));
+			} else if(method.type == FrameBuffer::DrawMethodType::DRAW_REPEATED_TEXTURED_RECT) {
+				coord.addRepeatedRects(method.rects.first, method.rects.second);
+			} else if(method.type == FrameBuffer::DrawMethodType::DRAW_TEXTURED_RECT) {
+				if(obj.drawMode == Painter::DrawMode::Triangles)
+					coord.addRect(method.rects.first, method.rects.second);
+				else
+					coord.addQuad(method.rects.first, method.rects.second);
+			} else if(method.type == FrameBuffer::DrawMethodType::DRAW_UPSIDEDOWN_TEXTURED_RECT) {
+				if(obj.drawMode == Painter::DrawMode::Triangles)
+					coord.addUpsideDownRect(method.rects.first, method.rects.second);
+				else
+					coord.addUpsideDownQuad(method.rects.first, method.rects.second);
+			}
+		}
+
+		return &coord;
+	};
+
+	if(addCoord(m_coordsBuffer)->canCache()) {
+		size_t hash = m_coordsBuffer.getVertexHash();
+		auto coordCached = m_currentFrameBuffer->m_lastCoordsCache[hash];
+		if(!coordCached) {
+			coordCached = std::make_shared<CoordsBuffer>();
+			coordCached->enableHardwareCaching(HardwareBuffer::StaticDraw);
+			addCoord(*coordCached);
+		}
+
+		m_currentFrameBuffer->m_currentCoordsCache[hash] = coordCached;
+		g_painter->drawCoords(*coordCached, obj.drawMode);
+	} else {
+		g_painter->drawCoords(m_coordsBuffer, obj.drawMode);
+	}
+
 	m_coordsBuffer.clear();
 }
 
@@ -262,5 +284,5 @@ void DrawPool::addAction(std::function<void()> action)
 	if(!m_currentFrameBuffer) return;
 
 	m_currentFrameBuffer->m_actionObjects
-		.push_back(std::make_shared<FrameBuffer::ScheduledAction>(FrameBuffer::ScheduledAction{ {}, nullptr, Painter::DrawMode::None, {}, action }));
+		.push_back(std::make_shared<FrameBuffer::ScheduledAction>(FrameBuffer::ScheduledAction{ 0, {}, nullptr, Painter::DrawMode::None, {}, action }));
 }

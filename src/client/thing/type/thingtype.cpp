@@ -353,10 +353,6 @@ const TexturePtr& ThingType::getTexture(int animationPhase, bool allBlank)
 	TexturePtr& animationPhaseTexture = (allBlank ? m_blankTextures : m_textures)[animationPhase];
 	if(animationPhaseTexture) return animationPhaseTexture;
 
-	bool useCustomImage = false;
-	if(animationPhase == 0 && !m_customImage.empty())
-		useCustomImage = true;
-
 	// we don't need layers in common items, they will be pre-drawn
 	int textureLayers = 1;
 	int numLayers = m_layers;
@@ -366,6 +362,7 @@ const TexturePtr& ThingType::getTexture(int animationPhase, bool allBlank)
 		numLayers = 5;
 	}
 
+	const bool useCustomImage = animationPhase == 0 && !m_customImage.empty();
 	const int indexSize = textureLayers * m_numPatternX * m_numPatternY * m_numPatternZ;
 	const Size textureSize = getBestTextureDimension(m_size.width(), m_size.height(), indexSize);
 	const ImagePtr fullImage = useCustomImage ? Image::load(m_customImage) : ImagePtr(new Image(textureSize * SPRITE_SIZE));

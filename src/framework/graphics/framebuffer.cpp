@@ -174,39 +174,35 @@ size_t FrameBuffer::updateHash(const TexturePtr& texture, const DrawMethod& meth
 {
 	const auto& currentState = g_painter->getCurrentState();
 
+	size_t hash = 0;
+
 	if(texture)
-		boost::hash_combine(m_status.second, HASH_INT(texture->getId()));
+		boost::hash_combine(hash, HASH_INT(texture->getId()));
 
 	if(currentState.opacity < 1.f)
-		boost::hash_combine(m_status.second, HASH_INT(currentState.opacity));
+		boost::hash_combine(hash, HASH_INT(currentState.opacity));
 
 	if(currentState.color != Color::white)
-		boost::hash_combine(m_status.second, HASH_INT(currentState.color.rgba()));
+		boost::hash_combine(hash, HASH_INT(currentState.color.rgba()));
 
 	if(currentState.compositionMode != Painter::CompositionMode_Normal)
-		boost::hash_combine(m_status.second, HASH_INT(currentState.compositionMode));
+		boost::hash_combine(hash, HASH_INT(currentState.compositionMode));
 
 	if(currentState.shaderProgram)
-		boost::hash_combine(m_status.second, HASH_INT(currentState.shaderProgram->getProgramId()));
+		boost::hash_combine(hash, HASH_INT(currentState.shaderProgram->getProgramId()));
 
 	if(currentState.clipRect.isValid()) {
-		boost::hash_combine(m_status.second, HASH_INT(currentState.clipRect.x()));
-		boost::hash_combine(m_status.second, HASH_INT(currentState.clipRect.y()));
+		boost::hash_combine(hash, HASH_INT(currentState.clipRect.x()));
+		boost::hash_combine(hash, HASH_INT(currentState.clipRect.y()));
 	}
 
-	size_t rectHash = 0;
-	{
-		if(method.rects.first.isValid()) {
-			boost::hash_combine(rectHash, HASH_INT(method.rects.first.x()));
-			boost::hash_combine(rectHash, HASH_INT(method.rects.first.y()));
-		}
-		if(method.rects.second.isValid()) {
-			boost::hash_combine(rectHash, HASH_INT(method.rects.second.x()));
-			boost::hash_combine(rectHash, HASH_INT(method.rects.second.y()));
-		}
-		if(rectHash > 0) {
-			boost::hash_combine(m_status.second, rectHash);
-		}
+	if(method.rects.first.isValid()) {
+		boost::hash_combine(hash, HASH_INT(method.rects.first.x()));
+		boost::hash_combine(hash, HASH_INT(method.rects.first.y()));
+	}
+	if(method.rects.second.isValid()) {
+		boost::hash_combine(hash, HASH_INT(method.rects.second.x()));
+		boost::hash_combine(hash, HASH_INT(method.rects.second.y()));
 	}
 
 	const auto& a = std::get<0>(method.points),
@@ -214,23 +210,25 @@ size_t FrameBuffer::updateHash(const TexturePtr& texture, const DrawMethod& meth
 		c = std::get<2>(method.points);
 
 	if(!a.isNull()) {
-		boost::hash_combine(m_status.second, HASH_INT(a.x));
-		boost::hash_combine(m_status.second, HASH_INT(a.y));
+		boost::hash_combine(hash, HASH_INT(a.x));
+		boost::hash_combine(hash, HASH_INT(a.y));
 	}
 	if(!b.isNull()) {
-		boost::hash_combine(m_status.second, HASH_INT(b.x));
-		boost::hash_combine(m_status.second, HASH_INT(b.y));
+		boost::hash_combine(hash, HASH_INT(b.x));
+		boost::hash_combine(hash, HASH_INT(b.y));
 	}
 	if(!c.isNull()) {
-		boost::hash_combine(m_status.second, HASH_INT(c.x));
-		boost::hash_combine(m_status.second, HASH_INT(c.y));
+		boost::hash_combine(hash, HASH_INT(c.x));
+		boost::hash_combine(hash, HASH_INT(c.y));
 	}
 
 	if(method.intValue != 0)
-		boost::hash_combine(m_status.second, HASH_INT(method.intValue));
+		boost::hash_combine(hash, HASH_INT(method.intValue));
 
 	if(method.floatValue != 0)
-		boost::hash_combine(m_status.second, HASH_FLOAT(method.floatValue));
+		boost::hash_combine(hash, HASH_FLOAT(method.floatValue));
 
-	return rectHash;
+	boost::hash_combine(m_status.second, hash);
+
+	return hash;
 }

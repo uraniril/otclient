@@ -81,11 +81,18 @@ public:
 	void addBoudingRect(const Rect& dest, int innerLineWidth);
 	void addRepeatedRects(const Rect& dest, const Rect& src);
 
-	void generateHash() { m_vertexArray.generateHash(); m_textureCoordArray.generateHash(); }
-
 	void enableHardwareCaching(HardwareBuffer::UsagePattern usagePattern = HardwareBuffer::DynamicDraw);
 	void updateCaches();
+
 	bool isHardwareCached() { return m_hardwareCached; }
+	bool canCache() const
+	{
+		if(!m_hardwareCaching || m_hardwareCached)
+			return false;
+
+		// there is only performance improvement when caching a lot of vertices
+		return m_vertexArray.vertexCount() >= CACHE_MIN_VERTICES_COUNT;
+	}
 
 	float* getVertexArray() { return m_vertexArray.vertices(); }
 	float* getTextureCoordArray() { return m_textureCoordArray.vertices(); }

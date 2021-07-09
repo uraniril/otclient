@@ -29,7 +29,6 @@
 void UIWidget::initImage()
 {
 	m_imageCoordsBuffer.enableHardwareCaching();
-	m_imageCoordsBuffer.generateHash();
 }
 
 void UIWidget::parseImageStyle(const OTMLNodePtr& styleNode)

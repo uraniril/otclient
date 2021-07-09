@@ -113,10 +113,7 @@ void PainterOGL2::drawCoords(CoordsBuffer& coordsBuffer, DrawMode drawMode)
 		m_drawProgram->setAttributeArray(PainterShaderProgram::VERTEX_ATTR, coordsBuffer.getVertexArray(), 2);
 
 	// draw the element in coords buffers
-	if(drawMode == DrawMode::Triangles)
-		glDrawArrays(GL_TRIANGLES, 0, vertexCount);
-	else if(drawMode == DrawMode::TriangleStrip)
-		glDrawArrays(GL_TRIANGLE_STRIP, 0, vertexCount);
+	glDrawArrays(static_cast<GLenum>(drawMode), 0, vertexCount);
 
 	if(!textured)
 		PainterShaderProgram::enableAttributeArray(PainterShaderProgram::TEXCOORD_ATTR);

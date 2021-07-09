@@ -31,7 +31,6 @@ AnimatedText::AnimatedText()
 {
 	m_cachedText.setFont(g_fonts.getFont("verdana-11px-rounded"));
 	m_cachedText.setAlign(Fw::AlignLeft);
-	m_cachedText.generateHash();
 }
 
 void AnimatedText::onAppear()
