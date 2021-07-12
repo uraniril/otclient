@@ -34,6 +34,7 @@ void DrawPool::init() {}
 void DrawPool::terminate()
 {
 	m_currentFrameBuffer = nullptr;
+	m_coordsCache.clear();
 }
 
 void DrawPool::addRepeated(const TexturePtr& texture, const FrameBuffer::DrawMethod& method, const Painter::DrawMode drawMode)
@@ -41,10 +42,10 @@ void DrawPool::addRepeated(const TexturePtr& texture, const FrameBuffer::DrawMet
 	auto currentState = g_painter->getCurrentState();
 	currentState.texture = texture;
 
-	const auto itFind = std::find_if(m_actionObjects.rbegin(), m_actionObjects.rend(),
+	const auto itFind = std::find_if(m_actionObjects.begin(), m_actionObjects.end(),
 																	 [currentState](const std::shared_ptr<FrameBuffer::ScheduledAction>& action) { return action->state.isEqual(currentState); });
 
-	if(itFind != m_actionObjects.rend()) {
+	if(itFind != m_actionObjects.end()) {
 		(*itFind)->drawMethods.push_back(method);
 	} else
 		m_actionObjects.push_back(std::make_shared<FrameBuffer::ScheduledAction>(FrameBuffer::ScheduledAction{ 0, currentState, nullptr, drawMode, {method} }));
@@ -59,33 +60,30 @@ void DrawPool::add(const std::shared_ptr<CoordsBuffer>& coordsBuffer, const Text
 	auto currentState = g_painter->getCurrentState();
 	currentState.texture = texture;
 
-	if(method.type == FrameBuffer::DrawMethodType::DRAW_REPEATED_TEXTURED_RECT || method.type == FrameBuffer::DrawMethodType::DRAW_REPEATED_FILLED_RECT) {
-	} else
+	if(!m_currentFrameBuffer->m_actionObjects.empty() &&
+		 !(method.type == FrameBuffer::DrawMethodType::DRAW_TEXTURE_COORDS || method.type == FrameBuffer::DrawMethodType::DRAW_FILL_COORDS)) {
+		auto& prevDrawObject = m_currentFrameBuffer->m_actionObjects.back();
 
-		if(!m_currentFrameBuffer->m_actionObjects.empty() &&
-			 !(method.type == FrameBuffer::DrawMethodType::DRAW_TEXTURE_COORDS || method.type == FrameBuffer::DrawMethodType::DRAW_FILL_COORDS)) {
-			auto& prevDrawObject = m_currentFrameBuffer->m_actionObjects.back();
+		if(prevDrawObject->state.isEqual(currentState)) {
+			prevDrawObject->drawMode = Painter::DrawMode::Triangles;
 
-			if(prevDrawObject->state.isEqual(currentState)) {
-				prevDrawObject->drawMode = Painter::DrawMode::Triangles;
-
-				// Search for identical objects in the same position
-				bool push = false;
-				if(!method.dest.isNull()) {
-					const auto itFind = std::find_if(prevDrawObject->drawMethods.begin(), prevDrawObject->drawMethods.end(),
-																					 [&](const FrameBuffer::DrawMethod& prevMethod) { return prevMethod.dest == method.dest; });
-					push = itFind != prevDrawObject->drawMethods.end();
-				}
-
-				if(!push) {
-					prevDrawObject->drawMethods.push_back(method);
-					auto& list = m_currentFrameBuffer->m_coordsActionObjects[method.dest.hash()];
-					list.push_back(prevDrawObject);
-				}
-
-				return;
+			// Search for identical objects in the same position
+			bool push = false;
+			if(!method.dest.isNull()) {
+				const auto itFind = std::find_if(prevDrawObject->drawMethods.begin(), prevDrawObject->drawMethods.end(),
+																				 [&](const FrameBuffer::DrawMethod& prevMethod) { return prevMethod.dest == method.dest; });
+				push = itFind != prevDrawObject->drawMethods.end();
 			}
+
+			if(!push) {
+				prevDrawObject->drawMethods.push_back(method);
+				auto& list = m_currentFrameBuffer->m_coordsActionObjects[method.dest.hash()];
+				list.push_back(prevDrawObject);
+			}
+
+			return;
 		}
+	}
 
 	const auto& actionObject = std::make_shared<FrameBuffer::ScheduledAction>(FrameBuffer::ScheduledAction{ 0, currentState, coordsBuffer, drawMode, {method} });
 
@@ -140,7 +138,7 @@ void DrawPool::draw(const FrameBufferPtr& frameBuffer, const Rect& dest, const R
 		frameBuffer->bind();
 
 		for(auto& obj : frameBuffer->m_actionObjects)
-			drawObject(*obj);
+			drawObject(frameBuffer, *obj);
 
 		frameBuffer->release();
 
@@ -165,29 +163,30 @@ void DrawPool::drawRepeatedObject(const FrameBuffer::ScheduledAction& obj)
 	}
 
 	const	std::hash<size_t> toHash;
+	const bool hasTexture = obj.state.texture != nullptr;
 
 	size_t hash = toHash(obj.state.color.rgba());
-	if(obj.state.texture) {
+	if(hasTexture) {
 		boost::hash_combine(hash, toHash(obj.state.texture->getId()));
 	}
 
-	auto coordCached = m_coordsCache[hash];
-	if(!coordCached) {
-		coordCached = std::make_shared<CoordsBuffer>();
-		coordCached->enableHardwareCaching();
-	}
+	auto& coordCached = m_coordsCache[hash];
+	if(hasTexture && !coordCached.isEnabledHardwareCaching())
+		coordCached.enableHardwareCaching();
 
-	if(addCoord(obj, m_coordsBuffer).getVertexHash() != coordCached->getVertexHash()) {
-		coordCached->clear();
-		addCoord(obj, *coordCached);
+	if(canUpdate()) {
+		if(addCoord(obj, m_coordsBuffer).getVertexHash() != coordCached.getVertexHash()) {
+			coordCached.clear();
+			addCoord(obj, coordCached);
+		}
+		m_coordsBuffer.clear();
 	}
-	m_coordsBuffer.clear();
 
 	g_painter->executeState(obj.state);
-	g_painter->drawCoords(*coordCached, obj.drawMode);
+	g_painter->drawCoords(coordCached, obj.drawMode);
 }
 
-void DrawPool::drawObject(const FrameBuffer::ScheduledAction& obj)
+void DrawPool::drawObject(const FrameBufferPtr& frameBuffer, const FrameBuffer::ScheduledAction& obj)
 {
 	if(obj.action) {
 		obj.action();
@@ -205,14 +204,14 @@ void DrawPool::drawObject(const FrameBuffer::ScheduledAction& obj)
 
 	if(addCoord(obj, m_coordsBuffer).canCache()) {
 		size_t hash = m_coordsBuffer.getVertexHash();
-		auto coordCached = m_currentFrameBuffer->m_lastCoordsCache[hash];
+		auto coordCached = frameBuffer->m_lastCoordsCache[hash];
 		if(!coordCached) {
 			coordCached = std::make_shared<CoordsBuffer>();
-			coordCached->enableHardwareCaching(HardwareBuffer::StaticDraw);
+			coordCached->enableHardwareCaching(HardwareBuffer::StreamDraw);
 			addCoord(obj, *coordCached);
 		}
 
-		m_currentFrameBuffer->m_currentCoordsCache[hash] = coordCached;
+		frameBuffer->m_currentCoordsCache[hash] = coordCached;
 		g_painter->drawCoords(*coordCached, obj.drawMode);
 	} else {
 		g_painter->drawCoords(m_coordsBuffer, obj.drawMode);

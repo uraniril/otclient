@@ -95,15 +95,15 @@ void CoordsBuffer::enableHardwareCaching(HardwareBuffer::UsagePattern usagePatte
 
 bool CoordsBuffer::canCache() const
 {
-	if(!m_hardwareCaching || m_hardwareCached)
-		return false;
-
 	// there is only performance improvement when caching a lot of vertices
 	return m_vertexArray.vertexCount() >= 16;
 }
 
 void CoordsBuffer::updateCaches()
 {
+	if(!m_hardwareCaching || m_hardwareCached)
+		return;
+
 	if(!canCache()) return;
 
 	if(!m_hardwareVertexArray)

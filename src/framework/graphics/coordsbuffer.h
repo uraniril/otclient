@@ -81,8 +81,9 @@ public:
 	void enableHardwareCaching(HardwareBuffer::UsagePattern usagePattern = HardwareBuffer::DynamicDraw);
 	void updateCaches();
 
-	bool isHardwareCached() { return m_hardwareCached; }
+	bool isHardwareCached() const { return m_hardwareCached; }
 	bool canCache() const;
+	bool isEnabledHardwareCaching() const { return m_hardwareCaching; }
 
 	float* getVertexArray() { return m_vertexArray.vertices(); }
 	float* getTextureCoordArray() { return m_textureCoordArray.vertices(); }

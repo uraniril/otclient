@@ -56,7 +56,7 @@ public:
 	void draw(const FrameBufferPtr& frameBuffer, const Rect& dest, const Rect& src);
 
 private:
-	void drawObject(const FrameBuffer::ScheduledAction& obj);
+	void drawObject(const FrameBufferPtr& frameBuffer, const FrameBuffer::ScheduledAction& obj);
 	void drawRepeatedObject(const FrameBuffer::ScheduledAction& obj);
 
 	CoordsBuffer& addCoord(const FrameBuffer::ScheduledAction& obj, CoordsBuffer& coord);
@@ -69,7 +69,7 @@ private:
 	bool canUpdate() { return m_lastRenderedTime.ticksElapsed() >= 16; }
 
 	std::vector<std::shared_ptr<FrameBuffer::ScheduledAction>> m_actionObjects;
-	std::unordered_map<size_t, std::shared_ptr<CoordsBuffer>> m_coordsCache;
+	std::unordered_map<size_t, CoordsBuffer> m_coordsCache;
 
 	CoordsBuffer m_coordsBuffer;
 	FrameBufferPtr m_currentFrameBuffer;
