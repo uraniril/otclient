@@ -50,7 +50,7 @@ void MapViewPainter::draw(const MapViewPtr& mapView, const Rect& rect)
 
 	const Position cameraPosition = mapView->getCameraPosition();
 
-	g_drawPool.setFrameBuffer(mapView->m_frameCache.tile);
+	g_drawPool.setFrameBuffer(mapView->m_framebuffer);
 	const auto& lightView = mapView->m_drawLights ? mapView->m_lightView.get() : nullptr;
 	for(int_fast8_t z = mapView->m_floorMax; z >= mapView->m_floorMin; --z) {
 		if(lightView) {
@@ -120,33 +120,34 @@ void MapViewPainter::draw(const MapViewPtr& mapView, const Rect& rect)
 		g_painter->resetOpacity();
 	}
 
-	/*float fadeOpacity = 1.0f;
+	float fadeOpacity = 1.0f;
 	if(!mapView->m_shaderSwitchDone && mapView->m_fadeOutTime > 0) {
-					fadeOpacity = 1.0f - (mapView->m_fadeTimer.timeElapsed() / mapView->m_fadeOutTime);
-					if(fadeOpacity < 0.0f) {
-									mapView->m_shader = mapView->m_nextShader;
-									mapView->m_nextShader = nullptr;
-									mapView->m_shaderSwitchDone = true;
-									mapView->m_fadeTimer.restart();
-					}
+		fadeOpacity = 1.0f - (mapView->m_fadeTimer.timeElapsed() / mapView->m_fadeOutTime);
+		if(fadeOpacity < 0.0f) {
+			mapView->m_shader = mapView->m_nextShader;
+			mapView->m_nextShader = nullptr;
+			mapView->m_shaderSwitchDone = true;
+			mapView->m_fadeTimer.restart();
+		}
 	}
 
 	if(mapView->m_shaderSwitchDone && mapView->m_shader && mapView->m_fadeInTime > 0)
-					fadeOpacity = std::min<float>(mapView->m_fadeTimer.timeElapsed() / mapView->m_fadeInTime, 1.0f);
+		fadeOpacity = std::min<float>(mapView->m_fadeTimer.timeElapsed() / mapView->m_fadeInTime, 1.0f);
 
 	if(mapView->m_shader && g_painter->hasShaders() && g_graphics.shouldUseShaders() && mapView->m_viewMode == MapView::NEAR_VIEW) {
-					const Point center = mapView->m_rectCache.srcRect.center();
-					const Point globalCoord = Point(cameraPosition.x - mapView->m_drawDimension.width() / 2, -(cameraPosition.y - mapView->m_drawDimension.height() / 2)) * mapView->m_tileSize;
-					mapView->m_shader->bind();
-					mapView->m_shader->setUniformValue(ShaderManager::MAP_CENTER_COORD, center.x / static_cast<float>(mapView->m_rectDimension.width()), 1.0f - center.y / static_cast<float>(mapView->m_rectDimension.height()));
-					mapView->m_shader->setUniformValue(ShaderManager::MAP_GLOBAL_COORD, globalCoord.x / static_cast<float>(mapView->m_rectDimension.height()), globalCoord.y / static_cast<float>(mapView->m_rectDimension.height()));
-					mapView->m_shader->setUniformValue(ShaderManager::MAP_ZOOM, mapView->m_scaleFactor);
-					g_painter->setShaderProgram(mapView->m_shader);
+		const Point center = mapView->m_rectCache.srcRect.center();
+		const Point globalCoord = Point(cameraPosition.x - mapView->m_drawDimension.width() / 2, -(cameraPosition.y - mapView->m_drawDimension.height() / 2)) * mapView->m_tileSize;
+		mapView->m_shader->bind();
+		mapView->m_shader->setUniformValue(ShaderManager::MAP_CENTER_COORD, center.x / static_cast<float>(mapView->m_rectDimension.width()), 1.0f - center.y / static_cast<float>(mapView->m_rectDimension.height()));
+		mapView->m_shader->setUniformValue(ShaderManager::MAP_GLOBAL_COORD, globalCoord.x / static_cast<float>(mapView->m_rectDimension.height()), globalCoord.y / static_cast<float>(mapView->m_rectDimension.height()));
+		mapView->m_shader->setUniformValue(ShaderManager::MAP_ZOOM, mapView->m_scaleFactor);
+		g_painter->setShaderProgram(mapView->m_shader);
 	}
 
-	g_painter->setOpacity(fadeOpacity);*/
-
-	g_drawPool.draw(mapView->m_frameCache.tile, mapView->m_rectCache.rect, mapView->m_rectCache.srcRect);
+	g_painter->setOpacity(fadeOpacity);
+	g_drawPool.draw(mapView->m_framebuffer, mapView->m_rectCache.rect, mapView->m_rectCache.srcRect);
+	g_painter->resetShaderProgram();
+	g_painter->resetOpacity();
 
 	// this could happen if the player position is not known yet
 	if(!cameraPosition.isValid())

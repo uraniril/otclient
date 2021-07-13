@@ -57,12 +57,8 @@ MapView::MapView()
 	m_viewMode = NEAR_VIEW;
 	m_optimizedSize = Size(g_map.getAwareRange().horizontal(), g_map.getAwareRange().vertical()) * SPRITE_SIZE;
 
-	m_frameCache.tile = g_framebuffers.createFrameBuffer(false);
-	m_frameCache.creatureInformation = g_framebuffers.createFrameBuffer(true);
-	m_frameCache.staticText = g_framebuffers.createFrameBuffer(true);
-	m_frameCache.dynamicText = g_framebuffers.createFrameBuffer(true);
-
-	m_frameCache.tile->disableBlend();
+	m_framebuffer = g_framebuffers.createFrameBuffer(false);
+	m_framebuffer->disableBlend();
 
 	m_shader = g_shaders.getDefaultMapShader();
 
@@ -220,10 +216,8 @@ void MapView::updateGeometry(const Size& visibleDimension, const Size& optimized
 
 	m_scaleFactor = m_tileSize / static_cast<float>(SPRITE_SIZE);
 
-	m_frameCache.tile->resize(bufferSize);
+	m_framebuffer->resize(bufferSize);
 	if(m_drawLights) m_lightView->resize();
-	for(const auto& frame : { m_frameCache.creatureInformation, m_frameCache.staticText, m_frameCache.dynamicText })
-		frame->resize(g_graphics.getViewportSize());
 
 	m_awareRange.left = std::min<uint16>(g_map.getAwareRange().left, (m_drawDimension.width() / 2) - 1);
 	m_awareRange.top = std::min<uint16>(g_map.getAwareRange().top, (m_drawDimension.height() / 2) - 1);
@@ -364,7 +358,7 @@ void MapView::optimizeForSize(const Size& visibleSize)
 
 void MapView::setAntiAliasingMode(const AntialiasingMode mode)
 {
-	m_frameCache.tile->setSmooth(mode != ANTIALIASING_DISABLED);
+	m_framebuffer->setSmooth(mode != ANTIALIASING_DISABLED);
 	m_renderScale = mode == ANTIALIASING_SMOOTH_RETRO ? 200 : 100;
 	updateGeometry(m_visibleDimension, m_optimizedSize);
 }

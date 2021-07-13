@@ -159,10 +159,6 @@ protected:
 	friend class MapViewPainter;
 
 private:
-	struct FrameCache {
-		FrameBufferPtr tile, staticText, dynamicText, creatureInformation;
-	};
-
 	struct RectCache {
 		Rect rect, srcRect;
 		Point drawOffset;
@@ -245,8 +241,8 @@ private:
 	PainterShaderProgramPtr m_shader, m_nextShader;
 	LightViewPtr m_lightView;
 	CreaturePtr m_followingCreature;
+	FrameBufferPtr m_framebuffer;
 
-	FrameCache m_frameCache;
 	RectCache m_rectCache;
 	ViewMode m_viewMode;
 
