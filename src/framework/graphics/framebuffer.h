@@ -48,7 +48,6 @@ class FrameBuffer : public stdext::shared_object
 {
 public:
 	struct CoordsBufferCache {
-		CoordsBufferCache() { coordsBuffer.enableHardwareCaching(); };
 		size_t currentHash{ 0 }, lastHash{ 0 };
 		std::vector<std::pair<Rect, Rect>> rects;
 		CoordsBuffer coordsBuffer;
@@ -110,7 +109,6 @@ private:
 	struct ScheduledAction {
 		~ScheduledAction() { drawMethods.clear(); coordsBuffer = nullptr; state.texture = nullptr; }
 
-		size_t hash;
 		Painter::PainterState state;
 		std::shared_ptr<CoordsBuffer> coordsBuffer;
 		Painter::DrawMode drawMode{ Painter::DrawMode::Triangles };
@@ -143,8 +141,6 @@ private:
 	std::unordered_map<size_t, std::vector<std::shared_ptr<ScheduledAction>>> m_coordsActionObjects;
 
 	std::pair<size_t, size_t> m_status{ 0,0 };
-
-	std::unordered_map<size_t, std::shared_ptr<CoordsBuffer>> m_currentCoordsCache, m_lastCoordsCache;
 
 	bool m_backuping{ true },
 		m_smooth{ true },

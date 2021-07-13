@@ -45,7 +45,6 @@ void CachedText::update()
 {
 	if(m_font)
 		m_textSize = m_font->calculateTextRectSize(m_text);
-	m_textMustRecache = true;
 }
 
 void CachedText::wrapText(int maxWidth)

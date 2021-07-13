@@ -83,34 +83,16 @@ void PainterOGL1::drawCoords(CoordsBuffer& coordsBuffer, DrawMode drawMode)
 
 	// use vertex arrays if possible, much faster
 	if(g_graphics.canUseDrawArrays()) {
-		// update coords buffer hardware caches if enabled
-		coordsBuffer.updateCaches();
-		const bool hardwareCached = coordsBuffer.isHardwareCached();
-
 		// only set texture coords arrays when needed
 		if(textured) {
-			if(hardwareCached) {
-				coordsBuffer.getHardwareTextureCoordArray()->bind();
-				glTexCoordPointer(2, GL_FLOAT, 0, nullptr);
-			} else
-				glTexCoordPointer(2, GL_FLOAT, 0, coordsBuffer.getTextureCoordArray());
+			glTexCoordPointer(2, GL_FLOAT, 0, coordsBuffer.getTextureCoordArray());
 		}
 
 		// set vertex array
-		if(hardwareCached) {
-			coordsBuffer.getHardwareVertexArray()->bind();
-			glVertexPointer(2, GL_FLOAT, 0, nullptr);
-		} else
-			glVertexPointer(2, GL_FLOAT, 0, coordsBuffer.getVertexArray());
-
-		if(hardwareCached)
-			HardwareBuffer::unbind(HardwareBuffer::VertexBuffer);
+		glVertexPointer(2, GL_FLOAT, 0, coordsBuffer.getVertexArray());
 
 		// draw the element in coords buffers
-		if(drawMode == DrawMode::Triangles)
-			glDrawArrays(GL_TRIANGLES, 0, vertexCount);
-		else if(drawMode == DrawMode::TriangleStrip)
-			glDrawArrays(GL_TRIANGLE_STRIP, 0, vertexCount);
+		glDrawArrays(static_cast<GLenum>(drawMode), 0, vertexCount);
 	}
 #ifndef OPENGL_ES
 	else {

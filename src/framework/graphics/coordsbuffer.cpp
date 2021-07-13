@@ -23,21 +23,6 @@
 #include "coordsbuffer.h"
 #include "graphics.h"
 
-CoordsBuffer::CoordsBuffer()
-{
-	m_hardwareCacheMode = HardwareBuffer::DynamicDraw;
-	m_hardwareVertexArray = nullptr;
-	m_hardwareTextureCoordArray = nullptr;
-	m_hardwareCached = false;
-	m_hardwareCaching = false;
-}
-
-CoordsBuffer::~CoordsBuffer()
-{
-	delete m_hardwareVertexArray;
-	delete m_hardwareTextureCoordArray;
-}
-
 void CoordsBuffer::addBoudingRect(const Rect& dest, int innerLineWidth)
 {
 	const int left = dest.left();
@@ -80,45 +65,4 @@ void CoordsBuffer::addRepeatedRects(const Rect& dest, const Rect& src)
 			m_textureCoordArray.addRect(partialSrc);
 		}
 	}
-	m_hardwareCached = false;
-}
-
-void CoordsBuffer::enableHardwareCaching(HardwareBuffer::UsagePattern usagePattern)
-{
-	if(!g_graphics.canUseHardwareBuffers())
-		return;
-
-	m_hardwareCacheMode = usagePattern;
-	m_hardwareCaching = true;
-	m_hardwareCached = false;
-}
-
-bool CoordsBuffer::canCache() const
-{
-	// there is only performance improvement when caching a lot of vertices
-	return m_vertexArray.vertexCount() >= 16;
-}
-
-void CoordsBuffer::updateCaches()
-{
-	if(!m_hardwareCaching || m_hardwareCached)
-		return;
-
-	if(!canCache()) return;
-
-	if(!m_hardwareVertexArray)
-		m_hardwareVertexArray = new HardwareBuffer(HardwareBuffer::VertexBuffer);
-
-	m_hardwareVertexArray->bind();
-	m_hardwareVertexArray->write(m_vertexArray.vertices(), m_vertexArray.size() * sizeof(float), m_hardwareCacheMode);
-
-	if(m_textureCoordArray.vertexCount() > 0) {
-		if(!m_hardwareTextureCoordArray)
-			m_hardwareTextureCoordArray = new HardwareBuffer(HardwareBuffer::VertexBuffer);
-
-		m_hardwareTextureCoordArray->bind();
-		m_hardwareTextureCoordArray->write(m_textureCoordArray.vertices(), m_textureCoordArray.size() * sizeof(float), m_hardwareCacheMode);
-	}
-
-	m_hardwareCached = true;
 }

@@ -32,7 +32,6 @@ void UIWidget::initText()
 {
 	m_font = g_fonts.getDefaultFont();
 	m_textAlign = Fw::AlignCenter;
-	m_textCoordsBuffer.enableHardwareCaching();
 }
 
 void UIWidget::updateText()

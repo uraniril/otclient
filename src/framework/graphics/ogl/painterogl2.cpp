@@ -90,27 +90,14 @@ void PainterOGL2::drawCoords(CoordsBuffer& coordsBuffer, DrawMode drawMode)
 	m_drawProgram->setResolution(m_resolution);
 	m_drawProgram->updateTime();
 
-	// update coords buffer hardware caches if enabled
-	coordsBuffer.updateCaches();
-	const bool hardwareCached = coordsBuffer.isHardwareCached() && coordsBuffer.getHardwareTextureCoordArray();
-
 	// only set texture coords arrays when needed
 	if(textured) {
-		if(hardwareCached) {
-			coordsBuffer.getHardwareTextureCoordArray()->bind();
-			m_drawProgram->setAttributeArray(PainterShaderProgram::TEXCOORD_ATTR, nullptr, 2);
-		} else
-			m_drawProgram->setAttributeArray(PainterShaderProgram::TEXCOORD_ATTR, coordsBuffer.getTextureCoordArray(), 2);
+		m_drawProgram->setAttributeArray(PainterShaderProgram::TEXCOORD_ATTR, coordsBuffer.getTextureCoordArray(), 2);
 	} else
 		PainterShaderProgram::disableAttributeArray(PainterShaderProgram::TEXCOORD_ATTR);
 
 	// set vertex array
-	if(hardwareCached) {
-		coordsBuffer.getHardwareVertexArray()->bind();
-		m_drawProgram->setAttributeArray(PainterShaderProgram::VERTEX_ATTR, nullptr, 2);
-		HardwareBuffer::unbind(HardwareBuffer::VertexBuffer);
-	} else
-		m_drawProgram->setAttributeArray(PainterShaderProgram::VERTEX_ATTR, coordsBuffer.getVertexArray(), 2);
+	m_drawProgram->setAttributeArray(PainterShaderProgram::VERTEX_ATTR, coordsBuffer.getVertexArray(), 2);
 
 	// draw the element in coords buffers
 	glDrawArrays(static_cast<GLenum>(drawMode), 0, vertexCount);

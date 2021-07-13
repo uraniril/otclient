@@ -29,61 +29,44 @@
 class CoordsBuffer
 {
 public:
-	CoordsBuffer();
-	~CoordsBuffer();
-
 	void clear()
 	{
 		m_textureCoordArray.clear();
 		m_vertexArray.clear();
-		m_hardwareCached = false;
 	}
 
 	void addTriangle(const Point& a, const Point& b, const Point& c)
 	{
 		m_vertexArray.addTriangle(a, b, c);
-		m_hardwareCached = false;
 	}
 	void addRect(const Rect& dest)
 	{
 		m_vertexArray.addRect(dest);
-		m_hardwareCached = false;
 	}
 	void addRect(const Rect& dest, const Rect& src)
 	{
 		m_vertexArray.addRect(dest);
 		m_textureCoordArray.addRect(src);
-		m_hardwareCached = false;
 	}
 	void addQuad(const Rect& dest, const Rect& src)
 	{
 		m_vertexArray.addQuad(dest);
 		m_textureCoordArray.addQuad(src);
-		m_hardwareCached = false;
 	}
 	void addUpsideDownQuad(const Rect& dest, const Rect& src)
 	{
 		m_vertexArray.addUpsideDownQuad(dest);
 		m_textureCoordArray.addQuad(src);
-		m_hardwareCached = false;
 	}
 
 	void addUpsideDownRect(const Rect& dest, const Rect& src)
 	{
 		m_vertexArray.addUpsideDownRect(dest);
 		m_textureCoordArray.addRect(src);
-		m_hardwareCached = false;
 	}
 
 	void addBoudingRect(const Rect& dest, int innerLineWidth);
 	void addRepeatedRects(const Rect& dest, const Rect& src);
-
-	void enableHardwareCaching(HardwareBuffer::UsagePattern usagePattern = HardwareBuffer::DynamicDraw);
-	void updateCaches();
-
-	bool isHardwareCached() const { return m_hardwareCached; }
-	bool canCache() const;
-	bool isEnabledHardwareCaching() const { return m_hardwareCaching; }
 
 	float* getVertexArray() { return m_vertexArray.vertices(); }
 	float* getTextureCoordArray() { return m_textureCoordArray.vertices(); }
@@ -92,17 +75,9 @@ public:
 	size_t getVertexHash() const { return m_vertexArray.getHash(); }
 	size_t getTextureCoordHash() const { return m_textureCoordArray.getHash(); }
 
-	HardwareBuffer* getHardwareVertexArray() { return m_hardwareVertexArray; }
-	HardwareBuffer* getHardwareTextureCoordArray() { return m_hardwareTextureCoordArray; }
-
 private:
-	HardwareBuffer* m_hardwareVertexArray;
-	HardwareBuffer* m_hardwareTextureCoordArray;
-	HardwareBuffer::UsagePattern m_hardwareCacheMode;
 	VertexArray m_vertexArray;
 	VertexArray m_textureCoordArray;
-	bool m_hardwareCached;
-	bool m_hardwareCaching;
 };
 
 #endif

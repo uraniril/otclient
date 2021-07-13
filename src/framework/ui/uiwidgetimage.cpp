@@ -26,10 +26,7 @@
 #include <framework/graphics/texturemanager.h>
 #include <framework/graphics/graphics.h>
 
-void UIWidget::initImage()
-{
-	m_imageCoordsBuffer.enableHardwareCaching();
-}
+void UIWidget::initImage() {}
 
 void UIWidget::parseImageStyle(const OTMLNodePtr& styleNode)
 {
