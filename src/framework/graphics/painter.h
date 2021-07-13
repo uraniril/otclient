@@ -67,7 +67,7 @@ public:
 		PainterShaderProgram* shaderProgram;
 		bool alphaWriting;
 
-		bool isEqual(const PainterState& s2) const
+		bool operator==(const PainterState& s2) const
 		{
 			return resolution == s2.resolution &&
 				transformMatrix == s2.transformMatrix &&

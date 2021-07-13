@@ -55,12 +55,12 @@ public:
 	void draw();
 
 private:
-	void drawObject(const FrameBuffer::ScheduledAction& obj);
+	void drawObject(const FrameBuffer::DrawObject& obj);
 
 	void add(const TexturePtr& texture, const FrameBuffer::DrawMethod& method, const Painter::DrawMode drawMode = Painter::DrawMode::Triangles);
 	void addRepeated(const TexturePtr& texture, const FrameBuffer::DrawMethod& method, const Painter::DrawMode drawMode = Painter::DrawMode::Triangles);
 
-	std::vector<std::shared_ptr<FrameBuffer::ScheduledAction>> m_repeatedActions, m_actions;
+	std::vector<std::shared_ptr<FrameBuffer::DrawObject>> m_repeatedActions, m_actions;
 	std::unordered_map<size_t, CoordsBuffer> m_coordsCache;
 
 	CoordsBuffer m_tempCoordsBuffer;

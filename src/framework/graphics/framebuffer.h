@@ -106,8 +106,8 @@ private:
 		float floatValue{ .0f };
 	};
 
-	struct ScheduledAction {
-		~ScheduledAction() { drawMethods.clear(); coordsBuffer = nullptr; state.texture = nullptr; }
+	struct DrawObject {
+		~DrawObject() { drawMethods.clear(); coordsBuffer = nullptr; state.texture = nullptr; }
 
 		Painter::PainterState state;
 		std::shared_ptr<CoordsBuffer> coordsBuffer;
@@ -137,8 +137,8 @@ private:
 	Color m_colorClear = { Color::black };
 	Painter::CompositionMode m_compositeMode{ Painter::CompositionMode_Normal };
 
-	std::vector<std::shared_ptr<ScheduledAction>> m_actions;
-	std::unordered_map<size_t, std::vector<std::shared_ptr<ScheduledAction>>> m_coordsActionObjects;
+	std::vector<std::shared_ptr<DrawObject>> m_actions;
+	std::unordered_map<size_t, std::vector<std::shared_ptr<DrawObject>>> m_coordsActionObjects;
 
 	std::pair<size_t, size_t> m_status{ 0,0 };
 
