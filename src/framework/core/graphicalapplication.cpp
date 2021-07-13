@@ -136,27 +136,14 @@ void GraphicalApplication::run()
 			// the screen consists of two panes
 			// background pane - high updated and animated pane (where the game are stuff happens)
 			// foreground pane - steady pane with few animated stuff (UI)
-			bool redraw = false;
-			bool updateForeground = false;
-
 			if(m_backgroundFrameCounter.shouldProcessNextFrame()) {
-				redraw = true;
-
-				if(m_mustRepaint || m_foregroundFrameCounter.shouldProcessNextFrame()) {
-					m_mustRepaint = false;
-					updateForeground = true;
-				}
-			}
-
-			if(redraw) {
 				// draw the foreground into a texture
-				if(updateForeground) {
-					m_foregroundFrameCounter.processNextFrame();
-
+				if(foregroundCanUpdate()) {
 					// draw foreground
-					if(g_drawPool.canFill(m_foregroundFrameCache)) {
-						g_ui.render(Fw::ForegroundPane);
-					}
+					g_drawPool.setFrameBuffer(m_foregroundFrameCache);
+					g_ui.render(Fw::ForegroundPane);
+
+					m_lastRenderedTime.restart();
 				}
 
 				// draw background (animated stuff)
@@ -166,8 +153,7 @@ void GraphicalApplication::run()
 				// draw the foreground (steady stuff)
 				g_drawPool.draw(m_foregroundFrameCache);
 
-				// resets frame refresh time.
-				g_drawPool.restart();
+				//m_lastRenderedTime.restart();
 
 				// update screen pixels
 				g_window.swapBuffers();
@@ -178,7 +164,6 @@ void GraphicalApplication::run()
 
 			if(m_backgroundFrameCounter.update())
 				g_lua.callGlobalField("g_app", "onFps", m_backgroundFrameCounter.getLastFps());
-			m_foregroundFrameCounter.update();
 
 			const int sleepMicros = m_backgroundFrameCounter.getMaximumSleepMicros();
 			if(sleepMicros >= AdaptativeFrameCounter::MINIMUM_MICROS_SLEEP)

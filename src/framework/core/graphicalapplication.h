@@ -26,6 +26,7 @@
 #include "application.h"
 #include <framework/graphics/declarations.h>
 #include <framework/core/inputevent.h>
+#include <framework/core/timer.h>
 
 class GraphicalApplication : public Application
 {
@@ -45,12 +46,9 @@ public:
 	void repaint() { m_mustRepaint = true; }
 
 	/* Force Max FPS 20, it is unnecessary more than that. */
-	void setForegroundPaneMaxFps(int /*maxFps*/) { m_foregroundFrameCounter.setMaxFps(20); }
 	void setBackgroundPaneMaxFps(int maxFps) { m_backgroundFrameCounter.setMaxFps(maxFps); }
 
-	int getForegroundPaneFps() { return m_foregroundFrameCounter.getLastFps(); }
 	int getBackgroundPaneFps() { return m_backgroundFrameCounter.getLastFps(); }
-	int getForegroundPaneMaxFps() { return m_foregroundFrameCounter.getMaxFps(); }
 	int getBackgroundPaneMaxFps() { return m_backgroundFrameCounter.getMaxFps(); }
 
 	bool isOnInputEvent() { return m_onInputEvent; }
@@ -60,10 +58,14 @@ protected:
 	void inputEvent(const InputEvent& event);
 
 private:
+	bool foregroundCanUpdate() { return m_mustRepaint && m_lastRenderedTime.ticksElapsed() >= 16; }
+
 	bool m_onInputEvent{ false },
 		m_mustRepaint{ false };
+
+	Timer m_lastRenderedTime;
+
 	AdaptativeFrameCounter m_backgroundFrameCounter;
-	AdaptativeFrameCounter m_foregroundFrameCounter;
 
 	FrameBufferPtr m_foregroundFrameCache;
 };

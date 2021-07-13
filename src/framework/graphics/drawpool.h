@@ -34,9 +34,7 @@ public:
 	void init();
 	void terminate();
 
-	bool canFill(const FrameBufferPtr& frameBuffer);
-	void flush();
-	void restart() { m_lastRenderedTime.restart(); }
+	void setFrameBuffer(const FrameBufferPtr& frameBuffer);
 
 	void addFillCoords(CoordsBuffer& coordsBuffer);
 	void addTextureCoords(CoordsBuffer& coordsBuffer, const TexturePtr& texture, Painter::DrawMode drawMode = Painter::DrawMode::Triangles);
@@ -54,22 +52,19 @@ public:
 
 	void draw(const FrameBufferPtr& frameBuffer) { draw(frameBuffer, Rect(), Rect()); }
 	void draw(const FrameBufferPtr& frameBuffer, const Rect& dest, const Rect& src);
+	void draw();
 
 private:
 	void drawObject(const FrameBuffer::ScheduledAction& obj);
 
 	void add(const TexturePtr& texture, const FrameBuffer::DrawMethod& method, const Painter::DrawMode drawMode = Painter::DrawMode::Triangles);
-
 	void addRepeated(const TexturePtr& texture, const FrameBuffer::DrawMethod& method, const Painter::DrawMode drawMode = Painter::DrawMode::Triangles);
 
-	bool canUpdate() { return m_lastRenderedTime.ticksElapsed() >= 16; }
-
-	std::vector<std::shared_ptr<FrameBuffer::ScheduledAction>> m_repeatedActionsObjects, m_actionObjects;
+	std::vector<std::shared_ptr<FrameBuffer::ScheduledAction>> m_repeatedActions, m_actions;
 	std::unordered_map<size_t, CoordsBuffer> m_coordsCache;
 
-	CoordsBuffer m_coordsBuffer;
+	CoordsBuffer m_tempCoordsBuffer;
 	FrameBufferPtr m_currentFrameBuffer;
-	Timer m_lastRenderedTime;
 };
 
 extern DrawPool g_drawPool;

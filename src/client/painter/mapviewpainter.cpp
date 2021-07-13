@@ -50,75 +50,74 @@ void MapViewPainter::draw(const MapViewPtr& mapView, const Rect& rect)
 
 	const Position cameraPosition = mapView->getCameraPosition();
 
-	if(g_drawPool.canFill(mapView->m_frameCache.tile)) {
-		const auto& lightView = mapView->m_drawLights ? mapView->m_lightView.get() : nullptr;
-		for(int_fast8_t z = mapView->m_floorMax; z >= mapView->m_floorMin; --z) {
-			if(lightView) {
-				const int8 nextFloor = z - 1;
-				if(nextFloor >= mapView->m_floorMin) {
-					lightView->setFloor(nextFloor);
-					for(const auto& tile : mapView->m_cachedVisibleTiles[nextFloor]) {
-						const auto& ground = tile->getGround();
-						if(ground && !ground->isTranslucent()) {
-							auto pos2D = mapView->transformPositionTo2D(tile->getPosition(), cameraPosition);
-							if(ground->isTopGround()) {
-								const auto currentPos = tile->getPosition();
-								for(const auto& pos : currentPos.translatedToDirections({ Otc::South, Otc::East })) {
-									const auto& nextDownTile = g_map.getTile(pos);
-									if(nextDownTile && nextDownTile->hasGround() && !nextDownTile->isTopGround()) {
-										lightView->setShade(pos2D);
-										break;
-									}
+	g_drawPool.setFrameBuffer(mapView->m_frameCache.tile);
+	const auto& lightView = mapView->m_drawLights ? mapView->m_lightView.get() : nullptr;
+	for(int_fast8_t z = mapView->m_floorMax; z >= mapView->m_floorMin; --z) {
+		if(lightView) {
+			const int8 nextFloor = z - 1;
+			if(nextFloor >= mapView->m_floorMin) {
+				lightView->setFloor(nextFloor);
+				for(const auto& tile : mapView->m_cachedVisibleTiles[nextFloor]) {
+					const auto& ground = tile->getGround();
+					if(ground && !ground->isTranslucent()) {
+						auto pos2D = mapView->transformPositionTo2D(tile->getPosition(), cameraPosition);
+						if(ground->isTopGround()) {
+							const auto currentPos = tile->getPosition();
+							for(const auto& pos : currentPos.translatedToDirections({ Otc::South, Otc::East })) {
+								const auto& nextDownTile = g_map.getTile(pos);
+								if(nextDownTile && nextDownTile->hasGround() && !nextDownTile->isTopGround()) {
+									lightView->setShade(pos2D);
+									break;
 								}
-
-								pos2D -= mapView->m_tileSize;
 							}
 
-							lightView->setShade(pos2D);
+							pos2D -= mapView->m_tileSize;
 						}
+
+						lightView->setShade(pos2D);
 					}
 				}
 			}
-
-			mapView->onFloorDrawingStart(z);
-
-			if(lightView) lightView->setFloor(z);
-
-			for(const auto& tile : mapView->m_cachedVisibleTiles[z]) {
-				if(!canRenderTile(mapView, tile, mapView->m_viewport, lightView)) continue;
-
-				TilePainter::drawStart(tile, mapView);
-				TilePainter::drawGround(tile, mapView->transformPositionTo2D(tile->getPosition(), cameraPosition), mapView->m_scaleFactor, Otc::FUpdateAll, lightView);
-				TilePainter::drawEnd(tile, mapView);
-			}
-
-			for(const auto& tile : mapView->m_cachedVisibleTiles[z]) {
-				if(!canRenderTile(mapView, tile, mapView->m_viewport, lightView)) continue;
-
-				TilePainter::drawStart(tile, mapView);
-				TilePainter::drawBottom(tile, mapView->transformPositionTo2D(tile->getPosition(), cameraPosition), mapView->m_scaleFactor, Otc::FUpdateAll, lightView);
-				TilePainter::drawTop(tile, mapView->transformPositionTo2D(tile->getPosition(), cameraPosition), mapView->m_scaleFactor, Otc::FUpdateAll, lightView);
-				TilePainter::drawEnd(tile, mapView);
-			}
-
-			for(const MissilePtr& missile : g_map.getFloorMissiles(z)) {
-				ThingPainter::draw(missile, mapView->transformPositionTo2D(missile->getPosition(), cameraPosition), mapView->m_scaleFactor, Otc::FUpdateAll, lightView);
-			}
-
-			mapView->onFloorDrawingEnd(z);
 		}
 
-		if(mapView->m_crosshairTexture && mapView->m_mousePosition.isValid()) {
-			const Point& point = mapView->transformPositionTo2D(mapView->m_mousePosition, cameraPosition);
-			if(mapView->m_crosshairEffect && mapView->m_crosshairEffect->getId() > 0) {
-				ThingPainter::draw(mapView->m_crosshairEffect, point, mapView->m_scaleFactor, Otc::FUpdateThing, nullptr);
-				g_painter->setOpacity(.65);
-			}
+		mapView->onFloorDrawingStart(z);
 
-			const auto crosshairRect = Rect(point, mapView->m_tileSize, mapView->m_tileSize);
-			g_drawPool.addTexturedRect(crosshairRect, mapView->m_crosshairTexture);
-			g_painter->resetOpacity();
+		if(lightView) lightView->setFloor(z);
+
+		for(const auto& tile : mapView->m_cachedVisibleTiles[z]) {
+			if(!canRenderTile(mapView, tile, mapView->m_viewport, lightView)) continue;
+
+			TilePainter::drawStart(tile, mapView);
+			TilePainter::drawGround(tile, mapView->transformPositionTo2D(tile->getPosition(), cameraPosition), mapView->m_scaleFactor, Otc::FUpdateAll, lightView);
+			TilePainter::drawEnd(tile, mapView);
 		}
+
+		for(const auto& tile : mapView->m_cachedVisibleTiles[z]) {
+			if(!canRenderTile(mapView, tile, mapView->m_viewport, lightView)) continue;
+
+			TilePainter::drawStart(tile, mapView);
+			TilePainter::drawBottom(tile, mapView->transformPositionTo2D(tile->getPosition(), cameraPosition), mapView->m_scaleFactor, Otc::FUpdateAll, lightView);
+			TilePainter::drawTop(tile, mapView->transformPositionTo2D(tile->getPosition(), cameraPosition), mapView->m_scaleFactor, Otc::FUpdateAll, lightView);
+			TilePainter::drawEnd(tile, mapView);
+		}
+
+		for(const MissilePtr& missile : g_map.getFloorMissiles(z)) {
+			ThingPainter::draw(missile, mapView->transformPositionTo2D(missile->getPosition(), cameraPosition), mapView->m_scaleFactor, Otc::FUpdateAll, lightView);
+		}
+
+		mapView->onFloorDrawingEnd(z);
+	}
+
+	if(mapView->m_crosshairTexture && mapView->m_mousePosition.isValid()) {
+		const Point& point = mapView->transformPositionTo2D(mapView->m_mousePosition, cameraPosition);
+		if(mapView->m_crosshairEffect && mapView->m_crosshairEffect->getId() > 0) {
+			ThingPainter::draw(mapView->m_crosshairEffect, point, mapView->m_scaleFactor, Otc::FUpdateThing, nullptr);
+			g_painter->setOpacity(.65);
+		}
+
+		const auto crosshairRect = Rect(point, mapView->m_tileSize, mapView->m_tileSize);
+		g_drawPool.addTexturedRect(crosshairRect, mapView->m_crosshairTexture);
+		g_painter->resetOpacity();
 	}
 
 	/*float fadeOpacity = 1.0f;
@@ -178,7 +177,7 @@ void MapViewPainter::drawCreatureInformation(const MapViewPtr& mapView)
 																		 mapView->m_rectCache.horizontalStretchFactor, mapView->m_rectCache.verticalStretchFactor, flags);
 	}
 
-	g_drawPool.flush();
+	g_drawPool.draw();
 }
 
 void MapViewPainter::drawText(const MapViewPtr& mapView)
@@ -216,7 +215,7 @@ void MapViewPainter::drawText(const MapViewPtr& mapView)
 		ThingPainter::drawText(animatedText, p, mapView->m_rectCache.rect);
 	}
 
-	g_drawPool.flush();
+	g_drawPool.draw();
 }
 
 bool MapViewPainter::canRenderTile(const MapViewPtr& mapView, const TilePtr& tile, const AwareRange& viewPort, LightView* lightView)
