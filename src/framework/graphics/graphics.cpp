@@ -147,8 +147,6 @@ bool Graphics::parseOption(const std::string& option)
 		m_useHardwareMipmaps = false;
 	else if(option == "-no-smooth")
 		m_useBilinearFiltering = false;
-	else if(option == "-hardware-buffers")
-		m_useHardwareBuffers = true;
 	else if(option == "-no-non-power-of-two-textures")
 		m_useNonPowerOfTwoTextures = false;
 	else if(option == "-no-clamp-to-edge")
@@ -310,21 +308,6 @@ bool Graphics::canUseBilinearFiltering()
 {
 	// bilinear filtering is supported by any OpenGL implementation
 	return m_useBilinearFiltering;
-}
-
-bool Graphics::canUseHardwareBuffers()
-{
-#if OPENGL_ES==2
-	return m_useHardwareBuffers;
-#elif OPENGL_ES==1
-	// OpenGL ES 1.1 supports it but OpenGL ES 1.0 not
-	return false;
-#else
-	// vertex buffer objects is supported by OpenGL 1.5
-	if(!GLEW_ARB_vertex_buffer_object)
-		return false;
-#endif
-	return m_useHardwareBuffers;
 }
 
 bool Graphics::canUseNonPowerOfTwoTextures()

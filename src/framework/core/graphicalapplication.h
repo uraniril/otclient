@@ -42,10 +42,8 @@ public:
 	void poll() override;
 	void close() override;
 
-	bool willRepaint() { return m_mustRepaint; }
 	void repaint() { m_mustRepaint = true; }
 
-	/* Force Max FPS 20, it is unnecessary more than that. */
 	void setBackgroundPaneMaxFps(int maxFps) { m_backgroundFrameCounter.setMaxFps(maxFps); }
 
 	int getBackgroundPaneFps() { return m_backgroundFrameCounter.getLastFps(); }

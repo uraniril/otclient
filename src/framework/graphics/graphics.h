@@ -68,7 +68,6 @@ public:
 	bool canUseShaders();
 	bool canUseFBO();
 	bool canUseBilinearFiltering();
-	bool canUseHardwareBuffers();
 	bool canUseNonPowerOfTwoTextures();
 	bool canUseMipmaps();
 	bool canUseHardwareMipmaps();
@@ -88,7 +87,6 @@ private:
 	bool m_ok{ false },
 		m_useDrawArrays{ true },
 		m_useFBO{ true },
-		m_useHardwareBuffers{ false },
 		m_useBilinearFiltering{ true },
 		m_useNonPowerOfTwoTextures{ true },
 		m_useMipmaps{ true },
