@@ -295,6 +295,8 @@ void ThingType::unserialize(uint16 clientId, ThingCategory category, const FileS
 
 	m_textures.resize(m_animationPhases);
 	m_blankTextures.resize(m_animationPhases);
+	m_smoothTextures.resize(m_animationPhases);
+
 	m_texturesFramesRects.resize(m_animationPhases);
 	m_texturesFramesOriginRects.resize(m_animationPhases);
 	m_texturesFramesOffsets.resize(m_animationPhases);
@@ -348,9 +350,15 @@ void ThingType::unserializeOtml(const OTMLNodePtr& node)
 	}
 }
 
-const TexturePtr& ThingType::getTexture(int animationPhase, bool allBlank)
+const TexturePtr& ThingType::getTexture(int animationPhase, const TextureType txtType)
 {
-	TexturePtr& animationPhaseTexture = (allBlank ? m_blankTextures : m_textures)[animationPhase];
+	const bool allBlank = txtType == TextureType::ALL_BLANK,
+		smoth = txtType == TextureType::SMOOTH;
+
+	TexturePtr& animationPhaseTexture = (
+		allBlank ? m_blankTextures :
+		smoth ? m_smoothTextures : m_textures)[animationPhase];
+
 	if(animationPhaseTexture) return animationPhaseTexture;
 
 	// we don't need layers in common items, they will be pre-drawn
@@ -428,8 +436,10 @@ const TexturePtr& ThingType::getTexture(int animationPhase, bool allBlank)
 		}
 	}
 
-	fullImage->setRealSize(m_realSize);
-	animationPhaseTexture = TexturePtr(new Texture(fullImage, true));
+	animationPhaseTexture = TexturePtr(new Texture(fullImage, true, false, m_size.area() == 1));
+	if(smoth)
+		animationPhaseTexture->setSmooth(true);
+
 	return animationPhaseTexture;
 }
 

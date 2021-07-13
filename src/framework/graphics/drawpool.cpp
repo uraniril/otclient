@@ -106,14 +106,18 @@ void DrawPool::add(const TexturePtr& texture, const FrameBuffer::DrawMethod& met
 	const auto& actionObject = std::make_shared<FrameBuffer::ScheduledAction>(FrameBuffer::ScheduledAction{ currentState, nullptr, drawMode, {method} });
 
 	// Look for identical or opaque textures that are greater than or equal to the size of the previous texture and remove.
-	if(method.type == FrameBuffer::DrawMethodType::DRAW_TEXTURED_RECT && currentState.compositionMode != Painter::CompositionMode_Multiply &&
-		 !method.dest.isNull() && texture && currentState.opacity >= 1.f && currentState.color.aF() >= 1.f) {
+	if(method.type == FrameBuffer::DrawMethodType::DRAW_TEXTURED_RECT && !method.dest.isNull() &&
+		 currentState.compositionMode != Painter::CompositionMode_Multiply &&
+		 texture && currentState.opacity >= 1.f && currentState.color.aF() >= 1.f) {
 		auto& list = m_currentFrameBuffer->m_coordsActionObjects[method.dest.hash()];
 		for(auto& prevAction : list) {
-			if(prevAction->state.texture == texture || texture->isOpaque() && prevAction->state.texture->getRealSize() <= SPRITE_SIZE) {
+			//when it's the same texture, check if the source is the same, because in the case of outfit, the addons use "the same texture"
+			const bool isSameTexture = prevAction->state.texture == texture;
+
+			if(isSameTexture || texture->isOpaque() && prevAction->state.texture->canSuperimposed()) {
 				for(auto itm = prevAction->drawMethods.begin(); itm != prevAction->drawMethods.end(); ++itm) {
 					auto& prevMethod = *itm;
-					if(prevMethod.dest == method.dest) {
+					if(prevMethod.dest == method.dest && (!isSameTexture || prevMethod.rects.second == method.rects.second)) {
 						prevAction->drawMethods.erase(itm);
 						break;
 					}

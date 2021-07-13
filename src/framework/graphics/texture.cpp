@@ -50,10 +50,11 @@ Texture::Texture(const Size& size)
 	setupFilters();
 }
 
-Texture::Texture(const ImagePtr& image, bool buildMipmaps, bool compress)
+Texture::Texture(const ImagePtr& image, bool buildMipmaps, bool compress, bool canSuperimposed)
 {
 	m_id = 0;
 	m_time = 0;
+	m_canSuperimposed = canSuperimposed;
 
 	createTexture();
 
@@ -97,7 +98,6 @@ void Texture::uploadPixels(const ImagePtr& image, bool buildMipmaps, bool compre
 	setupFilters();
 
 	m_opaque = !image->hasTransparentPixel();
-	m_realSize = image->getRealSize() ? image->getRealSize() : image->getSize().area();
 }
 
 void Texture::bind()

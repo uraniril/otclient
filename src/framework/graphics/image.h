@@ -58,13 +58,9 @@ public:
 	bool hasTransparentPixel() const { return m_transparentPixel; }
 	void setTransparentPixel(const bool value) { m_transparentPixel = value; }
 
-	void setRealSize(const uint16 value) { m_realSize = value; }
-	uint16 getRealSize() const { return m_realSize; }
-
 private:
 	std::vector<uint8> m_pixels;
 	Size m_size;
-	uint16 m_realSize{ 0 };
 
 	int m_bpp;
 	bool m_transparentPixel{ false };

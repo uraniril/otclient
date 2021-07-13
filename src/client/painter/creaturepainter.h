@@ -28,11 +28,11 @@
 class CreaturePainter
 {
 public:
-    static void draw(const CreaturePtr& creature, const Point& dest, float scaleFactor, const Highlight& highLight, int frameFlags, LightView* lightView);
-    static void internalDrawOutfit(const CreaturePtr& creature, Point dest, float scaleFactor, bool useBlank, Otc::Direction_t direction);
-    static void drawOutfit(const CreaturePtr& creature, const Rect& destRect, bool resize);
-    static void drawInformation(const CreaturePtr& creature, const Rect& parentRect, const Point& dest, float scaleFactor,
-                                const Point& drawOffset, float horizontalStretchFactor, float verticalStretchFactor, int drawFlags);
+	static void draw(const CreaturePtr& creature, const Point& dest, float scaleFactor, const Highlight& highLight, int frameFlags, LightView* lightView);
+	static void internalDrawOutfit(const CreaturePtr& creature, Point dest, float scaleFactor, TextureType textureType, Otc::Direction_t direction);
+	static void drawOutfit(const CreaturePtr& creature, const Rect& destRect, bool resize);
+	static void drawInformation(const CreaturePtr& creature, const Rect& parentRect, const Point& dest, float scaleFactor,
+															const Point& drawOffset, float horizontalStretchFactor, float verticalStretchFactor, int drawFlags);
 };
 
 #endif

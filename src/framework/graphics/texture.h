@@ -30,7 +30,7 @@ class Texture : public stdext::shared_object
 public:
 	Texture();
 	Texture(const Size& size);
-	Texture(const ImagePtr& image, bool buildMipmaps = false, bool compress = false);
+	Texture(const ImagePtr& image, bool buildMipmaps = false, bool compress = false, bool canSuperimposed = false);
 	~Texture() override;
 
 	void uploadPixels(const ImagePtr& image, bool buildMipmaps = false, bool compress = false);
@@ -55,7 +55,7 @@ public:
 	bool hasMipmaps() { return m_hasMipmaps; }
 	virtual bool isAnimatedTexture() { return false; }
 	bool isOpaque() const { return m_opaque; }
-	uint16 getRealSize() const { return m_realSize; }
+	bool canSuperimposed() const { return m_canSuperimposed; }
 
 protected:
 	void createTexture();
@@ -69,15 +69,14 @@ protected:
 	ticks_t m_time;
 	Size m_size, m_glSize;
 
-	uint16 m_realSize{ 0 };
-
 	Matrix3 m_transformMatrix;
 
 	bool m_hasMipmaps{ false },
 		m_smooth{ false },
 		m_upsideDown{ false },
 		m_repeat{ false },
-		m_opaque{ false };
+		m_opaque{ false },
+		m_canSuperimposed{ false };
 };
 
 #endif

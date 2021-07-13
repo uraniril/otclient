@@ -49,11 +49,11 @@ void CreaturePainter::draw(const CreaturePtr& creature, const Point& dest, float
 			g_painter->resetColor();
 		}
 
-		internalDrawOutfit(creature, dest + (creature->m_walkOffset * scaleFactor), scaleFactor, false, creature->m_direction);
+		internalDrawOutfit(creature, dest + (creature->m_walkOffset * scaleFactor), scaleFactor, TextureType::NONE, creature->m_direction);
 
 		if(highLight.enabled && creature == highLight.thing) {
 			g_painter->setColor(highLight.rgbColor);
-			internalDrawOutfit(creature, dest + (creature->m_walkOffset * scaleFactor), scaleFactor, true, creature->m_direction);
+			internalDrawOutfit(creature, dest + (creature->m_walkOffset * scaleFactor), scaleFactor, TextureType::ALL_BLANK, creature->m_direction);
 			g_painter->resetColor();
 		}
 	}
@@ -76,7 +76,7 @@ void CreaturePainter::draw(const CreaturePtr& creature, const Point& dest, float
 	}
 }
 
-void CreaturePainter::internalDrawOutfit(const CreaturePtr& creature, Point dest, float scaleFactor, bool useBlank, Otc::Direction_t direction)
+void CreaturePainter::internalDrawOutfit(const CreaturePtr& creature, Point dest, float scaleFactor, TextureType textureType, Otc::Direction_t direction)
 {
 	if(creature->m_outfitColor != Color::white)
 		g_painter->setColor(creature->m_outfitColor);
@@ -97,7 +97,7 @@ void CreaturePainter::internalDrawOutfit(const CreaturePtr& creature, Point dest
 			const auto& datType = creature->rawGetMountThingType();
 
 			dest -= datType->getDisplacement() * scaleFactor;
-			ThingPainter::draw(datType, dest, scaleFactor, 0, xPattern, 0, 0, creature->getCurrentAnimationPhase(true), useBlank);
+			ThingPainter::draw(datType, dest, scaleFactor, 0, xPattern, 0, 0, creature->getCurrentAnimationPhase(true), textureType);
 			dest += creature->getDisplacement() * scaleFactor;
 
 			zPattern = std::min<int>(1, creature->getNumPatternZ() - 1);
@@ -115,9 +115,9 @@ void CreaturePainter::internalDrawOutfit(const CreaturePtr& creature, Point dest
 				continue;
 
 			auto* datType = creature->rawGetThingType();
-			ThingPainter::draw(datType, dest, scaleFactor, 0, xPattern, yPattern, zPattern, animationPhase, useBlank);
+			ThingPainter::draw(datType, dest, scaleFactor, 0, xPattern, yPattern, zPattern, animationPhase, textureType);
 
-			if(!useBlank && creature->getLayers() > 1) {
+			if(textureType != TextureType::ALL_BLANK && creature->getLayers() > 1) {
 				Color oldColor = g_painter->getColor();
 
 				const Painter::CompositionMode oldComposition = g_painter->getCompositionMode();
@@ -128,7 +128,7 @@ void CreaturePainter::internalDrawOutfit(const CreaturePtr& creature, Point dest
 
 				for(const auto& color : colors) {
 					g_painter->setColor(color.first);
-					ThingPainter::draw(datType, dest, scaleFactor, color.second, xPattern, yPattern, zPattern, animationPhase, false);
+					ThingPainter::draw(datType, dest, scaleFactor, color.second, xPattern, yPattern, zPattern, animationPhase, textureType);
 				}
 
 				g_painter->setColor(oldColor);
@@ -157,7 +157,7 @@ void CreaturePainter::internalDrawOutfit(const CreaturePtr& creature, Point dest
 		if(creature->m_outfit.getCategory() == ThingCategoryEffect)
 			animationPhase = std::min<int>(animationPhase + 1, animationPhases);
 
-		ThingPainter::draw(type, dest - (creature->getDisplacement() * scaleFactor), scaleFactor, 0, 0, 0, 0, animationPhase, useBlank);
+		ThingPainter::draw(type, dest - (creature->getDisplacement() * scaleFactor), scaleFactor, 0, 0, 0, 0, animationPhase, textureType);
 	}
 
 	if(creature->m_outfitColor != Color::white)
@@ -172,21 +172,9 @@ void CreaturePainter::drawOutfit(const CreaturePtr& creature, const Rect& destRe
 	else if((frameSize = creature->m_drawCache.exactSize) == 0)
 		return;
 
-	if(g_graphics.canUseFBO()) {
-		g_drawPool.addAction([&, rect = destRect, frameSize = frameSize]() {
-			const FrameBufferPtr& outfitBuffer = g_framebuffers.getTemporaryFrameBuffer();
-			const auto& size = Size(frameSize, frameSize);
-			outfitBuffer->resize(size);
-			outfitBuffer->bind();
-			internalDrawOutfit(creature, Point(frameSize - SPRITE_SIZE) + creature->getDisplacement(), 1, false, Otc::South);
-			outfitBuffer->release();
-			outfitBuffer->draw(rect, Rect(0, 0, size));
-		});
-	} else {
-		const float scaleFactor = destRect.width() / static_cast<float>(frameSize);
-		const Point dest = destRect.bottomRight() - (Point(SPRITE_SIZE) - creature->getDisplacement()) * scaleFactor;
-		internalDrawOutfit(creature, dest, scaleFactor, false, Otc::South);
-	}
+	const float scaleFactor = destRect.width() / static_cast<float>(frameSize);
+	const Point dest = destRect.bottomRight() - (Point(SPRITE_SIZE) - creature->getDisplacement()) * scaleFactor;
+	internalDrawOutfit(creature, dest, scaleFactor, TextureType::SMOOTH, Otc::South);
 }
 
 void CreaturePainter::drawInformation(const CreaturePtr& creature, const Rect& parentRect, const Point& dest, float scaleFactor,

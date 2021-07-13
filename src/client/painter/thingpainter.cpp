@@ -93,7 +93,7 @@ void ThingPainter::draw(const ItemPtr& item, const Point& dest, float scaleFacto
 	if(item->m_color != Color::alpha)
 		g_painter->setColor(item->m_color);
 
-	draw(item->rawGetThingType(), dest, scaleFactor, 0, xPattern, yPattern, zPattern, animationPhase, false, frameFlag, lightView);
+	draw(item->rawGetThingType(), dest, scaleFactor, 0, xPattern, yPattern, zPattern, animationPhase, TextureType::NONE, frameFlag, lightView);
 
 	/// Sanity check
 	/// This is just to ensure that we don't overwrite some color and
@@ -103,7 +103,7 @@ void ThingPainter::draw(const ItemPtr& item, const Point& dest, float scaleFacto
 
 	if(highLight.enabled && item == highLight.thing) {
 		g_painter->setColor(highLight.rgbColor);
-		draw(item->rawGetThingType(), dest, scaleFactor, 0, xPattern, yPattern, zPattern, animationPhase, true, frameFlag, nullptr);
+		draw(item->rawGetThingType(), dest, scaleFactor, 0, xPattern, yPattern, zPattern, animationPhase, TextureType::SMOOTH, frameFlag, nullptr);
 		g_painter->resetColor();
 	}
 }
@@ -147,7 +147,7 @@ void ThingPainter::draw(const MissilePtr& missile, const Point& dest, float scal
 	float fraction = missile->m_animationTimer.ticksElapsed() / missile->m_duration;
 	fraction = floor((fraction * pow(10, p) + 0.5)) / pow(10, p);
 
-	draw(missile->rawGetThingType(), dest + missile->m_delta * fraction * scaleFactor, scaleFactor, 0, xPattern, yPattern, 0, 0, false, frameFlag, lightView);
+	draw(missile->rawGetThingType(), dest + missile->m_delta * fraction * scaleFactor, scaleFactor, 0, xPattern, yPattern, 0, 0, TextureType::NONE, frameFlag, lightView);
 }
 
 void ThingPainter::draw(const EffectPtr& effect, const Point& dest, float scaleFactor, int frameFlag, LightView* lightView)
@@ -168,10 +168,10 @@ void ThingPainter::draw(const EffectPtr& effect, const Point& dest, float scaleF
 	const int xPattern = effect->m_position.x % effect->getNumPatternX();
 	const int yPattern = effect->m_position.y % effect->getNumPatternY();
 
-	draw(effect->rawGetThingType(), dest, scaleFactor, 0, xPattern, yPattern, 0, animationPhase, false, frameFlag, lightView);
+	draw(effect->rawGetThingType(), dest, scaleFactor, 0, xPattern, yPattern, 0, animationPhase, TextureType::NONE, frameFlag, lightView);
 }
 
-void ThingPainter::draw(const ThingTypePtr& thingType, const Point& dest, float scaleFactor, int layer, int xPattern, int yPattern, int zPattern, int animationPhase, bool useBlankTexture, int frameFlags, LightView* lightView)
+void ThingPainter::draw(const ThingTypePtr& thingType, const Point& dest, float scaleFactor, int layer, int xPattern, int yPattern, int zPattern, int animationPhase, TextureType textureType, int frameFlags, LightView* lightView)
 {
 	if(thingType->m_null)
 		return;
@@ -179,7 +179,7 @@ void ThingPainter::draw(const ThingTypePtr& thingType, const Point& dest, float 
 	if(animationPhase >= thingType->m_animationPhases)
 		return;
 
-	const TexturePtr& texture = thingType->getTexture(animationPhase, useBlankTexture); // texture might not exists, neither its rects.
+	const TexturePtr& texture = thingType->getTexture(animationPhase, textureType); // texture might not exists, neither its rects.
 	if(!texture)
 		return;
 
