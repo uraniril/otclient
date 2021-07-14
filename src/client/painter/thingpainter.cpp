@@ -103,7 +103,7 @@ void ThingPainter::draw(const ItemPtr& item, const Point& dest, float scaleFacto
 
 	if(highLight.enabled && item == highLight.thing) {
 		g_painter->setColor(highLight.rgbColor);
-		draw(item->rawGetThingType(), dest, scaleFactor, 0, xPattern, yPattern, zPattern, animationPhase, TextureType::SMOOTH, frameFlag, nullptr);
+		draw(item->rawGetThingType(), dest, scaleFactor, 0, xPattern, yPattern, zPattern, animationPhase, TextureType::ALL_BLANK, frameFlag, nullptr);
 		g_painter->resetColor();
 	}
 }
