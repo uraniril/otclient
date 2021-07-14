@@ -26,7 +26,6 @@
 #include <framework/graphics/framebuffermanager.h>
 #include <framework/graphics/graphics.h>
 #include "painter.h"
-#include <client/config.h>
 
 DrawPool g_drawPool;
 
