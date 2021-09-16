@@ -25,9 +25,11 @@
 #include "framebuffer.h"
 #include "image.h"
 
-#include <framework/core/application.h>
+#include "framework/core/application.h"
 
 #include "framework/stdext/math.h"
+
+#include <atomic>
 
 std::atomic<uint> LAST_ID(0);
 
