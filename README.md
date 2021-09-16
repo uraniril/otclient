@@ -1,5 +1,4 @@
-# OTCLient "1.0"
-![#6ff791](https://via.placeholder.com/15/6ff791/000000?text=+) `Tested on Tibia 10.98`
+# Canary Client
 
 ### Based on [edubart/otclient](https://github.com/edubart/otclient) Rev: 2.753
 
@@ -34,7 +33,6 @@
 
    </h2>
 
-[![Build Status](https://github.com/edubart/otclient/actions/workflows/build-vcpkg.yml/badge.svg)](https://github.com/edubart/otclient/actions/workflows/build-vcpkg.yml) [![Join the chat at https://gitter.im/edubart/otclient](https://img.shields.io/badge/GITTER-join%20chat-green.svg)](https://gitter.im/edubart/otclient?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Open Source Helpers](https://www.codetriage.com/edubart/otclient/badges/users.svg)](https://www.codetriage.com/edubart/otclient)
 
 ### What is otclient?
 
