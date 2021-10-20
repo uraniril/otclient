@@ -229,6 +229,7 @@ void LocalPlayer::updateWalkOffset(int totalPixelsWalked)
 void LocalPlayer::terminateWalk()
 {
     m_walkAnimationPhase = 0;
+    Creature::terminateWalk();
 
     if(m_serverWalking) {
         if(m_serverWalkEndEvent)

@@ -120,16 +120,16 @@ function onGameLoginError(message)
     end
 end
 
-function onGameLoginToken(unknown)
-    CharacterList.destroyLoadBox()
-    -- TODO: make it possible to enter a new token here / prompt token
-    errorBox = displayErrorBox(tr("Two-Factor Authentification"),
-                               'A new authentification token is required.\nPlease login again.')
-    errorBox.onOk = function()
-        errorBox = nil
-        EnterGame.show()
-    end
-end
+-- function onGameLoginToken(unknown)
+--     CharacterList.destroyLoadBox()
+--     -- TODO: make it possible to enter a new token here / prompt token
+--     errorBox = displayErrorBox(tr("Two-Factor Authentification"),
+--                                'A new authentification token is required.\nPlease login again.')
+--     errorBox.onOk = function()
+--         errorBox = nil
+--         EnterGame.show()
+--     end
+-- end
 
 function onGameConnectionError(message, code)
     CharacterList.destroyLoadBox()
