@@ -1040,8 +1040,11 @@ void ProtocolGame::parseRemoveInventoryItem(const InputMessagePtr& msg)
 
 void ProtocolGame::parseOpenNpcTrade(const InputMessagePtr& msg)
 {
-    msg->getString(); // npcName
+    msg->getString(); // NPC Name
 
+    msg->getU16(); // Version 12.20 Feature
+    msg->getString(); // Version 12.30 Feature
+	
     const uint16 listCount = msg->getU16();
     std::vector<std::tuple<ItemPtr, std::string, int, int, int>> items;
     items.reserve(listCount);
