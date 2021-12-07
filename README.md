@@ -37,7 +37,7 @@ Compiled for MacOS, Ubuntu and Windows can be found here:
 Compatible Dat and Spr with [otservbr-global](https://github.com/opentibiabr/otservbr-global) and [canary](https://github.com/opentibiabr/canary):
 * [Client 10](https://github.com/opentibiabr/tools/blob/master/Tibia%20Client%2010.zip)
 
-**NOTE:** You will need to download spr/dat files on your own and place them in `data/things/1264/` (i.e: `data/things/1264/Tibia.spr`)
+**NOTE:** You will need to download spr/dat files on your own and place them in `data/things/1272/` (i.e: `data/things/1272/Tibia.spr`)
 
 ### Compiling
 
