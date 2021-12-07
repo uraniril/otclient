@@ -1,6 +1,6 @@
 EnterGame = {}
 
-serverConfig = {ip = "127.0.0.1", port = 7171}
+serverConfig = {ip = "127.0.0.1", port = 7171, version = 1272}
 
 -- private variables
 local loadBox
@@ -142,9 +142,7 @@ function EnterGame.init()
     enterGame:getChildById('stayLoggedBox'):setChecked(stayLogged)
 
     clientBox = enterGame:getChildById('clientComboBox')
-    for _, proto in pairs(g_game.getSupportedClients()) do
-        clientBox:addOption(proto)
-    end
+    clientBox:addOption(serverConfig.version)
     clientBox:setCurrentOption(clientVersion)
 
     EnterGame.toggleAuthenticatorToken(clientVersion, true)
