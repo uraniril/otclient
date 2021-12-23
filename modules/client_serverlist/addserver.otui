@@ -52,9 +52,7 @@ MainWindow
     menu-height: 125
     menu-scroll-step: 25
     @onSetup: |
-      for _, proto in pairs(g_game.getSupportedClients()) do
-        self:addOption(proto)
-      end
+      self:addOption(1272)
 
   Button
     id: buttonAdd

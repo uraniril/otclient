@@ -42,26 +42,6 @@ end
 
 function g_game.isOfficialTibia() return G.currentRsa == CIPSOFT_RSA end
 
-function g_game.getSupportedClients() return {1264} end
-
--- The client version and protocol version where
--- unsynchronized for some releases, not sure if this
--- will be the normal standard.
-
--- Client Version: Publicly given version when
--- downloading Cipsoft client.
-
--- Protocol Version: Previously was the same as
--- the client version, but was unsychronized in some
--- releases, now it needs to be verified and added here
--- if it does not match the client version.
-
--- Reason for defining both: The server now requires a
--- Client version and Protocol version from the client.
-
--- Important: Use getClientVersion for specific protocol
--- features to ensure we are using the proper version.
-
 function g_game.getClientProtocolVersion(client)
     local clients = {
         [980] = 971,
