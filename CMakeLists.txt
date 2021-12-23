@@ -58,6 +58,7 @@ option(FRAMEWORK_SQL "Use SQL" OFF)
 option(BOT_PROTECTION "Enable bot protection" OFF)
 
 
+
 # *****************************************************************************
 # Options Code
 # *****************************************************************************
